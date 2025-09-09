@@ -147,14 +147,19 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm }: Conten
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (selectedOpportunity && selectedContentType && selectedCompany) {
-      onConfirm({
-        opportunityId: selectedOpportunity,
-        contentType: selectedContentType,
-        companyId: selectedCompany
-      });
-      handleClose();
+      try {
+        // Call the actual generation function instead of just logging
+        await onConfirm({
+          opportunityId: selectedOpportunity,
+          contentType: selectedContentType,
+          companyId: selectedCompany
+        });
+        handleClose();
+      } catch (error) {
+        console.error('Error generating content:', error);
+      }
     }
   };
 

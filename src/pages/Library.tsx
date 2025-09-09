@@ -41,12 +41,14 @@ const EmptyState = ({ type, title, description, icon }: {
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleGenerate = (config: any) => {
-    console.log('Gerando conteúdo com configuração:', config);
-    toast({
-      title: "Geração iniciada!",
-      description: "Seu conteúdo está sendo gerado. Você será notificado quando estiver pronto.",
-    });
+  const handleGenerate = async (config: any) => {
+    try {
+      const { generateContentWithAI } = await import('@/utils/contentGeneration');
+      await generateContentWithAI(config);
+      // The utility function handles all toasts and UI feedback
+    } catch (error) {
+      console.error('Error in content generation:', error);
+    }
   };
 
   return (

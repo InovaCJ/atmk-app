@@ -22,14 +22,23 @@ export default function Generate() {
     }
   }, [location.state]);
 
-  const handleStartGeneration = (config?: any) => {
-    setIsGenerating(true);
-    toast({
-      title: "Gerando conteúdo personalizado!",
-      description: config 
-        ? "Estamos criando seu conteúdo baseado na configuração selecionada..."
-        : "Estamos criando seus primeiros conteúdos baseados nas informações fornecidas...",
-    });
+  const handleStartGeneration = async (config?: any) => {
+    if (config) {
+      try {
+        const { generateContentWithAI } = await import('@/utils/contentGeneration');
+        await generateContentWithAI(config);
+        // Navigate to library to see generated content
+        setTimeout(() => navigate('/library'), 2000);
+      } catch (error) {
+        console.error('Error generating content:', error);
+      }
+    } else {
+      setIsGenerating(true);
+      toast({
+        title: "Gerando conteúdo personalizado!",
+        description: "Estamos criando seus primeiros conteúdos baseados nas informações fornecidas...",
+      });
+    }
   };
 
   const handleGenerationComplete = () => {

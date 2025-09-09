@@ -97,12 +97,13 @@ export default function Dashboard() {
     }
   };
 
-  const handleGenerationConfirm = (config: any) => {
-    console.log("Generating content with config:", config);
-    toast({
-      title: "Geração iniciada!",
-      description: "Seu conteúdo está sendo gerado. Você será notificado quando estiver pronto.",
-    });
+  const handleGenerationConfirm = async (config: any) => {
+    try {
+      const { generateContentWithAI } = await import('@/utils/contentGeneration');
+      await generateContentWithAI(config);
+    } catch (error) {
+      console.error('Error generating content:', error);
+    }
   };
 
   return (
