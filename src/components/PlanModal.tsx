@@ -3,6 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   X, 
   Check, 
@@ -11,7 +14,9 @@ import {
   Zap,
   Users,
   Building2,
-  FileText
+  FileText,
+  Plus,
+  Minus
 } from "lucide-react";
 
 interface PlanModalProps {
@@ -89,6 +94,23 @@ const plans = [
 
 export function PlanModal({ isOpen, onClose }: PlanModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [additionalContent, setAdditionalContent] = useState(0);
+  const [additionalUsers, setAdditionalUsers] = useState(0);
+  const [additionalCompanies, setAdditionalCompanies] = useState(0);
+
+  const calculateBusinessPrice = () => {
+    const basePrice = 29.90;
+    const contentPrice = (additionalContent * 20) / 100; // R$20 por cada 100 conteúdos
+    const userPrice = additionalUsers * 10;
+    const companyPrice = additionalCompanies * 15;
+    return basePrice + contentPrice + userPrice + companyPrice;
+  };
+
+  const businessPlan = {
+    ...plans.find(p => p.id === "business")!,
+    price: `R$ ${calculateBusinessPrice().toFixed(2)}`,
+    period: "/mês"
+  };
 
   const handleSelectPlan = (planId: string) => {
     setSelectedPlan(planId);
@@ -124,14 +146,15 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             {plans.map((plan) => {
               const IconComponent = plan.icon;
+              const currentPlan = plan.id === "business" ? businessPlan : plan;
               return (
                 <Card 
                   key={plan.id} 
                   className={`relative transition-all duration-200 hover:shadow-lg ${
-                    plan.popular ? 'border-primary shadow-md' : ''
+                    currentPlan.popular ? 'border-primary shadow-md' : ''
                   } ${selectedPlan === plan.id ? 'ring-2 ring-primary' : ''}`}
                 >
-                  {plan.popular && (
+                  {currentPlan.popular && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                       <Badge className="bg-primary text-primary-foreground">
                         Mais Popular
@@ -139,18 +162,18 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
                     </div>
                   )}
 
-                  <CardHeader className={`text-center ${plan.bgColor} rounded-t-lg`}>
+                  <CardHeader className={`text-center ${currentPlan.bgColor} rounded-t-lg`}>
                     <div className="flex justify-center mb-2">
                       <div className={`p-3 rounded-full bg-background shadow-sm`}>
-                        <IconComponent className={`h-6 w-6 ${plan.color}`} />
+                        <IconComponent className={`h-6 w-6 ${currentPlan.color}`} />
                       </div>
                     </div>
-                    <CardTitle className="text-xl">{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
+                    <CardTitle className="text-xl">{currentPlan.name}</CardTitle>
+                    <CardDescription>{currentPlan.description}</CardDescription>
                     <div className="mt-4">
                       <div className="text-3xl font-bold">
-                        {plan.price}
-                        {plan.period && <span className="text-base font-normal">{plan.period}</span>}
+                        {currentPlan.price}
+                        {currentPlan.period && <span className="text-base font-normal">{currentPlan.period}</span>}
                       </div>
                     </div>
                   </CardHeader>
@@ -162,7 +185,7 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
                         Incluso no plano:
                       </h4>
                       <ul className="space-y-2">
-                        {plan.features.map((feature, index) => (
+                        {currentPlan.features.map((feature, index) => (
                           <li key={index} className="flex items-center gap-2 text-sm">
                             <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
                             {feature}
@@ -171,7 +194,112 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
                       </ul>
                     </div>
 
-                    {plan.addons && (
+                    {plan.id === "business" && (
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-primary">Personalize seu plano:</h4>
+                        
+                        {/* Conteúdos Adicionais */}
+                        <div className="space-y-2">
+                          <Label className="text-sm flex items-center gap-2">
+                            <FileText className="h-3 w-3" />
+                            Conteúdos adicionais (por 100)
+                          </Label>
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAdditionalContent(Math.max(0, additionalContent - 1))}
+                              disabled={additionalContent <= 0}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <Input
+                              type="number"
+                              value={additionalContent}
+                              onChange={(e) => setAdditionalContent(Math.max(0, parseInt(e.target.value) || 0))}
+                              className="w-16 text-center"
+                              min="0"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAdditionalContent(additionalContent + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">+ R$ {(additionalContent * 20).toFixed(2)}/mês</p>
+                        </div>
+
+                        {/* Usuários Adicionais */}
+                        <div className="space-y-2">
+                          <Label className="text-sm flex items-center gap-2">
+                            <Users className="h-3 w-3" />
+                            Usuários adicionais
+                          </Label>
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAdditionalUsers(Math.max(0, additionalUsers - 1))}
+                              disabled={additionalUsers <= 0}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <Input
+                              type="number"
+                              value={additionalUsers}
+                              onChange={(e) => setAdditionalUsers(Math.max(0, parseInt(e.target.value) || 0))}
+                              className="w-16 text-center"
+                              min="0"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAdditionalUsers(additionalUsers + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">+ R$ {(additionalUsers * 10).toFixed(2)}/mês</p>
+                        </div>
+
+                        {/* Empresas Adicionais */}
+                        <div className="space-y-2">
+                          <Label className="text-sm flex items-center gap-2">
+                            <Building2 className="h-3 w-3" />
+                            Empresas adicionais
+                          </Label>
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAdditionalCompanies(Math.max(0, additionalCompanies - 1))}
+                              disabled={additionalCompanies <= 0}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <Input
+                              type="number"
+                              value={additionalCompanies}
+                              onChange={(e) => setAdditionalCompanies(Math.max(0, parseInt(e.target.value) || 0))}
+                              className="w-16 text-center"
+                              min="0"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAdditionalCompanies(additionalCompanies + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">+ R$ {(additionalCompanies * 15).toFixed(2)}/mês</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {plan.addons && plan.id !== "business" && (
                       <div className="space-y-3">
                         <h4 className="font-semibold text-amber-600">Complementos:</h4>
                         <ul className="space-y-2">
