@@ -1,15 +1,12 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  BarChart3,
   BookOpen,
   Brain,
   FileText,
   Home,
   Settings,
   Sparkles,
-  Star,
-  TrendingUp,
-  Users
+  Star
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,15 +26,12 @@ import { Button } from "@/components/ui/button";
 
 const mainItems = [
   { title: "Dashboard", url: "/", icon: Home },
-  { title: "Oportunidades", url: "/opportunities", icon: TrendingUp },
   { title: "Biblioteca", url: "/library", icon: BookOpen },
   { title: "Geração de IA", url: "/generate", icon: Brain },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];
 
 const managementItems = [
   { title: "Base de Conhecimento", url: "/knowledge", icon: FileText },
-  { title: "Times & Marcas", url: "/teams", icon: Users },
   { title: "Configurações", url: "/settings", icon: Settings },
 ];
 

@@ -25,12 +25,9 @@ const App = () => (
           {/* Main App Routes */}
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
-            <Route path="opportunities" element={<div className="p-6">Oportunidades - Em breve</div>} />
             <Route path="library" element={<Library />} />
             <Route path="generate" element={<Generate />} />
-            <Route path="analytics" element={<div className="p-6">Analytics - Em breve</div>} />
             <Route path="knowledge" element={<div className="p-6">Base de Conhecimento - Em breve</div>} />
-            <Route path="teams" element={<div className="p-6">Times & Marcas - Em breve</div>} />
             <Route path="settings" element={<div className="p-6">Configurações - Em breve</div>} />
           </Route>
           
