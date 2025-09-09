@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { PlanModal } from "@/components/PlanModal";
 
 interface UserProfile {
   fullName: string;
@@ -74,6 +75,7 @@ export default function Settings() {
 
   const [newCompany, setNewCompany] = useState({ name: "", industry: "", size: "" });
   const [isAddingCompany, setIsAddingCompany] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
 
   // Load data from localStorage
   useEffect(() => {
@@ -386,7 +388,7 @@ export default function Settings() {
               <p className="text-muted-foreground">
                 Você atingiu o limite de {planUsage.companiesLimit} empresa(s) do seu plano atual.
               </p>
-              <Button variant="link" className="mt-2">
+              <Button variant="link" className="mt-2" onClick={() => setShowPlanModal(true)}>
                 Fazer upgrade do plano
               </Button>
             </div>
@@ -416,7 +418,7 @@ export default function Settings() {
                      planUsage.currentPlan === "pro" ? "R$ 29,90/mês" : "Personalizado"}
                   </Badge>
                 </div>
-                <Button variant="default">
+                <Button variant="default" onClick={() => setShowPlanModal(true)}>
                   Fazer Upgrade
                 </Button>
               </div>
@@ -510,6 +512,11 @@ export default function Settings() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <PlanModal 
+        isOpen={showPlanModal} 
+        onClose={() => setShowPlanModal(false)} 
+      />
     </div>
   );
 }
