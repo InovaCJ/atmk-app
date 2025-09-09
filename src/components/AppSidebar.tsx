@@ -45,18 +45,20 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-4 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Sparkles className="h-4 w-4" />
+        <div className="flex items-center justify-between gap-2 px-4 py-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+              <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                ATMK
+              </h1>
+              <p className="text-xs text-muted-foreground">Content AI</p>
+            </div>
           </div>
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-              ATMK
-            </h1>
-            <p className="text-xs text-muted-foreground">ContentOps AI</p>
-          </div>
+          <SidebarTrigger />
         </div>
-        <SidebarTrigger className="ml-auto mr-4" />
       </SidebarHeader>
 
       <SidebarContent>
