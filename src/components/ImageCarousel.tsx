@@ -14,11 +14,11 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length);
+    setCurrentIndex((prev) => Math.min(prev + 1, images.length - 2));
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    setCurrentIndex((prev) => Math.max(prev - 1, 0));
   };
 
   const handleCopy = (text: string, type: string) => {
@@ -78,11 +78,11 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
       <div className="relative">
         <div className="overflow-hidden rounded-lg">
           <div 
-            className="flex transition-transform duration-300 ease-in-out"
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            className="flex gap-4 transition-transform duration-300 ease-in-out"
+            style={{ transform: `translateX(-${currentIndex * 320}px)` }}
           >
             {images.map((image, index) => (
-              <div key={index} className="w-full flex-shrink-0 space-y-3">
+              <div key={index} className="w-80 flex-shrink-0 space-y-3">
                 {/* Caption */}
                 <div className="flex items-start gap-2">
                   <Textarea
