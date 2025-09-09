@@ -14,11 +14,11 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => Math.min(prev + 1, images.length - 2));
+    setCurrentIndex((prev) => (prev + 1) % images.length);
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => Math.max(prev - 1, 0));
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
   const handleCopy = (text: string, type: string) => {
@@ -55,7 +55,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
   };
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       {/* Navigation Indicator */}
       <div className="flex items-center justify-between">
         <div className="flex gap-1">
@@ -74,20 +74,17 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
         </span>
       </div>
 
-      {/* Main Carousel */}
-      <div className="relative overflow-hidden">
-        <div className="overflow-x-auto scrollbar-hide">
+      {/* Main Carousel Frame */}
+      <div className="relative w-full">
+        <div className="overflow-hidden rounded-lg w-full">
           <div 
-            className="flex gap-4 transition-transform duration-300 ease-in-out"
-            style={{ 
-              transform: `translateX(-${currentIndex * 320}px)`,
-              width: `${images.length * 336}px` // 320px + 16px gap
-            }}
+            className="flex transition-transform duration-300 ease-in-out w-full"
+            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
             {images.map((image, index) => (
-              <div key={index} className="w-80 flex-shrink-0 space-y-3">
+              <div key={index} className="w-full flex-shrink-0 space-y-3">
                 {/* Caption */}
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-2 px-2">
                   <Textarea
                     value={captions[index] || `Legenda do slide ${index + 1}`}
                     readOnly
@@ -104,22 +101,26 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
                 </div>
                 
                 {/* Image */}
-                <img 
-                  src={image} 
-                  alt={`Slide ${index + 1}`} 
-                  className="w-full aspect-square object-cover rounded-lg" 
-                />
+                <div className="px-2">
+                  <img 
+                    src={image} 
+                    alt={`Slide ${index + 1}`} 
+                    className="w-full aspect-square object-cover rounded-lg" 
+                  />
+                </div>
                 
                 {/* Download Button */}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full"
-                  onClick={() => downloadImage(image, index)}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Baixar Imagem {index + 1}
-                </Button>
+                <div className="px-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => downloadImage(image, index)}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar Imagem {index + 1}
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -131,7 +132,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm"
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm z-10"
               onClick={prevSlide}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -139,7 +140,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm z-10"
               onClick={nextSlide}
             >
               <ChevronRight className="h-4 w-4" />
@@ -149,7 +150,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
       </div>
 
       {/* Thumbnail Navigation */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="flex gap-2 overflow-x-auto pb-2 px-2">
         {images.map((image, index) => (
           <button
             key={index}
