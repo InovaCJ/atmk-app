@@ -63,6 +63,21 @@ A Black Friday representa uma das maiores oportunidades do ano para e-commerces.
       createdAt: "2024-01-14",
       status: "rascunho",
       category: "Tecnologia",
+      postCaption: `🚀 A Inteligência Artificial está revolucionando o e-commerce de forma incrível! 
+
+Você sabia que lojas que implementam IA aumentam suas conversões em até 30%? 
+
+👉 Swipe para descobrir como a tecnologia pode transformar sua loja virtual:
+
+✨ Recomendações personalizadas
+🎯 Chatbots inteligentes  
+📊 Análise preditiva de vendas
+🔍 Busca visual avançada
+💰 Precificação dinâmica
+
+Qual dessas funcionalidades você gostaria de implementar primeiro na sua loja?
+
+#IA #Ecommerce #InteligenciaArtificial #VendasOnline #MarketingDigital #Tecnologia #Inovacao #Vendas #LojaVirtual #Empreendedorismo`,
       images: [
         "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop",
         "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=400&fit=crop"
@@ -461,9 +476,28 @@ Slide 1: Título do webinar
                 )}
 
                 {selectedContent.type === "social" && (
-                  <div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Legenda sugerida para o post</label>
+                      <div className="flex items-start gap-2 mt-1">
+                        <Textarea
+                          value={selectedContent.postCaption || ""}
+                          readOnly
+                          className="text-sm flex-1"
+                          rows={8}
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleCopy(selectedContent.postCaption || "", "Legenda do post")}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
                     <div className="space-y-4">
-                      <label className="text-sm font-medium">Imagens Geradas</label>
+                      <label className="text-sm font-medium">Imagens do Carrossel</label>
                       <div className="grid grid-cols-2 gap-4">
                         {selectedContent.images?.map((image: string, index: number) => (
                           <div key={index} className="space-y-2">
