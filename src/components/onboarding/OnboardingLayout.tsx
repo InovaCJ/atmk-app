@@ -11,10 +11,11 @@ interface OnboardingLayoutProps {
   title: string;
   description: string;
   onNext?: () => void;
-  onPrevious?: () => void;
+  onBack?: () => void;
   onSkip?: () => void;
   isNextEnabled?: boolean;
   isLoading?: boolean;
+  nextButtonText?: string;
 }
 
 export function OnboardingLayout({
@@ -24,10 +25,11 @@ export function OnboardingLayout({
   title,
   description,
   onNext,
-  onPrevious,
+  onBack,
   onSkip,
   isNextEnabled = true,
-  isLoading = false
+  isLoading = false,
+  nextButtonText = "Próximo"
 }: OnboardingLayoutProps) {
   const progress = (currentStep / totalSteps) * 100;
 
@@ -75,7 +77,7 @@ export function OnboardingLayout({
               {currentStep > 1 && (
                 <Button
                   variant="outline"
-                  onClick={onPrevious}
+                  onClick={onBack}
                   disabled={isLoading}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -105,7 +107,7 @@ export function OnboardingLayout({
                   "Finalizar"
                 ) : (
                   <>
-                    Próximo
+                    {nextButtonText}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 )}
