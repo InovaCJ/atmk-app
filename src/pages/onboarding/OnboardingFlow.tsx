@@ -8,6 +8,8 @@ import { SEOSemantics } from "./SEOSemantics";
 import { ContentFormats } from "./ContentFormats";
 import { toast } from "@/hooks/use-toast";
 import { OnboardingData } from "@/types/onboarding";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useKnowledgeBase } from "@/hooks/useKnowledgeBase";
 
 export function OnboardingFlow() {
   const navigate = useNavigate();
@@ -15,8 +17,10 @@ export function OnboardingFlow() {
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     completedSteps: []
   });
+  const { companies } = useCompanies();
+  const { saveOnboardingData } = useKnowledgeBase(companies[0]?.id);
 
-  const handleStepNext = (stepData: any, step: number) => {
+  const handleStepNext = async (stepData: any, step: number) => {
     const stepKeys = ['basicInfo', 'brandIdentity', 'business', 'audience', 'seo', 'contentFormats'];
     const stepKey = stepKeys[step - 1];
     
@@ -33,12 +37,8 @@ export function OnboardingFlow() {
         description: `Avançando para a etapa ${step + 1}...`,
       });
     } else {
-      // Finalizar onboarding - redirecionar para generate
-      toast({
-        title: "Onboarding concluído!",
-        description: "Gerando seus conteúdos personalizados...",
-      });
-      navigate("/generate");
+      // Finalizar onboarding - salvar dados e redirecionar
+      await finalizeOnboarding();
     }
   };
 
@@ -53,6 +53,43 @@ export function OnboardingFlow() {
       setCurrentStep(currentStep + 1);
     } else {
       navigate("/");
+    }
+  };
+
+  const finalizeOnboarding = async () => {
+    if (companies.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Nenhuma empresa encontrada para salvar os dados.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Salvar dados completos do onboarding na base de conhecimento
+      await saveOnboardingData(onboardingData, companies[0].name);
+      
+      toast({
+        title: "Onboarding concluído!",
+        description: "Seus dados foram salvos e estão prontos para gerar conteúdos personalizados!",
+      });
+      
+      // Aguardar um pouco antes de navegar para mostrar o toast
+      setTimeout(() => {
+        navigate("/generate");
+      }, 1500);
+    } catch (error) {
+      console.error('Error saving onboarding data:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar dados do onboarding. Redirecionando mesmo assim...",
+        variant: "destructive"
+      });
+      
+      setTimeout(() => {
+        navigate("/generate");
+      }, 2000);
     }
   };
 

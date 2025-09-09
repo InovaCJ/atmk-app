@@ -22,11 +22,13 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useKnowledgeBase } from "@/hooks/useKnowledgeBase";
 import type { OnboardingData, BrandIdentityData, BusinessData, AudienceData, SEOData, ContentFormatsData } from "@/types/onboarding";
 
 export default function Knowledge() {
   const { companies, loading } = useCompanies();
   const [selectedCompany, setSelectedCompany] = useState("");
+  const { createOrUpdateKnowledgeItem, getKnowledgeItemByType, loading: knowledgeLoading } = useKnowledgeBase(selectedCompany);
 
   const [knowledgeData, setKnowledgeData] = useState<OnboardingData>({
     brandIdentity: {
@@ -122,20 +124,104 @@ export default function Knowledge() {
     }
   }, [companies, selectedCompany]);
 
-  // Load data from localStorage on mount
+  // Load data from Supabase when company is selected
   useEffect(() => {
-    const savedData = localStorage.getItem('onboardingData');
-    if (savedData) {
-      setKnowledgeData(JSON.parse(savedData));
+    if (selectedCompany) {
+      loadKnowledgeData();
     }
-  }, []);
+  }, [selectedCompany, getKnowledgeItemByType]);
 
-  const saveData = () => {
-    localStorage.setItem('onboardingData', JSON.stringify(knowledgeData));
-    toast({
-      title: "Dados salvos!",
-      description: "Suas informações foram atualizadas com sucesso."
-    });
+  const loadKnowledgeData = () => {
+    if (!selectedCompany) return;
+    
+    const knowledgeItem = getKnowledgeItemByType('onboarding_data');
+    if (knowledgeItem && knowledgeItem.metadata) {
+      setKnowledgeData(knowledgeItem.metadata);
+    } else {
+      // Se não houver dados salvos, resetar para o estado inicial
+      setKnowledgeData({
+        brandIdentity: {
+          mission: "",
+          vision: "",
+          values: [],
+          purpose: "",
+          archetypes: [],
+          valueProposition: "",
+          differentials: [],
+          categories: [],
+          personalityScales: {
+            formalInformal: 3,
+            technicalAccessible: 3,
+            seriousFun: 3
+          },
+          wordsToUse: [],
+          wordsToBan: [],
+          slogans: [],
+          messagePillars: []
+        },
+        business: {
+          sector: "",
+          market: "",
+          maturity: "growing",
+          regulatoryStatus: "",
+          products: [],
+          services: [],
+          roadmap: []
+        },
+        audience: {
+          icp: {
+            demographics: {
+              ageRange: "",
+              gender: "",
+              income: "",
+              education: "",
+              location: []
+            },
+            firmographics: {
+              companySize: "",
+              industry: [],
+              jobTitles: [],
+              regions: [],
+              languages: []
+            }
+          },
+          personas: [],
+          frequentQuestions: []
+        },
+        seo: {
+          keywords: [],
+          searchIntents: []
+        },
+        contentFormats: {
+          preferredFormats: []
+        },
+        completedSteps: []
+      });
+    }
+  };
+
+  const saveData = async () => {
+    if (!selectedCompany) {
+      toast({
+        title: "Erro",
+        description: "Selecione uma empresa primeiro.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const selectedCompanyData = companies.find(c => c.id === selectedCompany);
+    const companyName = selectedCompanyData?.name || 'Empresa';
+
+    const existingItem = getKnowledgeItemByType('onboarding_data');
+    
+    await createOrUpdateKnowledgeItem(
+      `Base de Conhecimento - ${companyName}`,
+      knowledgeData,
+      'onboarding_data',
+      ['onboarding', 'brand', 'business', 'audience', 'seo'],
+      existingItem?.id
+    );
   };
 
   // Helper functions for adding/removing items from arrays
@@ -422,9 +508,13 @@ export default function Knowledge() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={saveData} className="flex items-center gap-2">
+                <Button 
+                  onClick={saveData} 
+                  className="flex items-center gap-2"
+                  disabled={!selectedCompany || knowledgeLoading}
+                >
                   <Save className="h-4 w-4" />
-                  Salvar Alterações
+                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
                 </Button>
               </div>
             </CardContent>
@@ -544,9 +634,13 @@ export default function Knowledge() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={saveData} className="flex items-center gap-2">
+                <Button 
+                  onClick={saveData} 
+                  className="flex items-center gap-2"
+                  disabled={!selectedCompany || knowledgeLoading}
+                >
                   <Save className="h-4 w-4" />
-                  Salvar Alterações
+                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
                 </Button>
               </div>
             </CardContent>
@@ -745,9 +839,13 @@ export default function Knowledge() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={saveData} className="flex items-center gap-2">
+                <Button 
+                  onClick={saveData} 
+                  className="flex items-center gap-2"
+                  disabled={!selectedCompany || knowledgeLoading}
+                >
                   <Save className="h-4 w-4" />
-                  Salvar Alterações
+                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
                 </Button>
               </div>
             </CardContent>
@@ -885,9 +983,13 @@ export default function Knowledge() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={saveData} className="flex items-center gap-2">
+                <Button 
+                  onClick={saveData} 
+                  className="flex items-center gap-2"
+                  disabled={!selectedCompany || knowledgeLoading}
+                >
                   <Save className="h-4 w-4" />
-                  Salvar Alterações
+                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
                 </Button>
               </div>
             </CardContent>
@@ -996,9 +1098,13 @@ export default function Knowledge() {
               )}
 
               <div className="flex justify-end">
-                <Button onClick={saveData} className="flex items-center gap-2">
+                <Button 
+                  onClick={saveData} 
+                  className="flex items-center gap-2"
+                  disabled={!selectedCompany || knowledgeLoading}
+                >
                   <Save className="h-4 w-4" />
-                  Salvar Alterações
+                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
                 </Button>
               </div>
             </CardContent>
