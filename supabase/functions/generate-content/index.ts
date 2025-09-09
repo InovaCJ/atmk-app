@@ -26,10 +26,22 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Supabase client
+    // Get auth header to identify user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header provided');
+    }
+
+    // Initialize Supabase client with auth token
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
 
     // Get OpenAI API key
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -40,18 +52,6 @@ serve(async (req) => {
     // Parse request
     const { opportunityId, contentType, companyId }: GenerationRequest = await req.json();
     console.log('Generation request:', { opportunityId, contentType, companyId });
-
-    // Get auth header to identify user
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header provided');
-    }
-
-    // Set auth header for Supabase client
-    supabase.auth.setSession({
-      access_token: authHeader.replace('Bearer ', ''),
-      refresh_token: ''
-    } as any);
 
     // Gather company knowledge
     const knowledge = await gatherCompanyKnowledge(supabase, companyId, opportunityId);
@@ -70,8 +70,7 @@ serve(async (req) => {
       supabase, 
       generatedContent, 
       companyId, 
-      contentType,
-      authHeader.replace('Bearer ', '')
+      contentType
     );
 
     return new Response(
@@ -318,15 +317,15 @@ async function saveGeneratedContent(
   supabase: any, 
   content: any, 
   companyId: string, 
-  contentType: string,
-  accessToken: string
+  contentType: string
 ): Promise<any> {
   console.log('Saving generated content to database...');
 
-  // Get user ID from token (simplified approach)
-  const { data: { user } } = await supabase.auth.getUser(accessToken);
+  // Get user from the authenticated session
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (!user) {
+  if (userError || !user) {
+    console.error('Error getting authenticated user:', userError);
     throw new Error('User not authenticated');
   }
 
