@@ -101,11 +101,11 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
                 </div>
                 
                 {/* Image */}
-                <div className="px-2">
+                <div className="px-2 flex justify-center">
                   <img 
                     src={image} 
                     alt={`Slide ${index + 1}`} 
-                    className="w-full aspect-square object-cover rounded-lg" 
+                    className="w-96 h-96 object-cover rounded-lg" 
                   />
                 </div>
                 
