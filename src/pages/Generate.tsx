@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, FileSearch, Sparkles, Wand2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 
 export default function Generate() {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -16,15 +18,17 @@ export default function Generate() {
   useEffect(() => {
     const fromOnboarding = location.state?.fromOnboarding;
     if (fromOnboarding) {
-      handleStartGeneration();
+      setIsModalOpen(true);
     }
   }, [location.state]);
 
-  const handleStartGeneration = () => {
+  const handleStartGeneration = (config?: any) => {
     setIsGenerating(true);
     toast({
       title: "Gerando conteúdo personalizado!",
-      description: "Estamos criando seus primeiros conteúdos baseados nas informações fornecidas...",
+      description: config 
+        ? "Estamos criando seu conteúdo baseado na configuração selecionada..."
+        : "Estamos criando seus primeiros conteúdos baseados nas informações fornecidas...",
     });
   };
 
@@ -44,58 +48,66 @@ export default function Generate() {
 
   // Estado quando não há conteúdo sendo gerado
   return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <Card className="w-full max-w-2xl text-center">
-        <CardHeader className="pb-6">
-          <div className="flex justify-center mb-6">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-purple-600/10 border border-primary/20">
-              <Wand2 className="h-10 w-10 text-primary" />
+    <>
+      <div className="flex-1 flex items-center justify-center p-6">
+        <Card className="w-full max-w-2xl text-center">
+          <CardHeader className="pb-6">
+            <div className="flex justify-center mb-6">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-purple-600/10 border border-primary/20">
+                <Wand2 className="h-10 w-10 text-primary" />
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-2xl mb-2">Geração de Conteúdo</CardTitle>
-          <CardDescription className="text-base">
-            Crie conteúdos personalizados usando inteligência artificial baseada no seu perfil e empresa
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="p-4 bg-accent/50 rounded-lg">
-              <Sparkles className="h-5 w-5 text-primary mx-auto mb-2" />
-              <p className="font-medium">IA Personalizada</p>
-              <p className="text-muted-foreground text-xs">Baseada no seu perfil</p>
+            <CardTitle className="text-2xl mb-2">Geração de Conteúdo</CardTitle>
+            <CardDescription className="text-base">
+              Crie conteúdos personalizados usando inteligência artificial baseada no seu perfil e empresa
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <Sparkles className="h-5 w-5 text-primary mx-auto mb-2" />
+                <p className="font-medium">IA Personalizada</p>
+                <p className="text-muted-foreground text-xs">Baseada no seu perfil</p>
+              </div>
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <FileSearch className="h-5 w-5 text-primary mx-auto mb-2" />
+                <p className="font-medium">Tendências</p>
+                <p className="text-muted-foreground text-xs">Análise de mercado</p>
+              </div>
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <Wand2 className="h-5 w-5 text-primary mx-auto mb-2" />
+                <p className="font-medium">Multi-formato</p>
+                <p className="text-muted-foreground text-xs">Posts, artigos e mais</p>
+              </div>
             </div>
-            <div className="p-4 bg-accent/50 rounded-lg">
-              <FileSearch className="h-5 w-5 text-primary mx-auto mb-2" />
-              <p className="font-medium">Tendências</p>
-              <p className="text-muted-foreground text-xs">Análise de mercado</p>
+            
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button 
+                onClick={() => setIsModalOpen(true)}
+                size="lg"
+                className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+              >
+                <Wand2 className="h-5 w-5 mr-2" />
+                Gerar Conteúdo Agora
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => navigate('/')}
+                size="lg"
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                Voltar ao Dashboard
+              </Button>
             </div>
-            <div className="p-4 bg-accent/50 rounded-lg">
-              <Wand2 className="h-5 w-5 text-primary mx-auto mb-2" />
-              <p className="font-medium">Multi-formato</p>
-              <p className="text-muted-foreground text-xs">Posts, artigos e mais</p>
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button 
-              onClick={handleStartGeneration}
-              size="lg"
-              className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-            >
-              <Wand2 className="h-5 w-5 mr-2" />
-              Gerar Conteúdo Agora
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => navigate('/')}
-              size="lg"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Voltar ao Dashboard
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <ContentGenerationModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onConfirm={handleStartGeneration}
+      />
+    </>
   );
 }

@@ -30,6 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { ContentFeedback } from "@/components/ContentFeedback";
 import { ImageCarousel } from "@/components/ImageCarousel";
+import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 
 // Componente para estado vazio
 const EmptyState = ({ type, title, description, icon }: {
@@ -37,20 +38,40 @@ const EmptyState = ({ type, title, description, icon }: {
   title: string; 
   description: string;
   icon: React.ReactNode;
-}) => (
-  <div className="flex flex-col items-center justify-center py-16 text-center">
-    <div className="text-muted-foreground mb-6">
-      {icon}
-    </div>
-    <h3 className="text-xl font-semibold mb-3">{title}</h3>
-    <p className="text-muted-foreground mb-6 max-w-md">
-      {description}
-    </p>
-    <Button onClick={() => window.location.href = '/generate'}>
-      Gerar Primeiro Conteúdo
-    </Button>
-  </div>
-);
+}) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleGenerate = (config: any) => {
+    console.log('Gerando conteúdo com configuração:', config);
+    toast({
+      title: "Geração iniciada!",
+      description: "Seu conteúdo está sendo gerado. Você será notificado quando estiver pronto.",
+    });
+  };
+
+  return (
+    <>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="text-muted-foreground mb-6">
+          {icon}
+        </div>
+        <h3 className="text-xl font-semibold mb-3">{title}</h3>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          {description}
+        </p>
+        <Button onClick={() => setIsModalOpen(true)}>
+          Gerar Primeiro Conteúdo
+        </Button>
+      </div>
+      
+      <ContentGenerationModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onConfirm={handleGenerate}
+      />
+    </>
+  );
+};
 
 export default function Library() {
   const [searchTerm, setSearchTerm] = useState("");

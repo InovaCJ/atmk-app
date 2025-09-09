@@ -13,9 +13,12 @@ import {
   Settings
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ContentGenerationModal } from "@/components/ContentGenerationModal";
+import { toast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Mock data para trends/oportunidades de conteúdo
   const opportunities = [
@@ -89,9 +92,17 @@ export default function Dashboard() {
       // Redirect to settings/onboarding
       window.location.href = "/onboarding";
     } else {
-      // Generate content logic
-      console.log("Generating content for opportunity:", opportunityId);
+      // Open generation modal
+      setIsModalOpen(true);
     }
+  };
+
+  const handleGenerationConfirm = (config: any) => {
+    console.log("Generating content with config:", config);
+    toast({
+      title: "Geração iniciada!",
+      description: "Seu conteúdo está sendo gerado. Você será notificado quando estiver pronto.",
+    });
   };
 
   return (
@@ -186,6 +197,12 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      <ContentGenerationModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onConfirm={handleGenerationConfirm}
+      />
     </div>
   );
 }
