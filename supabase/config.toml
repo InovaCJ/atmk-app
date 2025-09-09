@@ -1,4 +1,1 @@
 project_id = "bztjknnilcmfaromieaj"
-
-[functions.sync-google-trends]
-verify_jwt = false
