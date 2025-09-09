@@ -21,14 +21,12 @@ import {
   Trash2
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useCompanies } from "@/hooks/useCompanies";
 import type { OnboardingData, BrandIdentityData, BusinessData, AudienceData, SEOData, ContentFormatsData } from "@/types/onboarding";
 
 export default function Knowledge() {
-  const [selectedCompany, setSelectedCompany] = useState("1");
-  const [companies] = useState([
-    { id: "1", name: "Minha Empresa" },
-    { id: "2", name: "Empresa Exemplo" }
-  ]);
+  const { companies, loading } = useCompanies();
+  const [selectedCompany, setSelectedCompany] = useState("");
 
   const [knowledgeData, setKnowledgeData] = useState<OnboardingData>({
     brandIdentity: {
@@ -116,6 +114,13 @@ export default function Knowledge() {
   // Relevance flags
   const [isB2CRelevant, setIsB2CRelevant] = useState(true);
   const [isB2BRelevant, setIsB2BRelevant] = useState(true);
+
+  // Auto-select first company when companies are loaded
+  useEffect(() => {
+    if (companies.length > 0 && !selectedCompany) {
+      setSelectedCompany(companies[0].id);
+    }
+  }, [companies, selectedCompany]);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -246,9 +251,9 @@ export default function Knowledge() {
             <Label htmlFor="company-select" className="font-medium">
               Configurando empresa:
             </Label>
-            <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+            <Select value={selectedCompany} onValueChange={setSelectedCompany} disabled={loading}>
               <SelectTrigger className="w-64">
-                <SelectValue placeholder="Selecione uma empresa" />
+                <SelectValue placeholder={loading ? "Carregando..." : "Selecione uma empresa"} />
               </SelectTrigger>
               <SelectContent>
                 {companies.map((company) => (
