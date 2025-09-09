@@ -427,13 +427,29 @@ Slide 1: Título do webinar
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = selectedContent.coverImage;
-                              link.download = `capa-${selectedContent.slug || selectedContent.title.replace(/\s+/g, '-').toLowerCase()}.jpg`;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(selectedContent.coverImage);
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `capa-${selectedContent.slug || selectedContent.title.replace(/\s+/g, '-').toLowerCase()}.jpg`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(url);
+                                toast({
+                                  title: "Download iniciado",
+                                  description: "A imagem está sendo baixada para sua pasta de downloads."
+                                });
+                              } catch (error) {
+                                toast({
+                                  title: "Erro no download",
+                                  description: "Não foi possível baixar a imagem. Tente novamente.",
+                                  variant: "destructive"
+                                });
+                              }
                             }}
                           >
                             <Download className="h-4 w-4 mr-2" />
@@ -471,7 +487,32 @@ Slide 1: Título do webinar
                                  <Copy className="h-4 w-4" />
                                </Button>
                             </div>
-                            <Button variant="outline" size="sm" className="w-full">
+                            <Button variant="outline" size="sm" className="w-full"
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(image);
+                                  const blob = await response.blob();
+                                  const url = window.URL.createObjectURL(blob);
+                                  const link = document.createElement('a');
+                                  link.href = url;
+                                  link.download = `post-imagem-${index + 1}-${selectedContent.title.replace(/\s+/g, '-').toLowerCase()}.jpg`;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  window.URL.revokeObjectURL(url);
+                                  toast({
+                                    title: "Download iniciado",
+                                    description: "A imagem está sendo baixada para sua pasta de downloads."
+                                  });
+                                } catch (error) {
+                                  toast({
+                                    title: "Erro no download",
+                                    description: "Não foi possível baixar a imagem. Tente novamente.",
+                                    variant: "destructive"
+                                  });
+                                }
+                              }}
+                            >
                               <Download className="h-4 w-4 mr-2" />
                               Baixar Imagem
                             </Button>
