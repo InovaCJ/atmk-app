@@ -42,30 +42,25 @@ const managementItems = [
 ];
 
 export function AppSidebar() {
-  const { open } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
-  const collapsed = !open;
 
-  const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-primary text-primary-foreground font-medium" : "hover:bg-accent";
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
+    <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-4 py-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Sparkles className="h-4 w-4" />
           </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                ATMK
-              </h1>
-              <p className="text-xs text-muted-foreground">ContentOps AI</p>
-            </div>
-          )}
+          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              ATMK
+            </h1>
+            <p className="text-xs text-muted-foreground">ContentOps AI</p>
+          </div>
         </div>
         <SidebarTrigger className="ml-auto mr-4" />
       </SidebarHeader>
@@ -77,10 +72,10 @@ export function AppSidebar() {
             <SidebarMenu>
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
+                  <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                    <NavLink to={item.url} end>
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -95,10 +90,10 @@ export function AppSidebar() {
             <SidebarMenu>
               {managementItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavCls}>
+                  <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                    <NavLink to={item.url}>
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -108,23 +103,22 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-4">
-        {!collapsed ? (
-          <div className="space-y-2">
-            <Button variant="premium" className="w-full justify-start">
-              <Star className="h-4 w-4 mr-2" />
-              Upgrade Pro
-            </Button>
-            <div className="text-xs text-muted-foreground">
-              <p>Plano Gratuito</p>
-              <p>2/10 conteúdos</p>
-            </div>
+      <SidebarFooter className="border-t border-sidebar-border">
+        <div className="space-y-2 group-data-[collapsible=icon]:hidden">
+          <Button variant="premium" className="w-full justify-start">
+            <Star className="h-4 w-4 mr-2" />
+            Upgrade Pro
+          </Button>
+          <div className="text-xs text-muted-foreground px-2">
+            <p>Plano Gratuito</p>
+            <p>2/10 conteúdos</p>
           </div>
-        ) : (
+        </div>
+        <div className="hidden group-data-[collapsible=icon]:block">
           <Button variant="premium" size="icon">
             <Star className="h-4 w-4" />
           </Button>
-        )}
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
