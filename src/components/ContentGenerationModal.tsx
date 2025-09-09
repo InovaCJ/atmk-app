@@ -28,6 +28,7 @@ interface ContentGenerationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (config: GenerationConfig) => void;
+  preselectedOpportunity?: string;
 }
 
 interface GenerationConfig {
@@ -115,17 +116,17 @@ const contentFormats = [
   }
 ];
 
-export function ContentGenerationModal({ open, onOpenChange, onConfirm }: ContentGenerationModalProps) {
-  const [step, setStep] = useState(1);
-  const [selectedOpportunity, setSelectedOpportunity] = useState("");
+export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselectedOpportunity }: ContentGenerationModalProps) {
+  const [step, setStep] = useState(preselectedOpportunity ? 2 : 1);
+  const [selectedOpportunity, setSelectedOpportunity] = useState(preselectedOpportunity || "");
   const [selectedContentType, setSelectedContentType] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("");
   
   const { companies, loading } = useCompanies();
 
   const resetModal = () => {
-    setStep(1);
-    setSelectedOpportunity("");
+    setStep(preselectedOpportunity ? 2 : 1);
+    setSelectedOpportunity(preselectedOpportunity || "");
     setSelectedContentType("");
     setSelectedCompany("");
   };

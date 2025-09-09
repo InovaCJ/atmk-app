@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 export default function Dashboard() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | undefined>();
 
   // Mock data para trends/oportunidades de conteúdo
   const opportunities = [
@@ -92,15 +93,16 @@ export default function Dashboard() {
       // Redirect to settings/onboarding
       window.location.href = "/onboarding";
     } else {
-      // Open generation modal
+      // Open generation modal with preselected opportunity
+      setSelectedOpportunityId(opportunityId.toString());
       setIsModalOpen(true);
     }
   };
 
   const handleGenerationConfirm = async (config: any) => {
     try {
-      const { generateContentWithAI } = await import('@/utils/contentGeneration');
-      await generateContentWithAI(config);
+      // Navigate to generate page to show loading screen
+      window.location.href = `/generate?config=${encodeURIComponent(JSON.stringify(config))}`;
     } catch (error) {
       console.error('Error generating content:', error);
     }
@@ -203,6 +205,7 @@ export default function Dashboard() {
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         onConfirm={handleGenerationConfirm}
+        preselectedOpportunity={selectedOpportunityId}
       />
     </div>
   );

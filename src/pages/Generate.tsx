@@ -14,13 +14,25 @@ export default function Generate() {
   const location = useLocation();
   const { toast } = useToast();
 
-  // Auto-start generation if coming from onboarding
+  // Auto-start generation if coming from onboarding or with config from dashboard
   useEffect(() => {
     const fromOnboarding = location.state?.fromOnboarding;
     if (fromOnboarding) {
       setIsModalOpen(true);
     }
-  }, [location.state]);
+    
+    // Check if coming with config from dashboard
+    const urlParams = new URLSearchParams(location.search);
+    const configParam = urlParams.get('config');
+    if (configParam) {
+      try {
+        const config = JSON.parse(decodeURIComponent(configParam));
+        handleStartGeneration(config);
+      } catch (error) {
+        console.error('Error parsing config:', error);
+      }
+    }
+  }, [location.state, location.search]);
 
   const handleStartGeneration = async (config?: any) => {
     // Always show loading screen for generation
