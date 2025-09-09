@@ -239,14 +239,21 @@ export default function Settings() {
   };
 
   const openDeleteDialog = (id: string) => {
+    console.log('openDeleteDialog called with id:', id);
     setCompanyToDelete(id);
     setShowDeleteDialog(true);
+    console.log('showDeleteDialog set to true, companyToDelete set to:', id);
   };
 
   const confirmDeleteCompany = () => {
+    console.log('confirmDeleteCompany called');
+    console.log('companyToDelete:', companyToDelete);
+    console.log('companies before deletion:', companies);
+    
     if (!companyToDelete) return;
 
     if (companies.length <= 1) {
+      console.log('Cannot delete - only one company left');
       toast({
         title: "Não é possível remover",
         description: "Você deve ter pelo menos uma empresa cadastrada.",
@@ -258,6 +265,7 @@ export default function Settings() {
     }
 
     const updatedCompanies = companies.filter(c => c.id !== companyToDelete);
+    console.log('companies after filter:', updatedCompanies);
     setCompanies(updatedCompanies);
     localStorage.setItem('userCompanies', JSON.stringify(updatedCompanies));
     
@@ -276,6 +284,8 @@ export default function Settings() {
   };
 
   const removeCompany = (id: string) => {
+    console.log('removeCompany called with id:', id);
+    console.log('companies.length:', companies.length);
     openDeleteDialog(id);
   };
 
@@ -540,7 +550,10 @@ export default function Settings() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeCompany(company.id)}
+                        onClick={() => {
+                          console.log('Delete button clicked for company:', company.id);
+                          removeCompany(company.id);
+                        }}
                         disabled={companies.length <= 1}
                       >
                         <Trash2 className="h-4 w-4" />
