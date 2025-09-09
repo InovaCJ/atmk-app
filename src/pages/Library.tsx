@@ -416,20 +416,31 @@ Slide 1: Título do webinar
                       />
                     </div>
 
-                    <div className="mt-4">
-                      <label className="text-sm font-medium">Imagem de Capa Sugerida</label>
-                      <div className="flex items-center gap-2 mt-2">
-                        <img 
-                          src={selectedContent.coverImage} 
-                          alt="Capa sugerida" 
-                          className="w-16 h-16 object-cover rounded" 
-                        />
-                        <Button variant="outline" size="sm">
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Ver no Unsplash
-                        </Button>
+                      <div className="mt-4">
+                        <label className="text-sm font-medium">Imagem de Capa Sugerida</label>
+                        <div className="flex items-center gap-2 mt-2">
+                          <img 
+                            src={selectedContent.coverImage} 
+                            alt="Capa sugerida" 
+                            className="w-16 h-16 object-cover rounded" 
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = selectedContent.coverImage;
+                              link.download = `capa-${selectedContent.slug || selectedContent.title.replace(/\s+/g, '-').toLowerCase()}.jpg`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Baixar Imagem
+                          </Button>
+                        </div>
                       </div>
-                    </div>
                   </div>
                 )}
 
