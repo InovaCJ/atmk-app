@@ -23,7 +23,7 @@ import { toast } from "@/hooks/use-toast";
 
 export default function Library() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("todos");
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState("");
 
@@ -35,7 +35,7 @@ export default function Library() {
       title: "Black Friday 2024: 10 Estratégias Infalíveis para E-commerce",
       description: "Guia completo com estratégias testadas para maximizar vendas na Black Friday",
       createdAt: "2024-01-15",
-      status: "published",
+      status: "publicado",
       category: "Marketing Digital",
       slug: "black-friday-2024-estrategias-ecommerce",
       coverImage: "https://images.unsplash.com/photo-1607083206968-13611e3d76db?w=400&h=200&fit=crop",
@@ -54,10 +54,10 @@ A Black Friday representa uma das maiores oportunidades do ano para e-commerces.
     {
       id: 2,
       type: "social",
-      title: "Carousel: IA no E-commerce",
+      title: "Carrossel: IA no E-commerce",
       description: "5 slides sobre como a IA está transformando o varejo online",
       createdAt: "2024-01-14",
-      status: "draft",
+      status: "rascunho",
       category: "Tecnologia",
       images: [
         "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop",
@@ -76,7 +76,7 @@ A Black Friday representa uma das maiores oportunidades do ano para e-commerces.
       title: "Newsletter: Tendências Marketing 2025",
       description: "E-mail sobre as principais tendências para o próximo ano",
       createdAt: "2024-01-13",
-      status: "scheduled",
+      status: "agendado",
       category: "Tendências",
       subject: "🚀 As 7 Tendências de Marketing que Vão Dominar 2025",
       preheader: "Fique à frente da concorrência com essas previsões exclusivas",
@@ -94,7 +94,7 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
   const filteredContents = contents.filter(content => {
     const matchesSearch = content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          content.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === "all" || content.type === activeTab;
+    const matchesTab = activeTab === "todos" || content.type === activeTab;
     return matchesSearch && matchesTab;
   });
 
@@ -118,10 +118,19 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "published": return "bg-green-100 text-green-800";
-      case "draft": return "bg-yellow-100 text-yellow-800";
-      case "scheduled": return "bg-blue-100 text-blue-800";
+      case "publicado": return "bg-green-100 text-green-800";
+      case "rascunho": return "bg-yellow-100 text-yellow-800";
+      case "agendado": return "bg-blue-100 text-blue-800";
       default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "publicado": return "Publicado";
+      case "rascunho": return "Rascunho";
+      case "agendado": return "Agendado";
+      default: return status;
     }
   };
 
@@ -187,7 +196,7 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="all">Todos ({contents.length})</TabsTrigger>
+            <TabsTrigger value="todos">Todos ({contents.length})</TabsTrigger>
             <TabsTrigger value="blog">Blog ({contents.filter(c => c.type === 'blog').length})</TabsTrigger>
             <TabsTrigger value="social">Social ({contents.filter(c => c.type === 'social').length})</TabsTrigger>
             <TabsTrigger value="email">E-mail ({contents.filter(c => c.type === 'email').length})</TabsTrigger>
@@ -205,7 +214,7 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
                   {getTypeIcon(content.type)}
                   <Badge variant="outline">{getTypeLabel(content.type)}</Badge>
                   <Badge className={getStatusColor(content.status)}>
-                    {content.status}
+                    {getStatusLabel(content.status)}
                   </Badge>
                 </div>
                 <Dialog>
@@ -301,11 +310,11 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
                             <div className="grid grid-cols-2 gap-4">
                               {content.images?.map((image, index) => (
                                 <div key={index} className="space-y-2">
-                                  <img 
-                                    src={image} 
-                                    alt={`Slide ${index + 1}`} 
-                                    className="w-full aspect-square object-cover rounded-lg" 
-                                  />
+                                   <img 
+                                     src={image} 
+                                     alt={`Imagem ${index + 1}`} 
+                                     className="w-full aspect-square object-cover rounded-lg" 
+                                   />
                                   <div className="flex items-center gap-2">
                                     <Textarea
                                       value={content.captions?.[index] || ""}
@@ -313,13 +322,13 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
                                       className="text-sm"
                                       rows={2}
                                     />
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      onClick={() => handleCopy(content.captions?.[index] || "", "Caption")}
-                                    >
-                                      <Copy className="h-4 w-4" />
-                                    </Button>
+                                     <Button
+                                       variant="outline"
+                                       size="icon"
+                                       onClick={() => handleCopy(content.captions?.[index] || "", "Legenda")}
+                                     >
+                                       <Copy className="h-4 w-4" />
+                                     </Button>
                                   </div>
                                   <Button variant="outline" size="sm" className="w-full">
                                     <Download className="h-4 w-4 mr-2" />
