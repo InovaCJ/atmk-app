@@ -23,6 +23,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { ContentFeedback } from "@/components/ContentFeedback";
+import { ImageCarousel } from "@/components/ImageCarousel";
 
 export default function Library() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -80,14 +81,165 @@ Qual dessas funcionalidades você gostaria de implementar primeiro na sua loja?
 #IA #Ecommerce #InteligenciaArtificial #VendasOnline #MarketingDigital #Tecnologia #Inovacao #Vendas #LojaVirtual #Empreendedorismo`,
       images: [
         "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop",
-        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=400&fit=crop"
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=400&fit=crop"
       ],
       captions: [
         "🤖 A IA está revolucionando o e-commerce! Descubra como implementar na sua loja",
-        "💡 Personalização em tempo real aumenta conversões em até 30%"
+        "💡 Personalização em tempo real aumenta conversões em até 30%",
+        "🎯 Chatbots inteligentes atendem 24h por dia",
+        "📊 Análise preditiva antecipa tendências de vendas",
+        "🔍 Busca visual: encontre produtos apenas com fotos"
       ],
       rating: 5,
       tags: ["IA", "Tecnologia", "Inovação"]
+    },
+    {
+      id: 3,
+      type: "social",
+      title: "Carrossel: Marketing Digital 2025",
+      description: "8 tendências que vão dominar o marketing digital em 2025",
+      createdAt: "2024-01-13",
+      status: "publicado",
+      category: "Marketing Digital",
+      postCaption: `📈 2025 chegando e o marketing digital não para de evoluir!
+
+Prepare-se para as tendências que vão DOMINAR o próximo ano:
+
+🤖 IA Conversacional
+📱 Social Commerce
+🎥 Vídeos Interativos
+🎯 Micro-Influenciadores
+📊 Marketing Preditivo
+🌟 Realidade Aumentada
+💬 Comunidades de Marca
+🔊 Marketing por Voz
+
+Qual dessas tendências você já está implementando?
+
+#MarketingDigital #Tendencias2025 #IA #SocialCommerce #Inovacao #Marketing #Estrategia #DigitalMarketing #Futuro #Negocios`,
+      images: [
+        "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"
+      ],
+      captions: [
+        "🤖 IA Conversacional: chatbots mais humanos",
+        "📱 Social Commerce: compre sem sair das redes",
+        "🎥 Vídeos Interativos: engajamento máximo",
+        "🎯 Micro-Influenciadores: autenticidade em foco",
+        "📊 Marketing Preditivo: antecipe o futuro",
+        "🌟 Realidade Aumentada: experiências imersivas",
+        "💬 Comunidades de Marca: relacionamento duradouro",
+        "🔊 Marketing por Voz: otimização para assistentes"
+      ],
+      rating: 5,
+      tags: ["Marketing Digital", "Tendências", "2025"]
+    },
+    {
+      id: 4,
+      type: "social",
+      title: "Carrossel: E-commerce Lucrativo",
+      description: "6 estratégias para aumentar a lucratividade do seu e-commerce",
+      createdAt: "2024-01-12",
+      status: "agendado",
+      category: "E-commerce",
+      postCaption: `💰 Quer TRIPLICAR a lucratividade do seu e-commerce?
+
+Essas 6 estratégias podem ser o divisor de águas do seu negócio:
+
+🎯 Segmentação Inteligente
+📈 Upsell e Cross-sell
+🚀 Funil de Conversão
+💳 Checkout Otimizado
+📊 Análise de Dados
+🎁 Programa de Fidelidade
+
+Qual você vai implementar HOJE?
+
+Salve este post e compartilhe com quem também quer vender mais!
+
+#Ecommerce #VendasOnline #Lucratividade #Marketing #Vendas #Negocios #Empreendedorismo #LojaVirtual #Conversao #Fidelizacao`,
+      images: [
+        "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop"
+      ],
+      captions: [
+        "🎯 Segmente seu público para ofertas certeiras",
+        "📈 Upsell: venda produtos complementares",
+        "🚀 Otimize cada etapa do funil",
+        "💳 Checkout simples = mais conversões",
+        "📊 Dados orientam decisões inteligentes",
+        "🎁 Fidelidade gera vendas recorrentes"
+      ],
+      rating: 4,
+      tags: ["E-commerce", "Vendas", "Lucratividade"]
+    },
+    {
+      id: 5,
+      type: "social",
+      title: "Carrossel: Instagram Stories",
+      description: "10 tipos de stories que geram mais engajamento",
+      createdAt: "2024-01-11",
+      status: "rascunho",
+      category: "Redes Sociais",
+      postCaption: `📱 Seus Stories não estão convertendo?
+
+Estes 10 tipos de conteúdo vão TRIPLICAR seu engajamento:
+
+❓ Enquetes Interativas
+📊 Quiz e Perguntas
+🎁 Bastidores Exclusivos
+💡 Dicas Rápidas
+🎯 Call-to-Action
+📈 Antes e Depois
+🤝 Depoimentos
+🎪 Challenges
+📝 Tutoriais
+🔥 Promoções Exclusivas
+
+Qual você vai testar primeiro?
+
+Salve este carrossel e marque aquele amigo que precisa ver!
+
+#InstagramStories #SocialMedia #Engajamento #Instagram #MarketingDigital #RedesSociais #Conteudo #Stories #Estrategia #DigitalMarketing`,
+      images: [
+        "https://images.unsplash.com/photo-1611262588024-d12430b98920?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=400&fit=crop"
+      ],
+      captions: [
+        "❓ Enquetes: envolva sua audiência",
+        "📊 Quiz: teste o conhecimento",
+        "🎁 Bastidores: mostre o que não veem",
+        "💡 Dicas: agregue valor rapidamente",
+        "🎯 CTA: direcione para ação",
+        "📈 Antes/Depois: prove resultados",
+        "🤝 Depoimentos: construa credibilidade",
+        "🎪 Challenges: crie movimento viral",
+        "📝 Tutoriais: ensine passo a passo",
+        "🔥 Promoções: gere urgência"
+      ],
+      rating: 5,
+      tags: ["Instagram", "Stories", "Engajamento"]
     },
     {
       id: 3,
@@ -498,61 +650,65 @@ Slide 1: Título do webinar
                     
                     <div className="space-y-4">
                       <label className="text-sm font-medium">Imagens do Carrossel</label>
-                      <div className="grid grid-cols-2 gap-4">
-                        {selectedContent.images?.map((image: string, index: number) => (
-                          <div key={index} className="space-y-2">
-                            <div className="flex items-start gap-2">
-                              <Textarea
-                                value={selectedContent.captions?.[index] || ""}
-                                readOnly
-                                className="text-sm flex-1"
-                                rows={2}
+                      {selectedContent.images && selectedContent.images.length > 4 ? (
+                        <ImageCarousel images={selectedContent.images} captions={selectedContent.captions} title={selectedContent.title} />
+                      ) : (
+                        <div className="grid grid-cols-2 gap-4">
+                          {selectedContent.images?.map((image: string, index: number) => (
+                            <div key={index} className="space-y-2">
+                              <div className="flex items-start gap-2">
+                                <Textarea
+                                  value={selectedContent.captions?.[index] || ""}
+                                  readOnly
+                                  className="text-sm flex-1"
+                                  rows={2}
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleCopy(selectedContent.captions?.[index] || "", "Legenda")}
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <img 
+                                src={image} 
+                                alt={`Imagem ${index + 1}`} 
+                                className="w-full aspect-square object-cover rounded-lg" 
                               />
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => handleCopy(selectedContent.captions?.[index] || "", "Legenda")}
+                              <Button variant="outline" size="sm" className="w-full"
+                                onClick={async () => {
+                                  try {
+                                    const response = await fetch(image);
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = `post-imagem-${index + 1}-${selectedContent.title.replace(/\s+/g, '-').toLowerCase()}.jpg`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    window.URL.revokeObjectURL(url);
+                                    toast({
+                                      title: "Download iniciado",
+                                      description: "A imagem está sendo baixada para sua pasta de downloads."
+                                    });
+                                  } catch (error) {
+                                    toast({
+                                      title: "Erro no download",
+                                      description: "Não foi possível baixar a imagem. Tente novamente.",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }}
                               >
-                                <Copy className="h-4 w-4" />
+                                <Download className="h-4 w-4 mr-2" />
+                                Baixar Imagem
                               </Button>
                             </div>
-                            <img 
-                              src={image} 
-                              alt={`Imagem ${index + 1}`} 
-                              className="w-full aspect-square object-cover rounded-lg" 
-                            />
-                            <Button variant="outline" size="sm" className="w-full"
-                              onClick={async () => {
-                                try {
-                                  const response = await fetch(image);
-                                  const blob = await response.blob();
-                                  const url = window.URL.createObjectURL(blob);
-                                  const link = document.createElement('a');
-                                  link.href = url;
-                                  link.download = `post-imagem-${index + 1}-${selectedContent.title.replace(/\s+/g, '-').toLowerCase()}.jpg`;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                  window.URL.revokeObjectURL(url);
-                                  toast({
-                                    title: "Download iniciado",
-                                    description: "A imagem está sendo baixada para sua pasta de downloads."
-                                  });
-                                } catch (error) {
-                                  toast({
-                                    title: "Erro no download",
-                                    description: "Não foi possível baixar a imagem. Tente novamente.",
-                                    variant: "destructive"
-                                  });
-                                }
-                              }}
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Baixar Imagem
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
