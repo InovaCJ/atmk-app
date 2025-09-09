@@ -71,7 +71,7 @@ export function Layout() {
         <AppSidebar />
         <main className="flex-1">
           <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex h-16 items-center justify-between px-4 lg:px-6">
+            <div className="flex h-20 items-center justify-between px-4 lg:px-6">
               <div className="flex items-center gap-4">
                 <SidebarTrigger />
                 <div>
