@@ -25,15 +25,11 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Auth Route */}
+            {/* Auth Route - Only for existing users */}
             <Route path="/auth" element={<Auth />} />
             
-            {/* Onboarding Routes - Protected */}
-            <Route path="/onboarding" element={
-              <ProtectedRoute>
-                <OnboardingFlow />
-              </ProtectedRoute>
-            } />
+            {/* Onboarding Routes - For new users (includes signup) */}
+            <Route path="/onboarding" element={<OnboardingFlow />} />
             
             {/* Main App Routes - Protected */}
             <Route path="/" element={

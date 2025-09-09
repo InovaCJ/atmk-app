@@ -40,16 +40,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         // Handle navigation after auth state changes
         if (session?.user) {
-          // User is logged in, redirect from auth page to main app
+          // User is logged in
           const currentPath = window.location.pathname;
+          
+          // If user is on auth page, redirect to onboarding for new users or dashboard for existing users
           if (currentPath === '/auth') {
-            navigate('/');
+            // Check if user needs onboarding (you can customize this logic)
+            navigate('/onboarding');
           }
         } else {
-          // User is logged out, redirect to auth if not already there
+          // User is logged out
           const currentPath = window.location.pathname;
-          if (currentPath !== '/auth' && currentPath !== '/') {
-            navigate('/auth');
+          
+          // Redirect to onboarding (which includes signup) for new users
+          if (currentPath !== '/onboarding' && currentPath !== '/auth') {
+            navigate('/onboarding');
           }
         }
         
@@ -63,6 +68,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // If no session, redirect to onboarding
+        if (!session) {
+          const currentPath = window.location.pathname;
+          if (currentPath !== '/onboarding' && currentPath !== '/auth') {
+            navigate('/onboarding');
+          }
+        }
       } catch (error) {
         console.error('Error getting initial session:', error);
       } finally {

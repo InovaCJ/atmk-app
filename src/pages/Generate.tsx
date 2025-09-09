@@ -1,18 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, FileSearch } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ArrowLeft, FileSearch, Sparkles, Wand2 } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Generate() {
-  const [isGenerating, setIsGenerating] = useState(false); // Mudei para false por padrão para demonstrar o estado
+  const [isGenerating, setIsGenerating] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
+
+  // Auto-start generation if coming from onboarding
+  useEffect(() => {
+    const fromOnboarding = location.state?.fromOnboarding;
+    if (fromOnboarding) {
+      handleStartGeneration();
+    }
+  }, [location.state]);
+
+  const handleStartGeneration = () => {
+    setIsGenerating(true);
+    toast({
+      title: "Gerando conteúdo personalizado!",
+      description: "Estamos criando seus primeiros conteúdos baseados nas informações fornecidas...",
+    });
+  };
 
   const handleGenerationComplete = () => {
     setIsGenerating(false);
+    toast({
+      title: "Conteúdo gerado com sucesso!",
+      description: "Seus conteúdos estão prontos na biblioteca.",
+    });
     // Redirect to library page
-    window.location.href = '/library';
+    navigate('/library');
   };
 
   if (isGenerating) {
@@ -22,26 +45,55 @@ export default function Generate() {
   // Estado quando não há conteúdo sendo gerado
   return (
     <div className="flex-1 flex items-center justify-center p-6">
-      <Card className="w-full max-w-md text-center">
-        <CardHeader className="pb-4">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-              <FileSearch className="h-8 w-8 text-muted-foreground" />
+      <Card className="w-full max-w-2xl text-center">
+        <CardHeader className="pb-6">
+          <div className="flex justify-center mb-6">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-purple-600/10 border border-primary/20">
+              <Wand2 className="h-10 w-10 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-xl">Nenhum conteúdo sendo gerado</CardTitle>
-          <CardDescription>
-            Não há geração de conteúdo ativa no momento. Retorne ao dashboard para iniciar uma nova geração.
+          <CardTitle className="text-2xl mb-2">Geração de Conteúdo</CardTitle>
+          <CardDescription className="text-base">
+            Crie conteúdos personalizados usando inteligência artificial baseada no seu perfil e empresa
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button 
-            onClick={() => navigate('/')}
-            className="w-full"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar ao Dashboard
-          </Button>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="p-4 bg-accent/50 rounded-lg">
+              <Sparkles className="h-5 w-5 text-primary mx-auto mb-2" />
+              <p className="font-medium">IA Personalizada</p>
+              <p className="text-muted-foreground text-xs">Baseada no seu perfil</p>
+            </div>
+            <div className="p-4 bg-accent/50 rounded-lg">
+              <FileSearch className="h-5 w-5 text-primary mx-auto mb-2" />
+              <p className="font-medium">Tendências</p>
+              <p className="text-muted-foreground text-xs">Análise de mercado</p>
+            </div>
+            <div className="p-4 bg-accent/50 rounded-lg">
+              <Wand2 className="h-5 w-5 text-primary mx-auto mb-2" />
+              <p className="font-medium">Multi-formato</p>
+              <p className="text-muted-foreground text-xs">Posts, artigos e mais</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button 
+              onClick={handleStartGeneration}
+              size="lg"
+              className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+            >
+              <Wand2 className="h-5 w-5 mr-2" />
+              Gerar Conteúdo Agora
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/')}
+              size="lg"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Voltar ao Dashboard
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
