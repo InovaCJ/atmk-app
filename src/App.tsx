@@ -7,6 +7,7 @@ import { Layout } from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
 import Generate from "./pages/Generate";
+import Knowledge from "./pages/Knowledge";
 import { OnboardingFlow } from "./pages/onboarding/OnboardingFlow";
 import NotFound from "./pages/NotFound";
 
@@ -27,7 +28,7 @@ const App = () => (
             <Route index element={<Dashboard />} />
             <Route path="library" element={<Library />} />
             <Route path="generate" element={<Generate />} />
-            <Route path="knowledge" element={<div className="p-6">Base de Conhecimento - Em breve</div>} />
+            <Route path="knowledge" element={<Knowledge />} />
             <Route path="settings" element={<div className="p-6">Configurações - Em breve</div>} />
           </Route>
           
