@@ -17,16 +17,19 @@ import {
   Calendar,
   Eye,
   ExternalLink,
-  Mic
+  Mic,
+  Edit2
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { ContentFeedback } from "@/components/ContentFeedback";
 
 export default function Library() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("todos");
-  const [rating, setRating] = useState(0);
-  const [feedback, setFeedback] = useState("");
+  const [selectedContent, setSelectedContent] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [contentFeedbacks, setContentFeedbacks] = useState<{[key: number]: {rating: number, feedback: string}}>({});
 
   // Mock data para conteúdos gerados
   const contents = [
@@ -202,21 +205,47 @@ Slide 1: Título do webinar
   };
 
   const handleRating = (contentId: number, newRating: number) => {
-    setRating(newRating);
+    setContentFeedbacks(prev => ({
+      ...prev,
+      [contentId]: {
+        ...prev[contentId],
+        rating: newRating
+      }
+    }));
     toast({
       title: "Avaliação salva",
       description: "Sua avaliação foi registrada com sucesso",
     });
   };
 
-  const handleFeedback = (contentId: number) => {
-    if (feedback.trim()) {
+  const handleFeedback = (contentId: number, feedbackText: string) => {
+    if (feedbackText.trim()) {
+      setContentFeedbacks(prev => ({
+        ...prev,
+        [contentId]: {
+          ...prev[contentId],
+          feedback: feedbackText,
+          rating: prev[contentId]?.rating || 0
+        }
+      }));
       toast({
-        title: "Feedback enviado",
+        title: "Feedback salvo",
         description: "Seu feedback foi registrado e será usado para melhorar futuras gerações",
       });
-      setFeedback("");
     }
+  };
+
+  const openContentDialog = (content: any) => {
+    setSelectedContent(content);
+    setIsDialogOpen(true);
+  };
+
+  const getCurrentRating = (contentId: number) => {
+    return contentFeedbacks[contentId]?.rating || contents.find(c => c.id === contentId)?.rating || 0;
+  };
+
+  const getCurrentFeedback = (contentId: number) => {
+    return contentFeedbacks[contentId]?.feedback || "";
   };
 
   return (
@@ -267,7 +296,11 @@ Slide 1: Título do webinar
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredContents.map((content) => (
-          <Card key={content.id} className="bg-gradient-to-br from-card to-card/50 border border-border/50 shadow-card hover:shadow-elegant hover:border-border transition-all duration-300">
+          <Card 
+            key={content.id} 
+            className="bg-gradient-to-br from-card to-card/50 border border-border/50 shadow-card hover:shadow-elegant hover:border-border transition-all duration-300 cursor-pointer"
+            onClick={() => openContentDialog(content)}
+          >
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
@@ -277,270 +310,16 @@ Slide 1: Título do webinar
                     {getStatusLabel(content.status)}
                   </Badge>
                 </div>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2">
-                        {getTypeIcon(content.type)}
-                        {content.title}
-                      </DialogTitle>
-                      <DialogDescription>
-                        {content.description}
-                      </DialogDescription>
-                    </DialogHeader>
-
-                    {/* Content Details */}
-                    <div className="space-y-6">
-                      {content.type === "blog" && (
-                        <div>
-                          <div className="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                              <label className="text-sm font-medium">Título</label>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Input value={content.title} readOnly />
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleCopy(content.title, "Título")}
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Slug</label>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Input value={content.slug} readOnly />
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleCopy(content.slug, "Slug")}
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-sm font-medium">Conteúdo do Artigo</label>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleCopy(content.content || "", "Conteúdo")}
-                              >
-                                <Copy className="h-4 w-4 mr-2" />
-                                Copiar Artigo
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={content.content}
-                              readOnly
-                              className="min-h-[200px] font-mono text-sm"
-                            />
-                          </div>
-
-                          <div className="mt-4">
-                            <label className="text-sm font-medium">Imagem de Capa Sugerida</label>
-                            <div className="flex items-center gap-2 mt-2">
-                              <img 
-                                src={content.coverImage} 
-                                alt="Capa sugerida" 
-                                className="w-16 h-16 object-cover rounded" 
-                              />
-                              <Button variant="outline" size="sm">
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                Ver no Unsplash
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {content.type === "social" && (
-                        <div>
-                          <div className="space-y-4">
-                            <label className="text-sm font-medium">Imagens Geradas</label>
-                            <div className="grid grid-cols-2 gap-4">
-                              {content.images?.map((image, index) => (
-                                <div key={index} className="space-y-2">
-                                   <img 
-                                     src={image} 
-                                     alt={`Imagem ${index + 1}`} 
-                                     className="w-full aspect-square object-cover rounded-lg" 
-                                   />
-                                  <div className="flex items-center gap-2">
-                                    <Textarea
-                                      value={content.captions?.[index] || ""}
-                                      readOnly
-                                      className="text-sm"
-                                      rows={2}
-                                    />
-                                     <Button
-                                       variant="outline"
-                                       size="icon"
-                                       onClick={() => handleCopy(content.captions?.[index] || "", "Legenda")}
-                                     >
-                                       <Copy className="h-4 w-4" />
-                                     </Button>
-                                  </div>
-                                  <Button variant="outline" size="sm" className="w-full">
-                                    <Download className="h-4 w-4 mr-2" />
-                                    Baixar Imagem
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {content.type === "email" && (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-sm font-medium">Assunto</label>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Input value={content.subject} readOnly />
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleCopy(content.subject || "", "Assunto")}
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Preheader</label>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Input value={content.preheader} readOnly />
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleCopy(content.preheader || "", "Preheader")}
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-sm font-medium">Corpo do E-mail</label>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleCopy(content.content || "", "E-mail")}
-                              >
-                                <Copy className="h-4 w-4 mr-2" />
-                                Copiar E-mail
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={content.content}
-                              readOnly
-                              className="min-h-[200px] font-mono text-sm"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {content.type === "roteiro" && (
-                        <div className="space-y-4">
-                          <div>
-                            <label className="text-sm font-medium">Categoria</label>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Input value={content.category} readOnly />
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => handleCopy(content.category || "", "Categoria")}
-                              >
-                                <Copy className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-sm font-medium">Roteiro</label>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleCopy(content.content || "", "Roteiro")}
-                              >
-                                <Copy className="h-4 w-4 mr-2" />
-                                Copiar Roteiro
-                              </Button>
-                            </div>
-                            <Textarea
-                              value={content.content}
-                              readOnly
-                              className="min-h-[200px] font-mono text-sm"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Rating and Feedback */}
-                      <div className="border-t pt-6 space-y-4">
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">
-                            Avalie este conteúdo (0 = inútil, 5 = muito útil)
-                          </label>
-                          <div className="flex gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Button
-                                key={star}
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleRating(content.id, star)}
-                                className="p-1"
-                              >
-                                <Star 
-                                  className={`h-5 w-5 ${
-                                    star <= (content.rating || rating) 
-                                      ? "fill-yellow-400 text-yellow-400" 
-                                      : "text-gray-300"
-                                  }`} 
-                                />
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">
-                            Feedback para melhorias
-                          </label>
-                          <div className="space-y-2">
-                            <Textarea
-                              placeholder="Descreva melhorias que poderiam ser aplicadas neste conteúdo..."
-                              value={feedback}
-                              onChange={(e) => setFeedback(e.target.value)}
-                              rows={3}
-                            />
-                            <Button 
-                              onClick={() => handleFeedback(content.id)}
-                              disabled={!feedback.trim()}
-                              size="sm"
-                            >
-                              Enviar Feedback
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openContentDialog(content);
+                  }}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
               </div>
               <CardTitle className="text-lg">{content.title}</CardTitle>
               <CardDescription>{content.description}</CardDescription>
@@ -554,7 +333,7 @@ Slide 1: Título do webinar
                   </div>
                   <div className="flex items-center gap-1">
                     <Star className="h-3 w-3" />
-                    {content.rating}/5
+                    {getCurrentRating(content.id)}/5
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1">
@@ -569,6 +348,231 @@ Slide 1: Título do webinar
           </Card>
         ))}
       </div>
+
+      {/* Content Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+          {selectedContent && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {getTypeIcon(selectedContent.type)}
+                  {selectedContent.title}
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedContent.description}
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* Content Details */}
+              <div className="space-y-6">
+                {selectedContent.type === "blog" && (
+                  <div>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="text-sm font-medium">Título</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input value={selectedContent.title} readOnly />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleCopy(selectedContent.title, "Título")}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Slug</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input value={selectedContent.slug} readOnly />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleCopy(selectedContent.slug, "Slug")}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Conteúdo do Artigo</label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCopy(selectedContent.content || "", "Conteúdo")}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copiar Artigo
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={selectedContent.content}
+                        readOnly
+                        className="min-h-[200px] font-mono text-sm"
+                      />
+                    </div>
+
+                    <div className="mt-4">
+                      <label className="text-sm font-medium">Imagem de Capa Sugerida</label>
+                      <div className="flex items-center gap-2 mt-2">
+                        <img 
+                          src={selectedContent.coverImage} 
+                          alt="Capa sugerida" 
+                          className="w-16 h-16 object-cover rounded" 
+                        />
+                        <Button variant="outline" size="sm">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Ver no Unsplash
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedContent.type === "social" && (
+                  <div>
+                    <div className="space-y-4">
+                      <label className="text-sm font-medium">Imagens Geradas</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        {selectedContent.images?.map((image: string, index: number) => (
+                          <div key={index} className="space-y-2">
+                             <img 
+                               src={image} 
+                               alt={`Imagem ${index + 1}`} 
+                               className="w-full aspect-square object-cover rounded-lg" 
+                             />
+                            <div className="flex items-center gap-2">
+                              <Textarea
+                                value={selectedContent.captions?.[index] || ""}
+                                readOnly
+                                className="text-sm"
+                                rows={2}
+                              />
+                               <Button
+                                 variant="outline"
+                                 size="icon"
+                                 onClick={() => handleCopy(selectedContent.captions?.[index] || "", "Legenda")}
+                               >
+                                 <Copy className="h-4 w-4" />
+                               </Button>
+                            </div>
+                            <Button variant="outline" size="sm" className="w-full">
+                              <Download className="h-4 w-4 mr-2" />
+                              Baixar Imagem
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedContent.type === "email" && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Assunto</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input value={selectedContent.subject} readOnly />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleCopy(selectedContent.subject || "", "Assunto")}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Preheader</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input value={selectedContent.preheader} readOnly />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleCopy(selectedContent.preheader || "", "Preheader")}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Corpo do E-mail</label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCopy(selectedContent.content || "", "E-mail")}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copiar E-mail
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={selectedContent.content}
+                        readOnly
+                        className="min-h-[200px] font-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {selectedContent.type === "roteiro" && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Categoria</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input value={selectedContent.category} readOnly />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleCopy(selectedContent.category || "", "Categoria")}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Roteiro</label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCopy(selectedContent.content || "", "Roteiro")}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copiar Roteiro
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={selectedContent.content}
+                        readOnly
+                        className="min-h-[200px] font-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Rating and Feedback */}
+                <ContentFeedback 
+                  content={selectedContent}
+                  currentRating={getCurrentRating(selectedContent.id)}
+                  currentFeedback={getCurrentFeedback(selectedContent.id)}
+                  onRating={handleRating}
+                  onFeedback={handleFeedback}
+                />
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {filteredContents.length === 0 && (
         <div className="text-center py-12">
