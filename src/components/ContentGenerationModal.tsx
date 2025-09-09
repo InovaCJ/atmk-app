@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -20,9 +21,13 @@ import {
   Newspaper,
   Calendar,
   Building,
-  Sparkles
+  Sparkles,
+  AlertTriangle,
+  Settings
 } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
+import { useNavigate } from "react-router-dom";
 
 interface ContentGenerationModalProps {
   open: boolean;
@@ -123,6 +128,8 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
   const [selectedCompany, setSelectedCompany] = useState("");
   
   const { companies, loading } = useCompanies();
+  const navigate = useNavigate();
+  const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedCompany);
 
   const resetModal = () => {
     setStep(preselectedOpportunity ? 2 : 1);
@@ -168,7 +175,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
     switch (step) {
       case 1: return selectedOpportunity !== "";
       case 2: return selectedContentType !== "";
-      case 3: return selectedCompany !== "";
+      case 3: return selectedCompany !== "" && canGenerateContent;
       default: return false;
     }
   };
@@ -342,10 +349,49 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
                 </SelectContent>
               </Select>
               
-              {selectedCompany && (
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  <h4 className="font-medium mb-2">Base de conhecimento selecionada:</h4>
-                  <div className="text-sm text-muted-foreground">
+              {selectedCompany && !canGenerateContent && (
+                <Alert className="border-amber-200 bg-amber-50">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-800">
+                    <div className="space-y-2">
+                      <p className="font-medium">Base de conhecimento incompleta ({completionPercentage}%)</p>
+                      <p className="text-sm">
+                        É necessário completar pelo menos 50% da base de conhecimento para gerar conteúdos de qualidade.
+                      </p>
+                      {missingFields.length > 0 && (
+                        <details className="mt-2">
+                          <summary className="text-sm cursor-pointer hover:underline">
+                            Ver campos faltantes ({missingFields.length})
+                          </summary>
+                          <ul className="text-xs mt-1 ml-4 list-disc">
+                            {missingFields.slice(0, 8).map((field, index) => (
+                              <li key={index}>{field}</li>
+                            ))}
+                            {missingFields.length > 8 && <li>+ {missingFields.length - 8} outros...</li>}
+                          </ul>
+                        </details>
+                      )}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          onOpenChange(false);
+                          navigate("/knowledge");
+                        }}
+                        className="mt-2"
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Completar Base de Conhecimento
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {selectedCompany && canGenerateContent && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h4 className="font-medium mb-2 text-green-800">✓ Base de conhecimento válida ({completionPercentage}%)</h4>
+                  <div className="text-sm text-green-700">
                     {companies.find(c => c.id === selectedCompany)?.description || 
                      "A IA utilizará as informações de marca, público-alvo, produtos e estratégias desta empresa."}
                   </div>
@@ -381,7 +427,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
               <Button 
                 onClick={handleConfirm}
                 disabled={!canProceed()}
-                className="bg-primary text-primary-foreground"
+                className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 Gerar Conteúdo

@@ -6,6 +6,8 @@ import { ArrowLeft, FileSearch, Sparkles, Wand2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 
 export default function Generate() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -13,6 +15,11 @@ export default function Generate() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { companies } = useCompanies();
+  
+  // Usar primeira empresa para validação ou undefined se não houver
+  const selectedCompanyId = companies.length > 0 ? companies[0].id : undefined;
+  const { canGenerateContent, completionPercentage } = useKnowledgeValidation(selectedCompanyId);
 
   // Auto-start generation if coming from onboarding or with config from dashboard
   useEffect(() => {
@@ -108,11 +115,23 @@ export default function Generate() {
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button 
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  if (!canGenerateContent) {
+                    toast({
+                      title: "Base de conhecimento incompleta",
+                      description: `Complete pelo menos 50% da sua base de conhecimento para gerar conteúdos. Atual: ${completionPercentage}%`,
+                      variant: "destructive"
+                    });
+                    navigate("/knowledge");
+                    return;
+                  }
+                  setIsModalOpen(true);
+                }}
                 size="lg"
                 className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                disabled={!canGenerateContent}
               >
-                <Wand2 className="h-5 w-5 mr-2" />
+                <Sparkles className="h-5 w-5 mr-2" />
                 Gerar Conteúdo Agora
               </Button>
               <Button 

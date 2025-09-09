@@ -23,10 +23,15 @@ import {
   ExternalLink,
   Mic,
   Edit2,
-  Images
+  Images,
+  Sparkles
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
+import { useNavigate } from "react-router-dom";
 import { ContentFeedback } from "@/components/ContentFeedback";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
@@ -39,6 +44,13 @@ const EmptyState = ({ type, title, description, icon }: {
   icon: React.ReactNode;
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { companies } = useCompanies();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Usar primeira empresa para validação ou undefined se não houver
+  const selectedCompanyId = companies.length > 0 ? companies[0].id : undefined;
+  const { canGenerateContent, completionPercentage } = useKnowledgeValidation(selectedCompanyId);
 
   const handleGenerate = async (config: any) => {
     try {
@@ -48,6 +60,19 @@ const EmptyState = ({ type, title, description, icon }: {
     } catch (error) {
       console.error('Error in content generation:', error);
     }
+  };
+
+  const handleGenerateClick = () => {
+    if (!canGenerateContent) {
+      toast({
+        title: "Base de conhecimento incompleta",
+        description: `Complete pelo menos 50% da sua base de conhecimento para gerar conteúdos. Atual: ${completionPercentage}%`,
+        variant: "destructive"
+      });
+      navigate("/knowledge");
+      return;
+    }
+    setIsModalOpen(true);
   };
 
   return (
@@ -60,7 +85,12 @@ const EmptyState = ({ type, title, description, icon }: {
         <p className="text-muted-foreground mb-6 max-w-md">
           {description}
         </p>
-        <Button onClick={() => setIsModalOpen(true)}>
+        <Button 
+          onClick={handleGenerateClick}
+          className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+          disabled={!canGenerateContent}
+        >
+          <Sparkles className="h-4 w-4 mr-2" />
           Gerar Primeiro Conteúdo
         </Button>
       </div>

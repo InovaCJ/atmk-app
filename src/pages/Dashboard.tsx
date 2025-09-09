@@ -15,11 +15,19 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { toast } from "@/hooks/use-toast";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | undefined>();
+  const { companies } = useCompanies();
+  const navigate = useNavigate();
+  
+  // Usar primeira empresa para validação ou undefined se não houver
+  const selectedCompanyId = companies.length > 0 ? companies[0].id : undefined;
+  const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedCompanyId);
 
   // Mock data para trends/oportunidades de conteúdo
   const opportunities = [
@@ -55,7 +63,7 @@ export default function Dashboard() {
   const stats = [
     {
       title: "Conteúdos Gerados",
-      value: hasCompletedOnboarding ? "0" : "-",
+      value: canGenerateContent ? "0" : "-",
       change: "0%",
       icon: FileText
     },
@@ -67,13 +75,13 @@ export default function Dashboard() {
     },
     {
       title: "Taxa de Engajamento",
-      value: hasCompletedOnboarding ? "0%" : "-",
+      value: canGenerateContent ? "0%" : "-",
       change: "0%",
       icon: Share2
     },
     {
       title: "Próximas Publicações",
-      value: hasCompletedOnboarding ? "0" : "-",
+      value: canGenerateContent ? "0" : "-",
       change: "0",
       icon: Calendar
     }
@@ -89,14 +97,19 @@ export default function Dashboard() {
   };
 
   const handleGenerateContent = (opportunityId: number) => {
-    if (!hasCompletedOnboarding) {
-      // Redirect to settings/onboarding
-      window.location.href = "/onboarding";
-    } else {
-      // Open generation modal with preselected opportunity
-      setSelectedOpportunityId(opportunityId.toString());
-      setIsModalOpen(true);
+    if (!canGenerateContent) {
+      toast({
+        title: "Base de conhecimento incompleta",
+        description: `Complete pelo menos 50% da sua base de conhecimento para gerar conteúdos. Atual: ${completionPercentage}%`,
+        variant: "destructive"
+      });
+      navigate("/knowledge");
+      return;
     }
+    
+    // Open generation modal with preselected opportunity
+    setSelectedOpportunityId(opportunityId.toString());
+    setIsModalOpen(true);
   };
 
   const handleGenerationConfirm = async (config: any) => {
@@ -112,18 +125,32 @@ export default function Dashboard() {
     <div className="p-6 space-y-6">
 
       {/* Onboarding Alert */}
-      {!hasCompletedOnboarding && (
+      {!canGenerateContent && (
         <Alert className="border-primary/20 bg-primary/5">
           <Sparkles className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between w-full">
-            <span>
-              Complete seu cadastro para desbloquear a geração de conteúdos personalizados
-            </span>
-            <Button variant="primary" size="sm" asChild>
-              <a href="/onboarding">
-                <Settings className="h-4 w-4 mr-2" />
-                Completar Cadastro
-              </a>
+            <div>
+              <p className="font-medium">Base de conhecimento incompleta ({completionPercentage}%)</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Complete pelo menos 50% para gerar conteúdos personalizados
+              </p>
+              {missingFields.length > 0 && (
+                <details className="mt-2">
+                  <summary className="text-sm cursor-pointer text-primary hover:underline">
+                    Ver campos faltantes ({missingFields.length})
+                  </summary>
+                  <ul className="text-xs text-muted-foreground mt-1 ml-4 list-disc">
+                    {missingFields.slice(0, 5).map((field, index) => (
+                      <li key={index}>{field}</li>
+                    ))}
+                    {missingFields.length > 5 && <li>+ {missingFields.length - 5} outros...</li>}
+                  </ul>
+                </details>
+              )}
+            </div>
+            <Button variant="default" size="sm" onClick={() => navigate("/knowledge")}>
+              <Settings className="h-4 w-4 mr-2" />
+              Completar Base
             </Button>
           </AlertDescription>
         </Alert>
@@ -175,6 +202,7 @@ export default function Dashboard() {
                   <Button 
                     onClick={() => handleGenerateContent(opportunity.id)}
                     className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                    disabled={!canGenerateContent}
                   >
                     <Sparkles className="h-4 w-4 mr-2" />
                     Gerar Conteúdo
