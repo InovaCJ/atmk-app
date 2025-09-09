@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,6 +91,7 @@ export default function Settings() {
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load data from localStorage
   useEffect(() => {
@@ -195,6 +196,48 @@ export default function Settings() {
     setEditCompanyData({ name: "", industry: "", size: "" });
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Verificar se é uma imagem
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Arquivo inválido",
+        description: "Por favor, selecione apenas arquivos de imagem (JPG, PNG, GIF).",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Verificar tamanho do arquivo (máximo 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "O tamanho da imagem deve ser menor que 2MB.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Converter para base64 e atualizar o perfil
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64Image = e.target?.result as string;
+      setUserProfile(prev => ({ ...prev, avatar: base64Image }));
+      
+      toast({
+        title: "Foto atualizada!",
+        description: "Sua foto de perfil foi alterada com sucesso."
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   const openDeleteDialog = (id: string) => {
     setCompanyToDelete(id);
     setShowDeleteDialog(true);
@@ -297,7 +340,14 @@ export default function Settings() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <Button variant="outline" size="sm">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <Button variant="outline" size="sm" onClick={triggerImageUpload}>
                     Alterar Foto
                   </Button>
                   <p className="text-sm text-muted-foreground mt-1">
