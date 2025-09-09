@@ -508,16 +508,64 @@ export default function Library() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleCopy(selectedContent.postCaption || "", "Legenda")}
+                          onClick={() => handleCopy(selectedContent.caption || selectedContent.postCaption || "", "Legenda")}
                         >
                           <Copy className="h-4 w-4 mr-2" />
                           Copiar Legenda
                         </Button>
                       </div>
                       <Textarea
-                        value={selectedContent.postCaption}
+                        value={selectedContent.caption || selectedContent.postCaption || ""}
                         readOnly
                         className="min-h-[200px] font-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {selectedContent.type === "carrossel" && (
+                  <div className="space-y-4">
+                    {selectedContent.images && selectedContent.images.length > 0 && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Imagens do Carrossel</label>
+                        <ImageCarousel 
+                          images={selectedContent.images}
+                          captions={selectedContent.slides?.map((slide: any) => slide.title)}
+                          title={selectedContent.title}
+                        />
+                      </div>
+                    )}
+                    
+                    {selectedContent.slides && selectedContent.slides.length > 0 && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Slides do Carrossel</label>
+                        <div className="space-y-2">
+                          {selectedContent.slides.map((slide: any, index: number) => (
+                            <div key={index} className="border p-3 rounded">
+                              <h4 className="font-medium">{slide.title}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">{slide.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Conteúdo Completo</label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCopy(selectedContent.content || "", "Carrossel")}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copiar Conteúdo
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={selectedContent.content || ""}
+                        readOnly
+                        className="min-h-[100px] font-mono text-sm"
                       />
                     </div>
                   </div>
@@ -542,11 +590,11 @@ export default function Library() {
                     <div>
                       <label className="text-sm font-medium">Preheader</label>
                       <div className="flex items-center gap-2 mt-1">
-                        <Input value={selectedContent.preheader} readOnly />
+                        <Input value={selectedContent.previewText || selectedContent.preheader} readOnly />
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => handleCopy(selectedContent.preheader || "", "Preheader")}
+                          onClick={() => handleCopy(selectedContent.previewText || selectedContent.preheader || "", "Preheader")}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
