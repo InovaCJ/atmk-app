@@ -5,12 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { 
   FileText, 
   Mail, 
@@ -78,7 +78,7 @@ export default function Library() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("todos");
   const [selectedContent, setSelectedContent] = useState<any>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [contentFeedbacks, setContentFeedbacks] = useState<{[key: number]: {rating: number, feedback: string}}>({});
 
   // Conteúdos de exemplo para teste
@@ -314,9 +314,9 @@ export default function Library() {
     }
   };
 
-  const openContentDrawer = (content: any) => {
+  const openContentSheet = (content: any) => {
     setSelectedContent(content);
-    setIsDrawerOpen(true);
+    setIsSheetOpen(true);
   };
 
   const getCurrentRating = (contentId: number) => {
@@ -364,7 +364,7 @@ export default function Library() {
           {filteredContents.length > 0 ? (
             <div className="grid gap-4 mt-8">
               {filteredContents.map((content) => (
-                <Card key={content.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openContentDrawer(content)}>
+                <Card key={content.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openContentSheet(content)}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -418,261 +418,259 @@ export default function Library() {
         </Tabs>
       </div>
 
-      {/* Drawer do conteúdo selecionado */}
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <DrawerContent className="max-h-[80vh]">
-          <div className="mx-auto w-full max-w-4xl p-6">
-            <DrawerHeader>
-              <DrawerTitle className="flex items-center gap-3">
-                {selectedContent && getTypeIcon(selectedContent.type)}
-                {selectedContent?.title}
-              </DrawerTitle>
-              <DrawerDescription>
-                {selectedContent?.description}
-              </DrawerDescription>
-            </DrawerHeader>
+      {/* Sheet lateral do conteúdo selecionado */}
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="right" className="w-[600px] sm:w-[700px] h-full overflow-y-auto">
+          <SheetHeader className="space-y-3 pb-4 border-b">
+            <SheetTitle className="flex items-center gap-3 text-xl">
+              {selectedContent && getTypeIcon(selectedContent.type)}
+              {selectedContent?.title}
+            </SheetTitle>
+            <SheetDescription className="text-base">
+              {selectedContent?.description}
+            </SheetDescription>
+          </SheetHeader>
 
-            <div className="space-y-6 overflow-y-auto max-h-[60vh]">
-              {selectedContent && (
+          <div className="space-y-6 py-6">
+            {selectedContent && (
+              <div className="space-y-4">
+              <div className="flex items-center gap-4 flex-wrap">
+                <Badge variant="outline" className="flex items-center gap-1">
+                  {getTypeIcon(selectedContent.type)}
+                  {getTypeLabel(selectedContent.type, selectedContent.category)}
+                </Badge>
+                <Badge variant="outline">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  {selectedContent.createdAt.toLocaleDateString()}
+                </Badge>
+                <Badge className={getStatusColor(selectedContent.status)}>
+                  {getStatusLabel(selectedContent.status)}
+                </Badge>
+                {selectedContent.tags?.map((tag: string, index: number) => (
+                  <Badge key={index} variant="secondary">{tag}</Badge>
+                ))}
+              </div>
+
+              {selectedContent.type === "blog" && (
                 <div className="space-y-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    {getTypeIcon(selectedContent.type)}
-                    {getTypeLabel(selectedContent.type, selectedContent.category)}
-                  </Badge>
-                  <Badge variant="outline">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    {selectedContent.createdAt.toLocaleDateString()}
-                  </Badge>
-                  <Badge className={getStatusColor(selectedContent.status)}>
-                    {getStatusLabel(selectedContent.status)}
-                  </Badge>
-                  {selectedContent.tags?.map((tag: string, index: number) => (
-                    <Badge key={index} variant="secondary">{tag}</Badge>
-                  ))}
-                </div>
-
-                {selectedContent.type === "blog" && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Slug URL</label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Input value={selectedContent.slug} readOnly />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleCopy(selectedContent.slug || "", "Slug")}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">Conteúdo Completo</label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCopy(selectedContent.content || "", "Artigo")}
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copiar Artigo
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={selectedContent.content}
-                        readOnly
-                        className="min-h-[300px] font-mono text-sm"
-                      />
+                  <div>
+                    <label className="text-sm font-medium">Slug URL</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input value={selectedContent.slug} readOnly />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleCopy(selectedContent.slug || "", "Slug")}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                )}
-
-                {selectedContent.type === "social" && (
-                  <div className="space-y-4">
-                    {selectedContent.images && selectedContent.images.length > 0 && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Imagens do Carrossel</label>
-                        <ImageCarousel 
-                          images={selectedContent.images}
-                          captions={selectedContent.captions}
-                          title={selectedContent.title}
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">Legenda do Post</label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCopy(selectedContent.caption || selectedContent.postCaption || "", "Legenda")}
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copiar Legenda
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={selectedContent.caption || selectedContent.postCaption || ""}
-                        readOnly
-                        className="min-h-[200px] font-mono text-sm"
-                      />
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Conteúdo Completo</label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopy(selectedContent.content || "", "Artigo")}
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar Artigo
+                      </Button>
                     </div>
+                    <Textarea
+                      value={selectedContent.content}
+                      readOnly
+                      className="min-h-[300px] font-mono text-sm"
+                    />
                   </div>
-                )}
-
-                {selectedContent.type === "carrossel" && (
-                  <div className="space-y-4">
-                    {selectedContent.images && selectedContent.images.length > 0 && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Imagens do Carrossel</label>
-                        <ImageCarousel 
-                          images={selectedContent.images}
-                          captions={selectedContent.slides?.map((slide: any) => slide.title)}
-                          title={selectedContent.title}
-                        />
-                      </div>
-                    )}
-                    
-                    {selectedContent.slides && selectedContent.slides.length > 0 && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Slides do Carrossel</label>
-                        <div className="space-y-2">
-                          {selectedContent.slides.map((slide: any, index: number) => (
-                            <div key={index} className="border p-3 rounded">
-                              <h4 className="font-medium">{slide.title}</h4>
-                              <p className="text-sm text-muted-foreground mt-1">{slide.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">Conteúdo Completo</label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCopy(selectedContent.content || "", "Carrossel")}
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copiar Conteúdo
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={selectedContent.content || ""}
-                        readOnly
-                        className="min-h-[100px] font-mono text-sm"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {selectedContent.type === "email" && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Assunto</label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Input value={selectedContent.subject} readOnly />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleCopy(selectedContent.subject || "", "Assunto")}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="text-sm font-medium">Preheader</label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Input value={selectedContent.previewText || selectedContent.preheader} readOnly />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleCopy(selectedContent.previewText || selectedContent.preheader || "", "Preheader")}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">Corpo do E-mail</label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCopy(selectedContent.content || "", "E-mail")}
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copiar E-mail
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={selectedContent.content}
-                        readOnly
-                        className="min-h-[200px] font-mono text-sm"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {selectedContent.type === "roteiro" && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Categoria</label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Input value={selectedContent.category} readOnly />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleCopy(selectedContent.category || "", "Categoria")}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">Roteiro</label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCopy(selectedContent.content || "", "Roteiro")}
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copiar Roteiro
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={selectedContent.content}
-                        readOnly
-                        className="min-h-[200px] font-mono text-sm"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Rating and Feedback */}
-                <ContentFeedback 
-                  content={selectedContent}
-                  currentRating={getCurrentRating(selectedContent.id)}
-                  currentFeedback={getCurrentFeedback(selectedContent.id)}
-                  onRating={handleRating}
-                  onFeedback={handleFeedback}
-                />
                 </div>
               )}
-            </div>
+
+              {selectedContent.type === "social" && (
+                <div className="space-y-4">
+                  {selectedContent.images && selectedContent.images.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Imagens do Carrossel</label>
+                      <ImageCarousel 
+                        images={selectedContent.images}
+                        captions={selectedContent.captions}
+                        title={selectedContent.title}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Legenda do Post</label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopy(selectedContent.caption || selectedContent.postCaption || "", "Legenda")}
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar Legenda
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={selectedContent.caption || selectedContent.postCaption || ""}
+                      readOnly
+                      className="min-h-[200px] font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {selectedContent.type === "carrossel" && (
+                <div className="space-y-4">
+                  {selectedContent.images && selectedContent.images.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Imagens do Carrossel</label>
+                      <ImageCarousel 
+                        images={selectedContent.images}
+                        captions={selectedContent.slides?.map((slide: any) => slide.title)}
+                        title={selectedContent.title}
+                      />
+                    </div>
+                  )}
+                  
+                  {selectedContent.slides && selectedContent.slides.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Slides do Carrossel</label>
+                      <div className="space-y-2">
+                        {selectedContent.slides.map((slide: any, index: number) => (
+                          <div key={index} className="border p-3 rounded">
+                            <h4 className="font-medium">{slide.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">{slide.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Conteúdo Completo</label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopy(selectedContent.content || "", "Carrossel")}
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar Conteúdo
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={selectedContent.content || ""}
+                      readOnly
+                      className="min-h-[100px] font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {selectedContent.type === "email" && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Assunto</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input value={selectedContent.subject} readOnly />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleCopy(selectedContent.subject || "", "Assunto")}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium">Preheader</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input value={selectedContent.previewText || selectedContent.preheader} readOnly />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleCopy(selectedContent.previewText || selectedContent.preheader || "", "Preheader")}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Corpo do E-mail</label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopy(selectedContent.content || "", "E-mail")}
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar E-mail
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={selectedContent.content}
+                      readOnly
+                      className="min-h-[200px] font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {selectedContent.type === "roteiro" && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Categoria</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input value={selectedContent.category} readOnly />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleCopy(selectedContent.category || "", "Categoria")}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Roteiro</label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopy(selectedContent.content || "", "Roteiro")}
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar Roteiro
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={selectedContent.content}
+                      readOnly
+                      className="min-h-[200px] font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Rating and Feedback */}
+              <ContentFeedback 
+                content={selectedContent}
+                currentRating={getCurrentRating(selectedContent.id)}
+                currentFeedback={getCurrentFeedback(selectedContent.id)}
+                onRating={handleRating}
+                onFeedback={handleFeedback}
+              />
+              </div>
+            )}
           </div>
-        </DrawerContent>
-      </Drawer>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
