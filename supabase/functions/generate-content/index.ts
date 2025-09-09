@@ -106,11 +106,16 @@ async function gatherCompanyKnowledge(supabase: any, companyId: string, opportun
     .from('companies')
     .select('*')
     .eq('id', companyId)
-    .single();
+    .maybeSingle();
 
   if (companyError) {
     console.error('Error fetching company:', companyError);
     throw new Error('Erro ao buscar dados da empresa');
+  }
+
+  if (!company) {
+    console.error('Company not found with id:', companyId);
+    throw new Error('Empresa não encontrada');
   }
 
   // Get opportunities data
