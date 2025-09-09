@@ -467,26 +467,26 @@ Slide 1: Título do webinar
                       <div className="grid grid-cols-2 gap-4">
                         {selectedContent.images?.map((image: string, index: number) => (
                           <div key={index} className="space-y-2">
-                             <img 
-                               src={image} 
-                               alt={`Imagem ${index + 1}`} 
-                               className="w-full aspect-square object-cover rounded-lg" 
-                             />
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-start gap-2">
                               <Textarea
                                 value={selectedContent.captions?.[index] || ""}
                                 readOnly
-                                className="text-sm"
+                                className="text-sm flex-1"
                                 rows={2}
                               />
-                               <Button
-                                 variant="outline"
-                                 size="icon"
-                                 onClick={() => handleCopy(selectedContent.captions?.[index] || "", "Legenda")}
-                               >
-                                 <Copy className="h-4 w-4" />
-                               </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleCopy(selectedContent.captions?.[index] || "", "Legenda")}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
                             </div>
+                            <img 
+                              src={image} 
+                              alt={`Imagem ${index + 1}`} 
+                              className="w-full aspect-square object-cover rounded-lg" 
+                            />
                             <Button variant="outline" size="sm" className="w-full"
                               onClick={async () => {
                                 try {
