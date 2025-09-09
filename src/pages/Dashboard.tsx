@@ -10,27 +10,12 @@ import {
   Calendar,
   ChevronRight,
   Sparkles,
-  Settings,
-  ChevronDown
+  Settings
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export default function Dashboard() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState("30 dias");
-
-  const periodOptions = [
-    "7 dias",
-    "30 dias", 
-    "60 dias",
-    "90 dias"
-  ];
 
   // Mock data para trends/oportunidades de conteúdo
   const opportunities = [
@@ -111,37 +96,6 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Gerencie suas oportunidades de conteúdo e performance
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Calendar className="h-4 w-4 mr-2" />
-                Últimos {selectedPeriod}
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              {periodOptions.map((period) => (
-                <DropdownMenuItem
-                  key={period}
-                  onClick={() => setSelectedPeriod(period)}
-                  className="cursor-pointer"
-                >
-                  Últimos {period}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
 
       {/* Onboarding Alert */}
       {!hasCompletedOnboarding && (
