@@ -75,6 +75,8 @@ export default function Settings() {
 
   const [newCompany, setNewCompany] = useState({ name: "", industry: "", size: "" });
   const [isAddingCompany, setIsAddingCompany] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [editCompanyData, setEditCompanyData] = useState({ name: "", industry: "", size: "" });
   const [showPlanModal, setShowPlanModal] = useState(false);
 
   // Load data from localStorage
@@ -143,6 +145,41 @@ export default function Settings() {
       title: "Empresa adicionada!",
       description: "Nova empresa foi criada com sucesso."
     });
+  };
+
+  const startEditCompany = (company: Company) => {
+    setEditingCompany(company);
+    setEditCompanyData({
+      name: company.name,
+      industry: company.industry,
+      size: company.size
+    });
+  };
+
+  const saveEditCompany = () => {
+    if (!editingCompany || !editCompanyData.name || !editCompanyData.industry) return;
+
+    const updatedCompanies = companies.map(company =>
+      company.id === editingCompany.id
+        ? { ...company, ...editCompanyData }
+        : company
+    );
+
+    setCompanies(updatedCompanies);
+    localStorage.setItem('userCompanies', JSON.stringify(updatedCompanies));
+    
+    setEditingCompany(null);
+    setEditCompanyData({ name: "", industry: "", size: "" });
+
+    toast({
+      title: "Empresa atualizada!",
+      description: "Os dados da empresa foram salvos com sucesso."
+    });
+  };
+
+  const cancelEditCompany = () => {
+    setEditingCompany(null);
+    setEditCompanyData({ name: "", industry: "", size: "" });
   };
 
   const removeCompany = (id: string) => {
@@ -354,6 +391,56 @@ export default function Settings() {
             </Card>
           )}
 
+          {editingCompany && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Editar Empresa</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editCompanyName">Nome da Empresa *</Label>
+                    <Input
+                      id="editCompanyName"
+                      placeholder="Nome da empresa"
+                      value={editCompanyData.name}
+                      onChange={(e) => setEditCompanyData(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="editIndustry">Setor *</Label>
+                    <Input
+                      id="editIndustry"
+                      placeholder="Ex: Tecnologia"
+                      value={editCompanyData.industry}
+                      onChange={(e) => setEditCompanyData(prev => ({ ...prev, industry: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="editSize">Tamanho</Label>
+                    <Input
+                      id="editSize"
+                      placeholder="Ex: 10-50 funcionários"
+                      value={editCompanyData.size}
+                      onChange={(e) => setEditCompanyData(prev => ({ ...prev, size: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={cancelEditCompany}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={saveEditCompany}>
+                    Salvar Alterações
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {companies.map((company) => (
               <Card key={company.id}>
@@ -363,14 +450,23 @@ export default function Settings() {
                       <Building2 className="h-5 w-5 text-muted-foreground" />
                       <span className="font-semibold">{company.name}</span>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeCompany(company.id)}
-                      disabled={companies.length <= 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEditCompany(company)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeCompany(company.id)}
+                        disabled={companies.length <= 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   
                   <div className="space-y-1 text-sm text-muted-foreground">
