@@ -80,8 +80,94 @@ export default function Library() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [contentFeedbacks, setContentFeedbacks] = useState<{[key: number]: {rating: number, feedback: string}}>({});
 
-  // Empty state - será preenchido com conteúdos gerados pela IA
-  const contents: any[] = [];
+  // Conteúdos de exemplo para teste
+  const contents = [
+    {
+      id: 1,
+      title: "10 Estratégias para Aumentar o Engajamento nas Redes Sociais",
+      description: "Descubra técnicas comprovadas para melhorar o engajamento do seu público nas redes sociais",
+      type: "blog",
+      status: "published",
+      createdAt: new Date("2024-12-01"),
+      content: "As redes sociais se tornaram uma ferramenta essencial para empresas que desejam se conectar com seu público. Neste artigo, vamos explorar 10 estratégias fundamentais para aumentar o engajamento...",
+      slug: "10-estrategias-engajamento-redes-sociais",
+      tags: ["marketing digital", "redes sociais", "engajamento"],
+      readTime: "5 min",
+      images: ["/placeholder.svg"],
+      rating: 5
+    },
+    {
+      id: 2,
+      title: "Newsletter Semanal - Tendências de Marketing",
+      description: "Fique por dentro das principais tendências de marketing desta semana",
+      type: "email",
+      status: "draft",
+      createdAt: new Date("2024-12-02"),
+      content: "Olá! Seja bem-vindo à nossa newsletter semanal. Esta semana trouxemos as principais tendências do marketing digital...",
+      subject: "📈 Tendências de Marketing que Você Não Pode Perder",
+      previewText: "Descubra as estratégias que estão revolucionando o mercado",
+      images: [],
+      rating: 4
+    },
+    {
+      id: 3,
+      title: "Post Instagram - Dicas de Produtividade",
+      description: "Conteúdo visual sobre organização e produtividade no trabalho",
+      type: "social",
+      status: "published",
+      createdAt: new Date("2024-12-03"),
+      content: "🚀 3 dicas para ser mais produtivo no trabalho:\n\n1. Organize suas tarefas por prioridade\n2. Elimine distrações do ambiente\n3. Faça pausas regulares\n\n#produtividade #trabalho #dicas",
+      caption: "Transforme sua rotina de trabalho com essas dicas simples e eficazes! 💼✨",
+      hashtags: ["#produtividade", "#trabalho", "#dicas", "#organizacao"],
+      images: ["/placeholder.svg"],
+      rating: 5
+    },
+    {
+      id: 4,
+      title: "Roteiro de Podcast - Inovação Tecnológica",
+      description: "Episódio sobre as últimas inovações em tecnologia e seus impactos",
+      type: "roteiro",
+      status: "published",
+      createdAt: new Date("2024-12-04"),
+      content: "ABERTURA: Olá pessoal, bem-vindos ao nosso podcast sobre inovação! Hoje vamos falar sobre as tecnologias que estão moldando o futuro...\n\nSEGMENTO 1: Inteligência Artificial\n- Impactos na sociedade\n- Oportunidades de negócio\n\nSEGMENTO 2: Blockchain\n- Além das criptomoedas\n- Casos de uso práticos",
+      duration: "25 min",
+      segments: [
+        { title: "Abertura", duration: "2 min" },
+        { title: "Inteligência Artificial", duration: "10 min" },
+        { title: "Blockchain", duration: "10 min" },
+        { title: "Considerações Finais", duration: "3 min" }
+      ],
+      images: [],
+      rating: 4
+    },
+    {
+      id: 5,
+      title: "Artigo LinkedIn - Liderança em Tempos de Mudança",
+      description: "Reflexões sobre como liderar equipes em momentos de transformação",
+      type: "blog",
+      status: "scheduled",
+      createdAt: new Date("2024-12-05"),
+      content: "A liderança nunca foi tão desafiadora quanto nos tempos atuais. Com mudanças constantes no mercado, tecnologia e comportamento do consumidor...",
+      slug: "lideranca-tempos-mudanca",
+      tags: ["liderança", "gestão", "mudança"],
+      readTime: "3 min",
+      images: [],
+      rating: 3
+    },
+    {
+      id: 6,
+      title: "Story Instagram - Bastidores da Empresa",
+      description: "Conteúdo casual mostrando o dia a dia da equipe",
+      type: "social", 
+      status: "published",
+      createdAt: new Date("2024-12-06"),
+      content: "📱 Bastidores do nosso escritório hoje!\n\nA equipe está trabalhando em um projeto incrível 🔥\n\n#bastidores #equipe #trabalho",
+      caption: "Um pouquinho do que rola aqui no escritório! 🏢",
+      hashtags: ["#bastidores", "#equipe", "#trabalho", "#escritorio"],
+      images: ["/placeholder.svg"],
+      rating: 4
+    }
+  ];
 
   const filteredContents = contents.filter(content => {
     const matchesSearch = content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
