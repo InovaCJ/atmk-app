@@ -442,7 +442,7 @@ export default function Library() {
                   </Badge>
                   <Badge variant="outline">
                     <Calendar className="h-3 w-3 mr-1" />
-                    {selectedContent.createdAt}
+                    {selectedContent.createdAt.toLocaleDateString()}
                   </Badge>
                   <Badge className={getStatusColor(selectedContent.status)}>
                     {getStatusLabel(selectedContent.status)}
