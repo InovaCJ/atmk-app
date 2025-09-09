@@ -198,7 +198,7 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredContents.map((content) => (
-          <Card key={content.id} className="bg-gradient-to-br from-card to-card/50 border-0 shadow-card hover:shadow-elegant transition-all duration-300">
+          <Card key={content.id} className="bg-gradient-to-br from-card to-card/50 border border-border/50 shadow-card hover:shadow-elegant hover:border-border transition-all duration-300">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
