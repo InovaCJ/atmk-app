@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { X, Plus } from "lucide-react";
 import { AudienceData } from "@/types/onboarding";
 
@@ -37,6 +38,9 @@ export function AudiencePersonas({ onNext, onBack, onSkip, initialData = {} }: A
     personas: initialData.personas || [],
     frequentQuestions: initialData.frequentQuestions || []
   });
+
+  const [isB2CRelevant, setIsB2CRelevant] = useState(true);
+  const [isB2BRelevant, setIsB2BRelevant] = useState(true);
 
   const [newLocation, setNewLocation] = useState("");
   const [newIndustry, setNewIndustry] = useState("");
@@ -135,8 +139,18 @@ export function AudiencePersonas({ onNext, onBack, onSkip, initialData = {} }: A
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Perfil Demográfico (B2C)</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="b2c-relevant"
+                checked={isB2CRelevant}
+                onCheckedChange={(checked) => setIsB2CRelevant(checked === true)}
+              />
+              <Label htmlFor="b2c-relevant" className="text-sm text-muted-foreground">
+                Este perfil é relevante para meu negócio
+              </Label>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6" style={{ opacity: isB2CRelevant ? 1 : 0.5 }}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="ageRange">Faixa Etária</Label>
@@ -144,6 +158,7 @@ export function AudiencePersonas({ onNext, onBack, onSkip, initialData = {} }: A
                   id="ageRange"
                   placeholder="Ex: 25-45 anos"
                   value={formData.icp.demographics.ageRange}
+                  disabled={!isB2CRelevant}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
                     icp: {
@@ -156,63 +171,67 @@ export function AudiencePersonas({ onNext, onBack, onSkip, initialData = {} }: A
               
               <div className="space-y-2">
                 <Label htmlFor="gender">Gênero</Label>
-                <Input
-                  id="gender"
-                  placeholder="Ex: Todos, Majoritariamente feminino..."
-                  value={formData.icp.demographics.gender}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    icp: {
-                      ...prev.icp,
-                      demographics: { ...prev.icp.demographics, gender: e.target.value }
-                    }
-                  }))}
-                />
+                 <Input
+                   id="gender"
+                   placeholder="Ex: Todos, Majoritariamente feminino..."
+                   value={formData.icp.demographics.gender}
+                   disabled={!isB2CRelevant}
+                   onChange={(e) => setFormData(prev => ({
+                     ...prev,
+                     icp: {
+                       ...prev.icp,
+                       demographics: { ...prev.icp.demographics, gender: e.target.value }
+                     }
+                   }))}
+                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="income">Renda</Label>
-                <Input
-                  id="income"
-                  placeholder="Ex: R$ 5.000-15.000/mês"
-                  value={formData.icp.demographics.income}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    icp: {
-                      ...prev.icp,
-                      demographics: { ...prev.icp.demographics, income: e.target.value }
-                    }
-                  }))}
-                />
+                 <Input
+                   id="income"
+                   placeholder="Ex: R$ 5.000-15.000/mês"
+                   value={formData.icp.demographics.income}
+                   disabled={!isB2CRelevant}
+                   onChange={(e) => setFormData(prev => ({
+                     ...prev,
+                     icp: {
+                       ...prev.icp,
+                       demographics: { ...prev.icp.demographics, income: e.target.value }
+                     }
+                   }))}
+                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="education">Escolaridade</Label>
-                <Input
-                  id="education"
-                  placeholder="Ex: Ensino superior completo"
-                  value={formData.icp.demographics.education}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    icp: {
-                      ...prev.icp,
-                      demographics: { ...prev.icp.demographics, education: e.target.value }
-                    }
-                  }))}
-                />
+                 <Input
+                   id="education"
+                   placeholder="Ex: Ensino superior completo"
+                   value={formData.icp.demographics.education}
+                   disabled={!isB2CRelevant}
+                   onChange={(e) => setFormData(prev => ({
+                     ...prev,
+                     icp: {
+                       ...prev.icp,
+                       demographics: { ...prev.icp.demographics, education: e.target.value }
+                     }
+                   }))}
+                 />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Localização</Label>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Ex: São Paulo, Rio de Janeiro..."
-                  value={newLocation}
-                  onChange={(e) => setNewLocation(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addToArray(['icp', 'demographics', 'location'], newLocation, setNewLocation)}
-                />
-                <Button type="button" onClick={() => addToArray(['icp', 'demographics', 'location'], newLocation, setNewLocation)}>
+                 <Input
+                   placeholder="Ex: São Paulo, Rio de Janeiro..."
+                   value={newLocation}
+                   disabled={!isB2CRelevant}
+                   onChange={(e) => setNewLocation(e.target.value)}
+                   onKeyPress={(e) => e.key === 'Enter' && isB2CRelevant && addToArray(['icp', 'demographics', 'location'], newLocation, setNewLocation)}
+                 />
+                 <Button type="button" disabled={!isB2CRelevant} onClick={() => addToArray(['icp', 'demographics', 'location'], newLocation, setNewLocation)}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -239,14 +258,25 @@ export function AudiencePersonas({ onNext, onBack, onSkip, initialData = {} }: A
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Perfil Firmográfico (B2B)</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="b2b-relevant"
+                checked={isB2BRelevant}
+                onCheckedChange={(checked) => setIsB2BRelevant(checked === true)}
+              />
+              <Label htmlFor="b2b-relevant" className="text-sm text-muted-foreground">
+                Este perfil é relevante para meu negócio
+              </Label>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6" style={{ opacity: isB2BRelevant ? 1 : 0.5 }}>
             <div className="space-y-2">
               <Label htmlFor="companySize">Tamanho da Empresa</Label>
               <Input
                 id="companySize"
                 placeholder="Ex: 50-200 funcionários, Startups, Grandes corporações..."
                 value={formData.icp.firmographics.companySize}
+                disabled={!isB2BRelevant}
                 onChange={(e) => setFormData(prev => ({
                   ...prev,
                   icp: {
@@ -260,13 +290,14 @@ export function AudiencePersonas({ onNext, onBack, onSkip, initialData = {} }: A
             <div className="space-y-2">
               <Label>Setores/Indústrias</Label>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Ex: Tecnologia, Saúde, Varejo..."
-                  value={newIndustry}
-                  onChange={(e) => setNewIndustry(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addToArray(['icp', 'firmographics', 'industry'], newIndustry, setNewIndustry)}
-                />
-                <Button type="button" onClick={() => addToArray(['icp', 'firmographics', 'industry'], newIndustry, setNewIndustry)}>
+                 <Input
+                   placeholder="Ex: Tecnologia, Saúde, Varejo..."
+                   value={newIndustry}
+                   disabled={!isB2BRelevant}
+                   onChange={(e) => setNewIndustry(e.target.value)}
+                   onKeyPress={(e) => e.key === 'Enter' && isB2BRelevant && addToArray(['icp', 'firmographics', 'industry'], newIndustry, setNewIndustry)}
+                 />
+                 <Button type="button" disabled={!isB2BRelevant} onClick={() => addToArray(['icp', 'firmographics', 'industry'], newIndustry, setNewIndustry)}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -290,13 +321,14 @@ export function AudiencePersonas({ onNext, onBack, onSkip, initialData = {} }: A
             <div className="space-y-2">
               <Label>Cargos-alvo</Label>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Ex: CEO, CMO, Gerente de Marketing..."
-                  value={newJobTitle}
-                  onChange={(e) => setNewJobTitle(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addToArray(['icp', 'firmographics', 'jobTitles'], newJobTitle, setNewJobTitle)}
-                />
-                <Button type="button" onClick={() => addToArray(['icp', 'firmographics', 'jobTitles'], newJobTitle, setNewJobTitle)}>
+                 <Input
+                   placeholder="Ex: CEO, CMO, Gerente de Marketing..."
+                   value={newJobTitle}
+                   disabled={!isB2BRelevant}
+                   onChange={(e) => setNewJobTitle(e.target.value)}
+                   onKeyPress={(e) => e.key === 'Enter' && isB2BRelevant && addToArray(['icp', 'firmographics', 'jobTitles'], newJobTitle, setNewJobTitle)}
+                 />
+                 <Button type="button" disabled={!isB2BRelevant} onClick={() => addToArray(['icp', 'firmographics', 'jobTitles'], newJobTitle, setNewJobTitle)}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>

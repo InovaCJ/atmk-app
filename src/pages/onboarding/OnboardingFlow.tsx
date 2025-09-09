@@ -6,7 +6,6 @@ import { BusinessOffer } from "./BusinessOffer";
 import { AudiencePersonas } from "./AudiencePersonas";
 import { SEOSemantics } from "./SEOSemantics";
 import { ContentFormats } from "./ContentFormats";
-import { LoadingScreen } from "@/components/LoadingScreen";
 import { toast } from "@/hooks/use-toast";
 import { OnboardingData } from "@/types/onboarding";
 
@@ -16,39 +15,31 @@ export function OnboardingFlow() {
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     completedSteps: []
   });
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleStepNext = async (stepData: any, step: number) => {
-    setIsLoading(true);
+  const handleStepNext = (stepData: any, step: number) => {
+    const stepKeys = ['basicInfo', 'brandIdentity', 'business', 'audience', 'seo', 'contentFormats'];
+    const stepKey = stepKeys[step - 1];
     
-    // Simular salvamento dos dados
-    setTimeout(() => {
-      const stepKeys = ['basicInfo', 'brandIdentity', 'business', 'audience', 'seo', 'contentFormats'];
-      const stepKey = stepKeys[step - 1];
-      
-      setOnboardingData(prev => ({
-        ...prev,
-        [stepKey]: stepData,
-        completedSteps: [...prev.completedSteps, step].filter((v, i, a) => a.indexOf(v) === i)
-      }));
-      
-      if (step < 6) {
-        setCurrentStep(step + 1);
-        toast({
-          title: "Etapa concluída!",
-          description: `Avançando para a etapa ${step + 1}...`,
-        });
-      } else {
-        // Finalizar onboarding
-        toast({
-          title: "Onboarding concluído!",
-          description: "Redirecionando para o dashboard...",
-        });
-        navigate("/");
-      }
-      
-      setIsLoading(false);
-    }, 1500);
+    setOnboardingData(prev => ({
+      ...prev,
+      [stepKey]: stepData,
+      completedSteps: [...prev.completedSteps, step].filter((v, i, a) => a.indexOf(v) === i)
+    }));
+    
+    if (step < 6) {
+      setCurrentStep(step + 1);
+      toast({
+        title: "Etapa concluída!",
+        description: `Avançando para a etapa ${step + 1}...`,
+      });
+    } else {
+      // Finalizar onboarding - redirecionar para generate
+      toast({
+        title: "Onboarding concluído!",
+        description: "Gerando seus conteúdos personalizados...",
+      });
+      navigate("/generate");
+    }
   };
 
   const handleStepBack = () => {
@@ -65,9 +56,6 @@ export function OnboardingFlow() {
     }
   };
 
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
 
   switch (currentStep) {
     case 1:

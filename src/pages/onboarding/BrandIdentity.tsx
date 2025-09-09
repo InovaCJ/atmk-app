@@ -238,8 +238,8 @@ export function BrandIdentity({ onNext, onBack, onSkip, initialData = {} }: Bran
                   }
                   max={5}
                   min={1}
-                  step={1}
-                  className="w-full"
+                  step={0.1}
+                  className="w-full [&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Muito Formal</span>
@@ -259,8 +259,8 @@ export function BrandIdentity({ onNext, onBack, onSkip, initialData = {} }: Bran
                   }
                   max={5}
                   min={1}
-                  step={1}
-                  className="w-full"
+                  step={0.1}
+                  className="w-full [&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Muito Técnico</span>
@@ -280,8 +280,8 @@ export function BrandIdentity({ onNext, onBack, onSkip, initialData = {} }: Bran
                   }
                   max={5}
                   min={1}
-                  step={1}
-                  className="w-full"
+                  step={0.1}
+                  className="w-full [&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Muito Sério</span>

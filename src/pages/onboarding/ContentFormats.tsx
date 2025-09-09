@@ -49,9 +49,9 @@ export function ContentFormats({ onNext, onBack, onSkip, initialData = {} }: Con
     email: 'E-mail Marketing',
     blog: 'Blog Posts',
     social: 'Social Media',
-    video: 'Vídeos',
-    podcast: 'Podcasts',
-    webinar: 'Webinars'
+    video: 'Roteiro para Vídeos',
+    podcast: 'Roteiro para Podcasts',
+    webinar: 'Roteiro para Webinars'
   };
 
   const priorityLabels = {

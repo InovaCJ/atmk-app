@@ -8,7 +8,7 @@ interface LoadingScreenProps {
   estimatedTime?: number; // in seconds
 }
 
-export function LoadingScreen({ onComplete, estimatedTime = 120 }: LoadingScreenProps) {
+export function LoadingScreen({ onComplete, estimatedTime = 10 }: LoadingScreenProps) {
   const [progress, setProgress] = useState(0);
   const [currentTask, setCurrentTask] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(estimatedTime);

@@ -7,12 +7,14 @@ export default function Generate() {
 
   const handleGenerationComplete = () => {
     setIsGenerating(false);
+    // Redirect to library page
+    window.location.href = '/library';
   };
 
   if (isGenerating) {
     return <LoadingScreen onComplete={handleGenerationComplete} />;
   }
 
-  // Redirect to dashboard after generation completes
+  // This should not be reached as we redirect in handleGenerationComplete
   return <Dashboard />;
 }

@@ -118,96 +118,32 @@ export function SEOSemantics({ onNext, onBack, onSkip, initialData = {} }: SEOSe
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="keyword">Palavra-chave</Label>
-                <Input
-                  id="keyword"
-                  placeholder="Ex: marketing digital"
-                  value={newKeyword.keyword}
-                  onChange={(e) => setNewKeyword(prev => ({ ...prev, keyword: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="searchVolume">Volume de Busca</Label>
-                <Input
-                  id="searchVolume"
-                  type="number"
-                  placeholder="Ex: 12000"
-                  value={newKeyword.searchVolume || ""}
-                  onChange={(e) => setNewKeyword(prev => ({ ...prev, searchVolume: parseInt(e.target.value) || 0 }))}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="difficulty">Dificuldade (1-5)</Label>
-                <Select value={newKeyword.difficulty.toString()} onValueChange={(value) => setNewKeyword(prev => ({ ...prev, difficulty: parseInt(value) }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 - Muito Fácil</SelectItem>
-                    <SelectItem value="2">2 - Fácil</SelectItem>
-                    <SelectItem value="3">3 - Médio</SelectItem>
-                    <SelectItem value="4">4 - Difícil</SelectItem>
-                    <SelectItem value="5">5 - Muito Difícil</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="intent">Intenção de Busca</Label>
-                <Select value={newKeyword.intent} onValueChange={(value: any) => setNewKeyword(prev => ({ ...prev, intent: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="informational">Informacional</SelectItem>
-                    <SelectItem value="commercial">Comercial</SelectItem>
-                    <SelectItem value="transactional">Transacional</SelectItem>
-                    <SelectItem value="navigational">Navegacional</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ex: marketing digital, gestão de vendas..."
+                value={newKeyword.keyword}
+                onChange={(e) => setNewKeyword(prev => ({ ...prev, keyword: e.target.value }))}
+                onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
+                className="flex-1"
+              />
+              <Button type="button" onClick={addKeyword}>
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
 
-            <Button type="button" onClick={addKeyword} className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Palavra-chave
-            </Button>
-
-            <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
               {formData.keywords.map((keyword, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-accent/5 rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <h4 className="font-medium">{keyword.keyword}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className={getIntentColor(keyword.intent)}>
-                          {keyword.intent === 'informational' && 'Informacional'}
-                          {keyword.intent === 'commercial' && 'Comercial'}
-                          {keyword.intent === 'transactional' && 'Transacional'}
-                          {keyword.intent === 'navigational' && 'Navegacional'}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground flex items-center gap-1">
-                          <TrendingUp className="h-3 w-3" />
-                          {keyword.searchVolume.toLocaleString()} buscas/mês
-                        </span>
-                        <span className={`text-sm font-medium ${getDifficultyColor(keyword.difficulty)}`}>
-                          Dif: {keyword.difficulty}/5
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                <Badge key={index} variant="outline" className="pr-1">
+                  {keyword.keyword}
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="h-auto p-1 ml-1"
                     onClick={() => removeKeyword(index)}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3" />
                   </Button>
-                </div>
+                </Badge>
               ))}
             </div>
           </CardContent>

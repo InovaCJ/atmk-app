@@ -282,41 +282,6 @@ export function BusinessOffer({ onNext, onBack, onSkip, initialData = {} }: Busi
           </CardContent>
         </Card>
 
-        {/* Roadmap */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Roadmap Público</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Ex: Nova funcionalidade de IA em Q2 2024"
-                value={newRoadmapItem}
-                onChange={(e) => setNewRoadmapItem(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addRoadmapItem()}
-              />
-              <Button type="button" onClick={addRoadmapItem}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              {formData.roadmap.map((item, index) => (
-                <Badge key={index} variant="outline" className="pr-1">
-                  {item}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto p-1 ml-1"
-                    onClick={() => removeItem('roadmap', index)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </OnboardingLayout>
   );
