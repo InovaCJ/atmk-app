@@ -43,8 +43,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center h-20 px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
+      <SidebarHeader className="border-b border-sidebar-border h-20">
+        <div className="flex items-center h-full px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Sparkles className="h-4 w-4" />
