@@ -32,7 +32,7 @@ export default function Dashboard() {
     "90 dias"
   ];
 
-  // Mock data para trends/oportunidades
+  // Mock data para trends/oportunidades de conteúdo
   const opportunities = [
     {
       id: 1,
