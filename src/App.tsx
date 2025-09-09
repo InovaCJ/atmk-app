@@ -7,7 +7,7 @@ import { Layout } from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
 import Generate from "./pages/Generate";
-import { BasicInfo } from "./pages/onboarding/BasicInfo";
+import { OnboardingFlow } from "./pages/onboarding/OnboardingFlow";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,7 +20,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           {/* Onboarding Routes */}
-          <Route path="/onboarding" element={<BasicInfo onNext={() => {}} onSkip={() => {}} />} />
+          <Route path="/onboarding" element={<OnboardingFlow />} />
           
           {/* Main App Routes */}
           <Route path="/" element={<Layout />}>
