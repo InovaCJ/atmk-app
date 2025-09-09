@@ -23,21 +23,25 @@ export default function Generate() {
   }, [location.state]);
 
   const handleStartGeneration = async (config?: any) => {
+    // Always show loading screen for generation
+    setIsGenerating(true);
+    setIsModalOpen(false); // Close modal if open
+    
+    toast({
+      title: "Gerando conteúdo personalizado!",
+      description: "Estamos criando seus primeiros conteúdos baseados nas informações fornecidas...",
+    });
+
     if (config) {
       try {
         const { generateContentWithAI } = await import('@/utils/contentGeneration');
         await generateContentWithAI(config);
-        // Navigate to library to see generated content
-        setTimeout(() => navigate('/library'), 2000);
+        // Complete generation and redirect
+        handleGenerationComplete();
       } catch (error) {
         console.error('Error generating content:', error);
+        setIsGenerating(false);
       }
-    } else {
-      setIsGenerating(true);
-      toast({
-        title: "Gerando conteúdo personalizado!",
-        description: "Estamos criando seus primeiros conteúdos baseados nas informações fornecidas...",
-      });
     }
   };
 
