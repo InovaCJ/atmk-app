@@ -75,11 +75,14 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
       </div>
 
       {/* Main Carousel */}
-      <div className="relative">
-        <div className="overflow-hidden rounded-lg">
+      <div className="relative overflow-hidden">
+        <div className="overflow-x-auto scrollbar-hide">
           <div 
             className="flex gap-4 transition-transform duration-300 ease-in-out"
-            style={{ transform: `translateX(-${currentIndex * 320}px)` }}
+            style={{ 
+              transform: `translateX(-${currentIndex * 320}px)`,
+              width: `${images.length * 336}px` // 320px + 16px gap
+            }}
           >
             {images.map((image, index) => (
               <div key={index} className="w-80 flex-shrink-0 space-y-3">

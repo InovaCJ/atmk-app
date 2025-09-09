@@ -518,7 +518,7 @@ Slide 1: Título do webinar
 
       {/* Content Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           {selectedContent && (
             <>
               <DialogHeader>
@@ -532,7 +532,7 @@ Slide 1: Título do webinar
               </DialogHeader>
 
               {/* Content Details */}
-              <div className="space-y-6">
+              <div className="space-y-6">{/* ... keep existing code */}
                 {selectedContent.type === "blog" && (
                   <div>
                     <div className="grid grid-cols-2 gap-4 mb-4">
