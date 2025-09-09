@@ -15,11 +15,22 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Crown
+  Crown,
+  AlertTriangle
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { PlanModal } from "@/components/PlanModal";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface UserProfile {
   fullName: string;
@@ -78,6 +89,8 @@ export default function Settings() {
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [editCompanyData, setEditCompanyData] = useState({ name: "", industry: "", size: "" });
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
 
   // Load data from localStorage
   useEffect(() => {
@@ -182,29 +195,45 @@ export default function Settings() {
     setEditCompanyData({ name: "", industry: "", size: "" });
   };
 
-  const removeCompany = (id: string) => {
+  const openDeleteDialog = (id: string) => {
+    setCompanyToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteCompany = () => {
+    if (!companyToDelete) return;
+
     if (companies.length <= 1) {
       toast({
         title: "Não é possível remover",
         description: "Você deve ter pelo menos uma empresa cadastrada.",
         variant: "destructive"
       });
+      setShowDeleteDialog(false);
+      setCompanyToDelete(null);
       return;
     }
 
-    const updatedCompanies = companies.filter(c => c.id !== id);
+    const updatedCompanies = companies.filter(c => c.id !== companyToDelete);
     setCompanies(updatedCompanies);
-    saveCompanies();
+    localStorage.setItem('userCompanies', JSON.stringify(updatedCompanies));
     
     setPlanUsage(prev => ({
       ...prev,
       companiesCount: prev.companiesCount - 1
     }));
 
+    setShowDeleteDialog(false);
+    setCompanyToDelete(null);
+
     toast({
-      title: "Empresa removida",
-      description: "A empresa foi removida com sucesso."
+      title: "Empresa excluída",
+      description: "A empresa e todos os dados associados foram removidos permanentemente."
     });
+  };
+
+  const removeCompany = (id: string) => {
+    openDeleteDialog(id);
   };
 
   const getPlanBadgeVariant = (plan: string) => {
@@ -613,6 +642,49 @@ export default function Settings() {
         isOpen={showPlanModal} 
         onClose={() => setShowPlanModal(false)} 
       />
+
+      {/* Diálogo de Confirmação de Exclusão */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Excluir Empresa Permanentemente
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <div>
+                <strong className="text-foreground">⚠️ ATENÇÃO: Esta ação é irreversível!</strong>
+              </div>
+              <div>
+                Ao excluir esta empresa, você perderá permanentemente:
+              </div>
+              <ul className="list-disc ml-4 space-y-1">
+                <li>Todos os dados da base de conhecimento</li>
+                <li>Histórico de conteúdos gerados</li>
+                <li>Configurações personalizadas</li>
+                <li>Análises e relatórios</li>
+              </ul>
+              <div className="bg-muted p-3 rounded-lg">
+                <strong className="text-foreground">💡 Recomendação:</strong>
+                <p className="text-sm mt-1">
+                  Para manter seus dados seguros, considere assinar um novo plano e adicionar uma nova empresa ao invés de excluir a atual.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteCompany}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir Permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
