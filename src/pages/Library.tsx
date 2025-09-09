@@ -16,7 +16,8 @@ import {
   Filter,
   Calendar,
   Eye,
-  ExternalLink
+  ExternalLink,
+  Mic
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -88,6 +89,62 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
 ...`,
       rating: 0,
       tags: ["Tendências", "Marketing", "2025"]
+    },
+    {
+      id: 4,
+      type: "roteiro",
+      title: "Roteiro para Podcast: Marketing Digital para PMEs",
+      description: "Roteiro estruturado para episódio sobre estratégias de marketing digital",
+      createdAt: "2024-01-12",
+      status: "publicado",
+      category: "Roteiro para Podcast",
+      content: `[INTRO - 2 minutos]
+Olá, pessoal! Bem-vindos ao nosso podcast sobre marketing digital...
+
+[BLOCO 1 - 8 minutos]
+Hoje vamos falar sobre as principais estratégias...
+
+[INTERVALO - 30 segundos]
+Este episódio é patrocinado por...`,
+      rating: 4,
+      tags: ["Roteiro para Podcast", "Marketing Digital", "PMEs"]
+    },
+    {
+      id: 5,
+      type: "roteiro",
+      title: "Roteiro para Vídeo: Tutorial de SEO",
+      description: "Roteiro para vídeo tutorial sobre otimização para motores de busca",
+      createdAt: "2024-01-11",
+      status: "rascunho",
+      category: "Roteiro para Vídeos",
+      content: `[ABERTURA - 15 segundos]
+VISUAL: Logo animado + música de abertura
+NARRAÇÃO: "Oi, pessoal! Hoje vamos aprender SEO do zero..."
+
+[CENA 1 - 2 minutos]
+VISUAL: Tela do Google com busca
+NARRAÇÃO: "O que é SEO e por que ele é importante..."`,
+      rating: 0,
+      tags: ["Roteiro para Vídeos", "SEO", "Tutorial"]
+    },
+    {
+      id: 6,
+      type: "roteiro",
+      title: "Roteiro para Webinar: IA no Marketing",
+      description: "Roteiro completo para webinar sobre inteligência artificial no marketing",
+      createdAt: "2024-01-10",
+      status: "agendado",
+      category: "Roteiro para Webnars",
+      content: `[PRÉ-WEBINAR - 5 minutos antes]
+- Música de fundo suave
+- Slide: "O webinar começará em breve"
+- Chat: Boas-vindas aos participantes
+
+[ABERTURA - 5 minutos]
+Slide 1: Título do webinar
+"Olá, pessoal! Bem-vindos ao nosso webinar sobre IA no Marketing..."`,
+      rating: 5,
+      tags: ["Roteiro para Webnars", "IA", "Marketing"]
     }
   ];
 
@@ -103,15 +160,17 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
       case "blog": return <FileText className="h-4 w-4" />;
       case "email": return <Mail className="h-4 w-4" />;
       case "social": return <Share2 className="h-4 w-4" />;
+      case "roteiro": return <Mic className="h-4 w-4" />;
       default: return <FileText className="h-4 w-4" />;
     }
   };
 
-  const getTypeLabel = (type: string) => {
+  const getTypeLabel = (type: string, category?: string) => {
     switch (type) {
       case "blog": return "Artigo de Blog";
       case "email": return "E-mail Marketing";
       case "social": return "Post Social";
+      case "roteiro": return category || "Roteiro";
       default: return type;
     }
   };
@@ -200,6 +259,7 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
             <TabsTrigger value="blog">Blog ({contents.filter(c => c.type === 'blog').length})</TabsTrigger>
             <TabsTrigger value="social">Social ({contents.filter(c => c.type === 'social').length})</TabsTrigger>
             <TabsTrigger value="email">E-mail ({contents.filter(c => c.type === 'email').length})</TabsTrigger>
+            <TabsTrigger value="roteiro">Roteiros ({contents.filter(c => c.type === 'roteiro').length})</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -212,7 +272,7 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   {getTypeIcon(content.type)}
-                  <Badge variant="outline">{getTypeLabel(content.type)}</Badge>
+                  <Badge variant="outline">{getTypeLabel(content.type, content.category)}</Badge>
                   <Badge className={getStatusColor(content.status)}>
                     {getStatusLabel(content.status)}
                   </Badge>
@@ -382,6 +442,43 @@ O marketing digital está em constante evolução, e 2025 promete trazer mudanç
                               >
                                 <Copy className="h-4 w-4 mr-2" />
                                 Copiar E-mail
+                              </Button>
+                            </div>
+                            <Textarea
+                              value={content.content}
+                              readOnly
+                              className="min-h-[200px] font-mono text-sm"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {content.type === "roteiro" && (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-sm font-medium">Categoria</label>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Input value={content.category} readOnly />
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleCopy(content.category || "", "Categoria")}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-sm font-medium">Roteiro</label>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCopy(content.content || "", "Roteiro")}
+                              >
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copiar Roteiro
                               </Button>
                             </div>
                             <Textarea
