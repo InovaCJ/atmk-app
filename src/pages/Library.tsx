@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { 
   FileText, 
   Mail, 
@@ -29,7 +35,7 @@ export default function Library() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("todos");
   const [selectedContent, setSelectedContent] = useState<any>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [contentFeedbacks, setContentFeedbacks] = useState<{[key: number]: {rating: number, feedback: string}}>({});
 
   // Mock data para conteúdos gerados
@@ -402,9 +408,9 @@ Slide 1: Título do webinar
     }
   };
 
-  const openContentDialog = (content: any) => {
+  const openContentDrawer = (content: any) => {
     setSelectedContent(content);
-    setIsDialogOpen(true);
+    setIsDrawerOpen(true);
   };
 
   const getCurrentRating = (contentId: number) => {
@@ -466,7 +472,7 @@ Slide 1: Título do webinar
           <Card 
             key={content.id} 
             className="bg-gradient-to-br from-card to-card/50 border border-border/50 shadow-card hover:shadow-elegant hover:border-border transition-all duration-300 cursor-pointer"
-            onClick={() => openContentDialog(content)}
+            onClick={() => openContentDrawer(content)}
           >
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -482,7 +488,7 @@ Slide 1: Título do webinar
                   size="icon"
                   onClick={(e) => {
                     e.stopPropagation();
-                    openContentDialog(content);
+                    openContentDrawer(content);
                   }}
                 >
                   <Eye className="h-4 w-4" />
@@ -516,23 +522,24 @@ Slide 1: Título do webinar
         ))}
       </div>
 
-      {/* Content Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          {selectedContent && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  {getTypeIcon(selectedContent.type)}
-                  {selectedContent.title}
-                </DialogTitle>
-                <DialogDescription>
-                  {selectedContent.description}
-                </DialogDescription>
-              </DialogHeader>
+      {/* Content Drawer */}
+      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <DrawerContent className="h-screen right-0 left-auto top-0 mt-0 w-1/2 rounded-none border-l">
+          <div className="flex flex-col h-full">
+            <DrawerHeader className="border-b">
+              <DrawerTitle className="flex items-center gap-2">
+                {selectedContent && getTypeIcon(selectedContent.type)}
+                {selectedContent?.title}
+              </DrawerTitle>
+              <DrawerDescription>
+                {selectedContent?.description}
+              </DrawerDescription>
+            </DrawerHeader>
 
-              {/* Content Details */}
-              <div className="space-y-6">{/* ... keep existing code */}
+            {/* Content Details */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {selectedContent && (
+                <div className="space-y-6">{/* ... keep existing code */}
                 {selectedContent.type === "blog" && (
                   <div>
                     <div className="grid grid-cols-2 gap-4 mb-4">
@@ -810,11 +817,12 @@ Slide 1: Título do webinar
                   onRating={handleRating}
                   onFeedback={handleFeedback}
                 />
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+                </div>
+              )}
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {filteredContents.length === 0 && (
         <div className="text-center py-12">
