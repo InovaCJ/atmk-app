@@ -16,10 +16,8 @@ import {
   Mail, 
   Share2, 
   Copy, 
-  Download, 
   Star,
   Search,
-  Filter,
   Calendar,
   Eye,
   ExternalLink,
@@ -191,16 +189,6 @@ export default function Library() {
           <p className="text-muted-foreground">
             Seus conteúdos gerados organizados por categoria
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtros
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
         </div>
       </div>
 

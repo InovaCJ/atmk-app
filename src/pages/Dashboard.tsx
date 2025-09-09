@@ -153,10 +153,6 @@ export default function Dashboard() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Oportunidades em Destaque</h2>
-          <Button variant="ghost" size="sm">
-            Ver todas
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
         </div>
 
         <div className="grid gap-4">
