@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { GoogleTrendsIntegration } from '@/components/GoogleTrendsIntegration';
+
 import { 
   Database, 
   BookOpen, 
@@ -162,7 +162,20 @@ export default function Knowledge() {
         </TabsContent>
 
         <TabsContent value="trends" className="space-y-6">
-          <GoogleTrendsIntegration />
+          <Card>
+            <CardHeader>
+              <CardTitle>Análise de Tendências</CardTitle>
+              <CardDescription>
+                Acompanhe as tendências do seu mercado e nichos de interesse
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Funcionalidade em desenvolvimento. Em breve você poderá visualizar tendências 
+                baseadas nos dados do seu onboarding e análises de mercado.
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="content" className="space-y-6">
