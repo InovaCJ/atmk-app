@@ -429,7 +429,7 @@ export default function Settings() {
                 {/* Uso de Conteúdos */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="font-medium">Conteúdos Gerados</span>
+                    <span className="font-medium">Conteúdos do Teste Gratuito</span>
                     <span className="text-sm text-muted-foreground">
                       {planUsage.contentGenerated} de {planUsage.contentLimit}
                     </span>
@@ -440,7 +440,7 @@ export default function Settings() {
                   />
                   {planUsage.contentGenerated >= planUsage.contentLimit && (
                     <p className="text-sm text-destructive">
-                      Limite atingido! Faça upgrade para gerar mais conteúdos.
+                      Teste gratuito esgotado! Faça upgrade para gerar mais conteúdos.
                     </p>
                   )}
                 </div>
@@ -481,7 +481,7 @@ export default function Settings() {
                 <ul className="text-sm text-muted-foreground space-y-1">
                   {planUsage.currentPlan === "free" && (
                     <>
-                      <li>• Até 10 conteúdos por mês</li>
+                      <li>• 10 conteúdos como teste gratuito</li>
                       <li>• 1 usuário</li>
                       <li>• 1 empresa</li>
                       <li>• Suporte por email</li>

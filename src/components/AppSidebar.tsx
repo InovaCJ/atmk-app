@@ -112,7 +112,7 @@ export function AppSidebar() {
             </Button>
             <div className="text-xs text-muted-foreground px-2">
               <p>Plano Gratuito</p>
-              <p>2/10 conteúdos</p>
+              <p>2/10 teste gratuito</p>
             </div>
           </div>
           <div className="hidden group-data-[collapsible=icon]:block">
