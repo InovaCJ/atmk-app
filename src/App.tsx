@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
 import Generate from "./pages/Generate";
 import Knowledge from "./pages/Knowledge";
+import Settings from "./pages/Settings";
 import { OnboardingFlow } from "./pages/onboarding/OnboardingFlow";
 import NotFound from "./pages/NotFound";
 
@@ -29,7 +30,7 @@ const App = () => (
             <Route path="library" element={<Library />} />
             <Route path="generate" element={<Generate />} />
             <Route path="knowledge" element={<Knowledge />} />
-            <Route path="settings" element={<div className="p-6">Configurações - Em breve</div>} />
+            <Route path="settings" element={<Settings />} />
           </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -10,7 +10,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  User, 
   Building, 
   Target, 
   Users, 
@@ -22,16 +21,16 @@ import {
   Trash2
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import type { OnboardingData, BasicInfoData, BrandIdentityData, BusinessData, AudienceData, SEOData, ContentFormatsData } from "@/types/onboarding";
+import type { OnboardingData, BrandIdentityData, BusinessData, AudienceData, SEOData, ContentFormatsData } from "@/types/onboarding";
 
 export default function Knowledge() {
+  const [selectedCompany, setSelectedCompany] = useState("1");
+  const [companies] = useState([
+    { id: "1", name: "Minha Empresa" },
+    { id: "2", name: "Empresa Exemplo" }
+  ]);
+
   const [knowledgeData, setKnowledgeData] = useState<OnboardingData>({
-    basicInfo: {
-      fullName: "",
-      email: "",
-      phone: "",
-      companyName: ""
-    },
     brandIdentity: {
       mission: "",
       vision: "",
@@ -158,16 +157,6 @@ export default function Knowledge() {
     }));
   };
 
-  const updateBasicInfo = (field: keyof BasicInfoData, value: string) => {
-    setKnowledgeData(prev => ({
-      ...prev,
-      basicInfo: {
-        ...prev.basicInfo!,
-        [field]: value
-      }
-    }));
-  };
-
   const updateBrandIdentity = (field: string, value: any) => {
     setKnowledgeData(prev => ({
       ...prev,
@@ -250,12 +239,31 @@ export default function Knowledge() {
         </p>
       </div>
 
-      <Tabs defaultValue="basicos" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="basicos" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Dados Básicos
-          </TabsTrigger>
+      {/* Seletor de Empresa */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <Label htmlFor="company-select" className="font-medium">
+              Configurando empresa:
+            </Label>
+            <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Selecione uma empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Tabs defaultValue="identidade" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="identidade" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
             Identidade
@@ -277,69 +285,6 @@ export default function Knowledge() {
             Formatos
           </TabsTrigger>
         </TabsList>
-
-        {/* Dados Básicos */}
-        <TabsContent value="basicos" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações Básicas</CardTitle>
-              <CardDescription>
-                Dados pessoais e da empresa
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Nome Completo *</Label>
-                  <Input
-                    id="fullName"
-                    placeholder="Seu nome completo"
-                    value={knowledgeData.basicInfo?.fullName || ""}
-                    onChange={(e) => updateBasicInfo("fullName", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={knowledgeData.basicInfo?.email || ""}
-                    onChange={(e) => updateBasicInfo("email", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone *</Label>
-                  <Input
-                    id="phone"
-                    placeholder="(11) 99999-9999"
-                    value={knowledgeData.basicInfo?.phone || ""}
-                    onChange={(e) => updateBasicInfo("phone", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Nome da Empresa *</Label>
-                  <Input
-                    id="companyName"
-                    placeholder="Nome da sua empresa"
-                    value={knowledgeData.basicInfo?.companyName || ""}
-                    onChange={(e) => updateBasicInfo("companyName", e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <Button onClick={saveData} className="flex items-center gap-2">
-                  <Save className="h-4 w-4" />
-                  Salvar Alterações
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* Identidade e Estratégia de Marca */}
         <TabsContent value="identidade" className="space-y-6">

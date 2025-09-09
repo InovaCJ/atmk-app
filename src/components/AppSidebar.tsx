@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
 import {
   BookOpen,
   Brain,
@@ -19,9 +20,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { PlanModal } from "./PlanModal";
 
 const mainItems = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -37,83 +38,100 @@ const managementItems = [
 export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const [showPlanModal, setShowPlanModal] = useState(false);
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-primary text-primary-foreground font-medium" : "hover:bg-accent";
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border h-20">
-        <div className="flex items-center h-full px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
-          <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-              <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                ATMK
-              </h1>
-              <p className="text-xs text-muted-foreground">Content AI</p>
+    <>
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="border-b border-sidebar-border h-20">
+          <div className="flex items-center h-full px-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
+            <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                  ATMK
+                </h1>
+                <p className="text-xs text-muted-foreground">Content AI</p>
+              </div>
             </div>
           </div>
-        </div>
-      </SidebarHeader>
+        </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Principal</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                    <NavLink to={item.url} end>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Principal</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {mainItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                      <NavLink to={item.url} end>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Gestão</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {managementItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                    <NavLink to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Gestão</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {managementItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                      <NavLink to={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
-        <div className="space-y-2 group-data-[collapsible=icon]:hidden">
-          <Button variant="premium" className="w-full justify-start">
-            <Star className="h-4 w-4 mr-2" />
-            Upgrade Pro
-          </Button>
-          <div className="text-xs text-muted-foreground px-2">
-            <p>Plano Gratuito</p>
-            <p>2/10 conteúdos</p>
+        <SidebarFooter className="border-t border-sidebar-border">
+          <div className="space-y-2 group-data-[collapsible=icon]:hidden">
+            <Button 
+              onClick={() => setShowPlanModal(true)}
+              variant="outline" 
+              className="w-full justify-start bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:bg-primary/10"
+            >
+              <Star className="h-4 w-4 mr-2" />
+              Upgrade Pro
+            </Button>
+            <div className="text-xs text-muted-foreground px-2">
+              <p>Plano Gratuito</p>
+              <p>2/10 conteúdos</p>
+            </div>
           </div>
-        </div>
-        <div className="hidden group-data-[collapsible=icon]:block">
-          <Button variant="premium" size="icon">
-            <Star className="h-4 w-4" />
-          </Button>
-        </div>
-      </SidebarFooter>
-    </Sidebar>
+          <div className="hidden group-data-[collapsible=icon]:block">
+            <Button 
+              onClick={() => setShowPlanModal(true)}
+              variant="outline" 
+              size="icon"
+              className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:bg-primary/10"
+            >
+              <Star className="h-4 w-4" />
+            </Button>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+
+      <PlanModal 
+        isOpen={showPlanModal} 
+        onClose={() => setShowPlanModal(false)} 
+      />
+    </>
   );
 }
