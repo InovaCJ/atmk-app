@@ -22,7 +22,8 @@ import {
   Eye,
   ExternalLink,
   Mic,
-  Edit2
+  Edit2,
+  Images
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -84,88 +85,146 @@ export default function Library() {
   const contents = [
     {
       id: 1,
-      title: "10 Estratégias para Aumentar o Engajamento nas Redes Sociais",
-      description: "Descubra técnicas comprovadas para melhorar o engajamento do seu público nas redes sociais",
+      title: "Como Criar uma Estratégia de Marketing Digital Eficaz",
+      description: "Guia completo para desenvolver e implementar uma estratégia de marketing digital que gera resultados",
       type: "blog",
       status: "published",
       createdAt: new Date("2024-12-01"),
-      content: "As redes sociais se tornaram uma ferramenta essencial para empresas que desejam se conectar com seu público. Neste artigo, vamos explorar 10 estratégias fundamentais para aumentar o engajamento...",
-      slug: "10-estrategias-engajamento-redes-sociais",
-      tags: ["marketing digital", "redes sociais", "engajamento"],
-      readTime: "5 min",
+      content: "O marketing digital se tornou essencial para o sucesso de qualquer negócio nos dias atuais. Neste artigo completo, vamos abordar os pilares fundamentais para criar uma estratégia que realmente funciona.\n\n## 1. Definindo seus objetivos\n\nAntes de qualquer ação, é crucial estabelecer metas claras e mensuráveis. Seja aumentar vendas, gerar leads ou fortalecer a marca, seus objetivos devem ser específicos.\n\n## 2. Conhecendo sua audiência\n\nUma pesquisa profunda sobre seu público-alvo é a base de toda estratégia bem-sucedida. Entenda suas dores, desejos e comportamentos.\n\n## 3. Escolhendo os canais certos\n\nNem toda plataforma será adequada para seu negócio. Foque onde sua audiência realmente está presente.\n\n## 4. Criando conteúdo relevante\n\nO conteúdo é o coração do marketing digital. Produza materiais que eduquem, entretenham e engajem seu público.\n\n## 5. Mensurando resultados\n\nSem análise de dados, você está navegando às cegas. Acompanhe métricas relevantes e ajuste sua estratégia conforme necessário.",
+      slug: "estrategia-marketing-digital-eficaz",
+      tags: ["marketing digital", "estratégia", "negócios"],
+      readTime: "8 min",
       images: ["/placeholder.svg"],
       rating: 5
     },
     {
       id: 2,
-      title: "Newsletter Semanal - Tendências de Marketing",
-      description: "Fique por dentro das principais tendências de marketing desta semana",
-      type: "email",
-      status: "draft",
+      title: "Carrossel: Tendências de Design 2024",
+      description: "As principais tendências visuais que vão dominar o design em 2024",
+      type: "carrossel",
+      status: "published",
       createdAt: new Date("2024-12-02"),
-      content: "Olá! Seja bem-vindo à nossa newsletter semanal. Esta semana trouxemos as principais tendências do marketing digital...",
-      subject: "📈 Tendências de Marketing que Você Não Pode Perder",
-      previewText: "Descubra as estratégias que estão revolucionando o mercado",
-      images: [],
+      content: "Carrossel com 8 slides sobre as tendências de design mais relevantes para este ano.",
+      images: [
+        "/placeholder.svg",
+        "/placeholder.svg", 
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg"
+      ],
+      slides: [
+        { title: "Gradientes Vibrantes", description: "Cores que saltam aos olhos" },
+        { title: "Tipografia Bold", description: "Fontes que fazem declarações" },
+        { title: "Minimalismo Funcional", description: "Menos é mais, sempre" },
+        { title: "Ilustrações 3D", description: "Profundidade e realismo" },
+        { title: "Cores Pastéis", description: "Suavidade e elegância" },
+        { title: "Assimetria Controlada", description: "Quebrando padrões com propósito" },
+        { title: "Micro-interações", description: "Detalhes que encantam" },
+        { title: "Dark Mode", description: "Elegância e conforto visual" }
+      ],
       rating: 4
     },
     {
       id: 3,
-      title: "Post Instagram - Dicas de Produtividade",
-      description: "Conteúdo visual sobre organização e produtividade no trabalho",
-      type: "social",
+      title: "Newsletter: Novidades da Semana",
+      description: "Resumo semanal com as principais atualizações e dicas da indústria",
+      type: "email",
       status: "published",
       createdAt: new Date("2024-12-03"),
-      content: "🚀 3 dicas para ser mais produtivo no trabalho:\n\n1. Organize suas tarefas por prioridade\n2. Elimine distrações do ambiente\n3. Faça pausas regulares\n\n#produtividade #trabalho #dicas",
-      caption: "Transforme sua rotina de trabalho com essas dicas simples e eficazes! 💼✨",
-      hashtags: ["#produtividade", "#trabalho", "#dicas", "#organizacao"],
-      images: ["/placeholder.svg"],
+      content: "Olá!\n\nEspero que sua semana esteja sendo produtiva! Trouxe algumas novidades importantes que podem interessar você:\n\n🔥 **Destaque da Semana**\nNova funcionalidade de IA revoluciona o marketing de conteúdo\n\n📊 **Números que Impressionam**\n- 75% das empresas já usam automação\n- ROI médio de 300% em campanhas personalizadas\n\n💡 **Dica Rápida**\nPersonalize o máximo possível suas comunicações - isso pode aumentar as conversões em até 40%!\n\n🎯 **Próximos Eventos**\n- Webinar gratuito sobre IA no Marketing (15/12)\n- Workshop de Growth Hacking (20/12)\n\nUm ótimo resto de semana!\n\nEquipe Marketing Pro",
+      subject: "🚀 Novidades que vão turbinar seus resultados",
+      previewText: "IA, automação e dicas práticas para acelerar seu crescimento",
+      images: [],
       rating: 5
     },
     {
       id: 4,
-      title: "Roteiro de Podcast - Inovação Tecnológica",
-      description: "Episódio sobre as últimas inovações em tecnologia e seus impactos",
-      type: "roteiro",
+      title: "Carrossel: Dicas de Produtividade",
+      description: "8 estratégias comprovadas para aumentar sua produtividade no trabalho",
+      type: "carrossel", 
       status: "published",
       createdAt: new Date("2024-12-04"),
-      content: "ABERTURA: Olá pessoal, bem-vindos ao nosso podcast sobre inovação! Hoje vamos falar sobre as tecnologias que estão moldando o futuro...\n\nSEGMENTO 1: Inteligência Artificial\n- Impactos na sociedade\n- Oportunidades de negócio\n\nSEGMENTO 2: Blockchain\n- Além das criptomoedas\n- Casos de uso práticos",
-      duration: "25 min",
-      segments: [
-        { title: "Abertura", duration: "2 min" },
-        { title: "Inteligência Artificial", duration: "10 min" },
-        { title: "Blockchain", duration: "10 min" },
-        { title: "Considerações Finais", duration: "3 min" }
+      content: "Carrossel educativo com dicas práticas de produtividade.",
+      images: [
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg", 
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg"
       ],
-      images: [],
-      rating: 4
+      slides: [
+        { title: "Técnica Pomodoro", description: "25 min focado + 5 min pausa" },
+        { title: "Lista de Prioridades", description: "Foque no que importa" },
+        { title: "Elimine Distrações", description: "Celular no modo avião" },
+        { title: "Organize seu Espaço", description: "Ambiente limpo = mente clara" },
+        { title: "Automatize Tarefas", description: "Use ferramentas a seu favor" },
+        { title: "Delegue Responsabilidades", description: "Você não precisa fazer tudo" },
+        { title: "Faça Pausas Regulares", description: "Descanso é parte do processo" },
+        { title: "Planeje o Dia Anterior", description: "Comece com clareza" }
+      ],
+      rating: 5
     },
     {
       id: 5,
-      title: "Artigo LinkedIn - Liderança em Tempos de Mudança",
-      description: "Reflexões sobre como liderar equipes em momentos de transformação",
-      type: "blog",
-      status: "scheduled",
+      title: "Email: Oferta Especial Black Friday",
+      description: "Campanha promocional com desconto exclusivo para clientes",
+      type: "email",
+      status: "published", 
       createdAt: new Date("2024-12-05"),
-      content: "A liderança nunca foi tão desafiadora quanto nos tempos atuais. Com mudanças constantes no mercado, tecnologia e comportamento do consumidor...",
-      slug: "lideranca-tempos-mudanca",
-      tags: ["liderança", "gestão", "mudança"],
-      readTime: "3 min",
+      content: "🖤 BLACK FRIDAY CHEGOU! 🖤\n\nOlá [NOME],\n\nA oportunidade que você estava esperando finalmente chegou!\n\n🔥 **OFERTA EXCLUSIVA**\n50% OFF em todos os nossos cursos\n\n⏰ **APENAS 48 HORAS**\nPromoção válida até 29/11 às 23:59\n\n✨ **O QUE VOCÊ GANHA:**\n• Acesso vitalício aos conteúdos\n• Certificado de conclusão\n• Suporte direto com especialistas\n• Materiais complementares exclusivos\n\nDe R$ 497 por apenas R$ 248,50\n\n[BOTÃO: QUERO APROVEITAR AGORA]\n\n💡 **Depoimento de Cliente:**\n\"Melhor investimento que fiz na minha carreira!\" - Maria Silva\n\nNão deixe essa oportunidade passar!\n\nAbraços,\nEquipe EduTech",
+      subject: "🔥 BLACK FRIDAY: 50% OFF - Apenas 48h!",
+      previewText: "Sua chance de economizar 50% em todos os cursos. Corre!",
       images: [],
-      rating: 3
+      rating: 4
     },
     {
       id: 6,
-      title: "Story Instagram - Bastidores da Empresa",
-      description: "Conteúdo casual mostrando o dia a dia da equipe",
-      type: "social", 
+      title: "Carrossel: Erros Comuns no Instagram",
+      description: "Os 8 erros mais frequentes que prejudicam o crescimento no Instagram",
+      type: "carrossel",
       status: "published",
       createdAt: new Date("2024-12-06"),
-      content: "📱 Bastidores do nosso escritório hoje!\n\nA equipe está trabalhando em um projeto incrível 🔥\n\n#bastidores #equipe #trabalho",
-      caption: "Um pouquinho do que rola aqui no escritório! 🏢",
-      hashtags: ["#bastidores", "#equipe", "#trabalho", "#escritorio"],
-      images: ["/placeholder.svg"],
+      content: "Carrossel educativo sobre erros comuns no Instagram.",
+      images: [
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg"
+      ],
+      slides: [
+        { title: "Não ter Estratégia", description: "Postar sem planejamento não funciona" },
+        { title: "Ignorar Analytics", description: "Dados guiam decisões inteligentes" },
+        { title: "Comprar Seguidores", description: "Qualidade > Quantidade sempre" },
+        { title: "Não Engajar", description: "Responda comentários e DMs" },
+        { title: "Usar Hashtags Genéricas", description: "Seja específico e relevante" },
+        { title: "Postar no Horário Errado", description: "Conheça sua audiência" },
+        { title: "Não Contar Histórias", description: "Stories conectam com pessoas" },
+        { title: "Abandonar a Consistência", description: "Regularidade constrói audiência" }
+      ],
       rating: 4
+    },
+    {
+      id: 7,
+      title: "Email: Boas-vindas Novo Assinante",
+      description: "Email de boas-vindas automatizado para novos leads da lista",
+      type: "email",
+      status: "draft",
+      createdAt: new Date("2024-12-07"),
+      content: "Seja muito bem-vindo(a), [NOME]! 🎉\n\nQue alegria ter você conosco!\n\nEu sou [SEU NOME], fundador(a) da [EMPRESA], e quero te contar um pouco sobre nossa missão:\n\n🎯 **Nossa Missão**\nAjudar empreendedores como você a alcançar resultados extraordinários através de estratégias práticas e comprovadas.\n\n📚 **O que você vai receber:**\n• Dicas semanais exclusivas\n• Cases de sucesso reais\n• Ferramentas gratuitas\n• Acesso a webinars especiais\n\n🎁 **BÔNUS DE BOAS-VINDAS**\nBaixe gratuitamente nosso e-book \"10 Estratégias para Dobrar suas Vendas\"\n\n[BOTÃO: BAIXAR E-BOOK GRÁTIS]\n\n💌 **Próximos Conteúdos:**\nNos próximos dias, você receberá uma série especial com os fundamentos do marketing digital.\n\nTem alguma dúvida específica? Responda este email - eu leio pessoalmente todas as mensagens!\n\nMais uma vez, seja bem-vindo(a) à nossa comunidade!\n\nCom carinho,\n[SEU NOME]",
+      subject: "🎉 Bem-vindo(a)! Aqui está seu presente...",
+      previewText: "Sua jornada de crescimento começa agora + e-book gratuito",
+      images: [],
+      rating: 5
     }
   ];
 
@@ -181,6 +240,7 @@ export default function Library() {
       case "blog": return <FileText className="h-4 w-4" />;
       case "email": return <Mail className="h-4 w-4" />;
       case "social": return <Share2 className="h-4 w-4" />;
+      case "carrossel": return <Images className="h-4 w-4" />;
       case "roteiro": return <Mic className="h-4 w-4" />;
       default: return <FileText className="h-4 w-4" />;
     }
@@ -191,6 +251,7 @@ export default function Library() {
       case "blog": return "Artigo de Blog";
       case "email": return "E-mail Marketing";
       case "social": return "Post Social";
+      case "carrossel": return "Carrossel";
       case "roteiro": return category || "Roteiro";
       default: return type;
     }
@@ -292,58 +353,68 @@ export default function Library() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="todos">Todos (0)</TabsTrigger>
-            <TabsTrigger value="blog">Blog (0)</TabsTrigger>
-            <TabsTrigger value="social">Social (0)</TabsTrigger>
-            <TabsTrigger value="email">E-mail (0)</TabsTrigger>
-            <TabsTrigger value="roteiro">Roteiros (0)</TabsTrigger>
+            <TabsTrigger value="todos">Todos ({contents.length})</TabsTrigger>
+            <TabsTrigger value="blog">Blog ({contents.filter(c => c.type === 'blog').length})</TabsTrigger>
+            <TabsTrigger value="carrossel">Carrossel ({contents.filter(c => c.type === 'carrossel').length})</TabsTrigger>
+            <TabsTrigger value="email">E-mail ({contents.filter(c => c.type === 'email').length})</TabsTrigger>
+            <TabsTrigger value="roteiro">Roteiros ({contents.filter(c => c.type === 'roteiro').length})</TabsTrigger>
           </TabsList>
           
-          {/* Empty State por tipo de conteúdo */}
-          <TabsContent value="todos" className="mt-8">
-            <EmptyState 
-              type="todos"
-              title="Biblioteca Vazia"
-              description="Seus conteúdos gerados pela IA aparecerão aqui"
-              icon={<FileText className="h-16 w-16" />}
-            />
-          </TabsContent>
-          
-          <TabsContent value="blog" className="mt-8">
-            <EmptyState 
-              type="blog"
-              title="Nenhum Artigo de Blog"
-              description="Gere artigos detalhados para seu blog usando nossa IA"
-              icon={<FileText className="h-16 w-16" />}
-            />
-          </TabsContent>
-          
-          <TabsContent value="social" className="mt-8">
-            <EmptyState 
-              type="social"
-              title="Nenhum Post Social"
-              description="Crie posts envolventes para suas redes sociais"
-              icon={<Share2 className="h-16 w-16" />}
-            />
-          </TabsContent>
-          
-          <TabsContent value="email" className="mt-8">
-            <EmptyState 
-              type="email"
-              title="Nenhum E-mail Marketing"
-              description="Desenvolva campanhas de e-mail personalizadas"
-              icon={<Mail className="h-16 w-16" />}
-            />
-          </TabsContent>
-          
-          <TabsContent value="roteiro" className="mt-8">
-            <EmptyState 
-              type="roteiro"
-              title="Nenhum Roteiro"
-              description="Gere roteiros para vídeos, podcasts e webinars"
-              icon={<Mic className="h-16 w-16" />}
-            />
-          </TabsContent>
+          {/* Content Display */}
+          {filteredContents.length > 0 ? (
+            <div className="grid gap-4 mt-8">
+              {filteredContents.map((content) => (
+                <Card key={content.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openContentDrawer(content)}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          {getTypeIcon(content.type)}
+                          <Badge variant="outline">{getTypeLabel(content.type)}</Badge>
+                          <Badge className={getStatusColor(content.status)}>
+                            {getStatusLabel(content.status)}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold mb-1">{content.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">{content.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {content.createdAt.toLocaleDateString()}
+                          </span>
+                          {content.readTime && (
+                            <span>{content.readTime}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star 
+                              key={star} 
+                              className={`h-4 w-4 ${star <= getCurrentRating(content.id) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                            />
+                          ))}
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <TabsContent value="todos" className="mt-8">
+              <EmptyState 
+                type="todos"
+                title="Nenhum conteúdo encontrado"
+                description="Tente ajustar sua busca ou gerar novos conteúdos"
+                icon={<FileText className="h-16 w-16" />}
+              />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
