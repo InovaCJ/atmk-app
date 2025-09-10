@@ -9,6 +9,7 @@ import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 import { PlanModal } from "@/components/PlanModal";
 import { useCompanyContext } from "@/contexts/CompanyContext";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 export default function Generate() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -17,8 +18,10 @@ export default function Generate() {
   const location = useLocation();
   const { toast } = useToast();
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
+  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useKnowledgeValidation(selectedCompanyId || undefined);
+  const { canGenerateContent: canGeneratePlan, remainingContent } = usePlanLimits();
   
-  const { canGenerateContent, completionPercentage } = useKnowledgeValidation(selectedCompanyId || undefined);
+  const canGenerate = canGenerateKnowledge && canGeneratePlan;
 
   // Auto-start generation if coming from onboarding or with config from dashboard
   useEffect(() => {
@@ -115,7 +118,7 @@ export default function Generate() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button 
                 onClick={() => {
-                  if (!canGenerateContent) {
+                  if (!canGenerateKnowledge) {
                     toast({
                       title: "Base de conhecimento incompleta",
                       description: `Complete pelo menos 50% da sua base de conhecimento para gerar conteúdos. Atual: ${completionPercentage}%`,
@@ -124,14 +127,21 @@ export default function Generate() {
                     navigate("/knowledge");
                     return;
                   }
+                  if (!canGeneratePlan) {
+                    setIsModalOpen(false);
+                    return;
+                  }
                   setIsModalOpen(true);
                 }}
                 size="lg"
                 className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-                disabled={!canGenerateContent}
+                disabled={!canGenerate}
               >
                 <Sparkles className="h-5 w-5 mr-2" />
-                Gerar Conteúdo Agora
+                {selectedCompany?.plan_type === 'free' 
+                  ? `Gerar Conteúdo (${remainingContent} restantes)`
+                  : 'Gerar Conteúdo Agora'
+                }
               </Button>
               <Button 
                 variant="outline"
@@ -146,11 +156,11 @@ export default function Generate() {
         </Card>
       </div>
 
-      {/* Conditional rendering based on plan type */}
-      {selectedCompany?.plan_type === 'free' ? (
+      {/* Show plan modal for free users who hit limit, content modal otherwise */}
+      {!canGeneratePlan && selectedCompany?.plan_type === 'free' ? (
         <PlanModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
         />
       ) : (
         <ContentGenerationModal

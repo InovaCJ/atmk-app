@@ -38,6 +38,7 @@ import { useCompanyContext } from "@/contexts/CompanyContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { ContentFeedback } from "@/components/ContentFeedback";
 import { ImageCarousel } from "@/components/ImageCarousel";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 // Componente para estado vazio
 const EmptyState = ({ type, title, description, icon }: {
@@ -53,7 +54,10 @@ const EmptyState = ({ type, title, description, icon }: {
   
   // Usar primeira empresa para validação ou undefined se não houver
   const selectedCompanyId = companies.length > 0 ? companies[0].id : undefined;
-  const { canGenerateContent, completionPercentage } = useKnowledgeValidation(selectedCompanyId);
+  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useKnowledgeValidation(selectedCompanyId);
+  const { canGenerateContent: canGeneratePlan, remainingContent } = usePlanLimits();
+  
+  const canGenerate = canGenerateKnowledge && canGeneratePlan;
 
   const handleGenerate = async (config: any) => {
     try {
@@ -66,7 +70,7 @@ const EmptyState = ({ type, title, description, icon }: {
   };
 
   const handleGenerateClick = () => {
-    if (!canGenerateContent) {
+    if (!canGenerateKnowledge) {
       toast({
         title: "Base de conhecimento incompleta",
         description: `Complete pelo menos 50% da sua base de conhecimento para gerar conteúdos. Atual: ${completionPercentage}%`,
@@ -74,6 +78,9 @@ const EmptyState = ({ type, title, description, icon }: {
       });
       navigate("/knowledge");
       return;
+    }
+    if (!canGeneratePlan) {
+      return; // Will trigger plan modal
     }
     setIsModalOpen(true);
   };
@@ -91,10 +98,13 @@ const EmptyState = ({ type, title, description, icon }: {
         <Button 
           onClick={handleGenerateClick}
           className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-          disabled={!canGenerateContent}
+          disabled={!canGenerate}
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          Gerar Primeiro Conteúdo
+          {companies.length > 0 && companies[0].plan_type === 'free' 
+            ? `Gerar Conteúdo (${remainingContent} restantes)`
+            : 'Gerar Primeiro Conteúdo'
+          }
         </Button>
       </div>
       
@@ -118,8 +128,11 @@ export default function Library() {
   
   const navigate = useNavigate();
   const { selectedCompany, selectedCompanyId } = useCompanyContext();
-  const { canGenerateContent, completionPercentage } = useKnowledgeValidation(selectedCompanyId || undefined);
+  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useKnowledgeValidation(selectedCompanyId || undefined);
+  const { canGenerateContent: canGeneratePlan, remainingContent } = usePlanLimits();
   const { toast } = useToast();
+  
+  const canGenerate = canGenerateKnowledge && canGeneratePlan;
 
   // Conteúdos de exemplo para teste
   const contents = [
@@ -404,7 +417,7 @@ export default function Library() {
         </div>
         <Button 
           onClick={() => {
-            if (!canGenerateContent) {
+            if (!canGenerateKnowledge) {
               toast({
                 title: "Base de conhecimento incompleta",
                 description: `Complete pelo menos 50% da sua base de conhecimento para gerar conteúdos. Atual: ${completionPercentage}%`,
@@ -413,13 +426,20 @@ export default function Library() {
               navigate("/knowledge");
               return;
             }
+            if (!canGeneratePlan) {
+              setIsPlanModalOpen(true);
+              return;
+            }
             setIsGenerationModalOpen(true);
           }}
           className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-          disabled={!canGenerateContent}
+          disabled={!canGenerate}
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          Gerar Novo Conteúdo
+          {selectedCompany?.plan_type === 'free' 
+            ? `Gerar Conteúdo (${remainingContent} restantes)`
+            : 'Gerar Novo Conteúdo'
+          }
         </Button>
       </div>
 
@@ -778,19 +798,24 @@ export default function Library() {
         </SheetContent>
         </Sheet>
 
-        {/* Content Generation Modal */}
-        {selectedCompany?.plan_type === 'free' ? (
+        {/* Show plan modal for free users who hit limit, content modal otherwise */}
+        {!canGeneratePlan && selectedCompany?.plan_type === 'free' ? (
           <PlanModal 
-            isOpen={isGenerationModalOpen} 
-            onClose={() => setIsGenerationModalOpen(false)} 
+            isOpen={isPlanModalOpen}
+            onClose={() => setIsPlanModalOpen(false)}
           />
-        ) : (
-          <ContentGenerationModal
-            open={isGenerationModalOpen}
-            onOpenChange={setIsGenerationModalOpen}
-            onConfirm={handleGenerationConfirm}
-          />
-        )}
+        ) : null}
+        
+        <PlanModal 
+          isOpen={isPlanModalOpen}
+          onClose={() => setIsPlanModalOpen(false)}
+        />
+        
+        <ContentGenerationModal
+          open={isGenerationModalOpen}
+          onOpenChange={setIsGenerationModalOpen}
+          onConfirm={handleGenerationConfirm}
+        />
       </div>
     );
   }
