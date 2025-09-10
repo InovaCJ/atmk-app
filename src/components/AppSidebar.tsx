@@ -49,7 +49,7 @@ export function AppSidebar() {
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-sidebar-border">
           <div className="p-4 group-data-[collapsible=icon]:px-2">
-            <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center mb-4">
+            <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Sparkles className="h-4 w-4" />
               </div>
@@ -60,8 +60,6 @@ export function AppSidebar() {
                 <p className="text-xs text-muted-foreground">Content AI</p>
               </div>
             </div>
-            
-            <UserProfileDropdown />
           </div>
         </SidebarHeader>
 
@@ -104,29 +102,33 @@ export function AppSidebar() {
         </SidebarContent>
 
         <SidebarFooter className="border-t border-sidebar-border">
-          <div className="space-y-2 group-data-[collapsible=icon]:hidden">
-            <Button 
-              onClick={() => setShowPlanModal(true)}
-              variant="outline" 
-              className="w-full justify-start bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:bg-primary/10"
-            >
-              <Star className="h-4 w-4 mr-2" />
-              Upgrade Pro
-            </Button>
-            <div className="text-xs text-muted-foreground px-2">
-              <p>Plano Gratuito</p>
-              <p>2/10 teste gratuito</p>
+          <div className="space-y-3">
+            <div className="space-y-2 group-data-[collapsible=icon]:hidden">
+              <Button 
+                onClick={() => setShowPlanModal(true)}
+                variant="outline" 
+                className="w-full justify-start bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:bg-primary/10"
+              >
+                <Star className="h-4 w-4 mr-2" />
+                Upgrade Pro
+              </Button>
+              <div className="text-xs text-muted-foreground px-2">
+                <p>Plano Gratuito</p>
+                <p>2/10 teste gratuito</p>
+              </div>
             </div>
-          </div>
-          <div className="hidden group-data-[collapsible=icon]:block">
-            <Button 
-              onClick={() => setShowPlanModal(true)}
-              variant="outline" 
-              size="icon"
-              className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:bg-primary/10"
-            >
-              <Star className="h-4 w-4" />
-            </Button>
+            <div className="hidden group-data-[collapsible=icon]:block">
+              <Button 
+                onClick={() => setShowPlanModal(true)}
+                variant="outline" 
+                size="icon"
+                className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:bg-primary/10"
+              >
+                <Star className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <UserProfileDropdown />
           </div>
         </SidebarFooter>
       </Sidebar>
