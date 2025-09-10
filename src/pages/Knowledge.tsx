@@ -280,15 +280,41 @@ export default function Knowledge() {
   });
 
   const addFormat = () => {
-    if (!selectedFormat.frequency) return;
+    if (!selectedFormat.frequency || !selectedFormat.type) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Verificar se o formato já existe
+    const exists = knowledgeData.contentFormats?.preferredFormats?.some(
+      format => format.type === selectedFormat.type && format.frequency === selectedFormat.frequency
+    );
+    
+    if (exists) {
+      toast({
+        title: "Formato já existe",
+        description: "Este formato com essa frequência já foi adicionado.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setKnowledgeData(prev => ({
       ...prev,
       contentFormats: {
-        ...prev.contentFormats!,
+        ...prev.contentFormats,
         preferredFormats: [
           ...(prev.contentFormats?.preferredFormats || []),
-          selectedFormat as any
+          {
+            type: selectedFormat.type as "email" | "blog" | "social" | "video" | "podcast" | "webinar",
+            priority: selectedFormat.priority,
+            frequency: selectedFormat.frequency,
+            platforms: selectedFormat.platforms
+          }
         ]
       }
     }));
@@ -298,6 +324,26 @@ export default function Knowledge() {
       priority: 1,
       frequency: '',
       platforms: []
+    });
+    
+    toast({
+      title: "Sucesso",
+      description: "Formato de conteúdo adicionado com sucesso!"
+    });
+  };
+
+  const removeFormat = (index: number) => {
+    setKnowledgeData(prev => ({
+      ...prev,
+      contentFormats: {
+        ...prev.contentFormats,
+        preferredFormats: prev.contentFormats?.preferredFormats?.filter((_, i) => i !== index) || []
+      }
+    }));
+    
+    toast({
+      title: "Sucesso",
+      description: "Formato de conteúdo removido com sucesso!"
     });
   };
 
@@ -1008,16 +1054,7 @@ export default function Knowledge() {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => {
-                            const newFormats = knowledgeData.contentFormats?.preferredFormats?.filter((_, i) => i !== index) || [];
-                            setKnowledgeData(prev => ({
-                              ...prev,
-                              contentFormats: {
-                                ...prev.contentFormats!,
-                                preferredFormats: newFormats
-                              }
-                            }));
-                          }}
+                          onClick={() => removeFormat(index)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
