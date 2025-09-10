@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
+import { PlanModal } from "@/components/PlanModal";
 import { toast } from "@/hooks/use-toast";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +23,7 @@ import { useCompanyContext } from "@/contexts/CompanyContext";
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | undefined>();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const navigate = useNavigate();
   
   const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedCompanyId || undefined);
@@ -104,8 +105,15 @@ export default function Dashboard() {
       navigate("/knowledge");
       return;
     }
+
+    // Check if user is on free plan - this feature is PRO only
+    const currentPlan = selectedCompany?.plan_type || 'free';
+    if (currentPlan === 'free') {
+      setIsModalOpen(true); // Open upgrade modal instead
+      return;
+    }
     
-    // Open generation modal with preselected opportunity
+    // Open generation modal with preselected opportunity (PRO/Business only)
     setSelectedOpportunityId(opportunityId.toString());
     setIsModalOpen(true);
   };
@@ -223,12 +231,20 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <ContentGenerationModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        onConfirm={handleGenerationConfirm}
-        preselectedOpportunity={selectedOpportunityId}
-      />
+      {/* Conditional rendering based on plan type */}
+      {selectedCompany?.plan_type === 'free' ? (
+        <PlanModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+      ) : (
+        <ContentGenerationModal
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          onConfirm={handleGenerationConfirm}
+          preselectedOpportunity={selectedOpportunityId}
+        />
+      )}
     </div>
   );
 }

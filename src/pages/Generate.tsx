@@ -7,6 +7,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
+import { PlanModal } from "@/components/PlanModal";
 import { useCompanyContext } from "@/contexts/CompanyContext";
 
 export default function Generate() {
@@ -15,7 +16,7 @@ export default function Generate() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   
   const { canGenerateContent, completionPercentage } = useKnowledgeValidation(selectedCompanyId || undefined);
 
@@ -145,11 +146,19 @@ export default function Generate() {
         </Card>
       </div>
 
-      <ContentGenerationModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        onConfirm={handleStartGeneration}
-      />
+      {/* Conditional rendering based on plan type */}
+      {selectedCompany?.plan_type === 'free' ? (
+        <PlanModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+      ) : (
+        <ContentGenerationModal
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          onConfirm={handleStartGeneration}
+        />
+      )}
     </>
   );
 }

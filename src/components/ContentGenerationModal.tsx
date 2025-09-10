@@ -27,7 +27,9 @@ import {
 } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
+import { useKnowledgeBase } from "@/hooks/useKnowledgeBase";
 import { useNavigate } from "react-router-dom";
+import { useCompanyContext } from "@/contexts/CompanyContext";
 
 interface ContentGenerationModalProps {
   open: boolean;
@@ -122,20 +124,27 @@ const contentFormats = [
 ];
 
 export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselectedOpportunity }: ContentGenerationModalProps) {
-  const [step, setStep] = useState(preselectedOpportunity ? 2 : 1);
+  const { companies, loading } = useCompanies();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
+  const { getKnowledgeItemByType } = useKnowledgeBase(selectedCompanyId || undefined);
+  const navigate = useNavigate();
+  
+  // Check if user is on free plan to skip opportunities step
+  const isFreePlan = selectedCompany?.plan_type === 'free';
+  const initialStep = isFreePlan ? 2 : (preselectedOpportunity ? 2 : 1);
+  
+  const [step, setStep] = useState(initialStep);
   const [selectedOpportunity, setSelectedOpportunity] = useState(preselectedOpportunity || "");
   const [selectedContentType, setSelectedContentType] = useState("");
-  const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedCompanyState, setSelectedCompanyState] = useState(selectedCompanyId || "");
   
-  const { companies, loading } = useCompanies();
-  const navigate = useNavigate();
-  const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedCompany);
+  const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedCompanyState);
 
   const resetModal = () => {
-    setStep(preselectedOpportunity ? 2 : 1);
+    setStep(initialStep);
     setSelectedOpportunity(preselectedOpportunity || "");
     setSelectedContentType("");
-    setSelectedCompany("");
+    setSelectedCompanyState(selectedCompanyId || "");
   };
 
   const handleClose = () => {
@@ -155,14 +164,42 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
     }
   };
 
+  // Get prioritized content formats from onboarding
+  const getPrioritizedFormats = () => {
+    try {
+      const onboardingData = getKnowledgeItemByType('onboarding_data');
+      const selectedFormats = onboardingData?.content?.contentFormats?.preferredFormats || [];
+      
+      // Sort selected formats by priority and put them first
+      const prioritizedFormats = selectedFormats
+        .sort((a: any, b: any) => a.priority - b.priority)
+        .map((format: any) => format.type);
+      
+      // Add remaining formats that weren't selected
+      const remainingFormats = contentFormats.filter(format => 
+        !prioritizedFormats.includes(format.type)
+      );
+      
+      // Combine prioritized + remaining
+      const prioritizedFormatObjects = prioritizedFormats
+        .map((type: string) => contentFormats.find(f => f.type === type))
+        .filter(Boolean);
+      
+      return [...prioritizedFormatObjects, ...remainingFormats];
+    } catch (error) {
+      console.error('Error getting prioritized formats:', error);
+      return contentFormats;
+    }
+  };
+
   const handleConfirm = async () => {
-    if (selectedOpportunity && selectedContentType && selectedCompany) {
+    if (selectedOpportunity && selectedContentType && selectedCompanyState) {
       try {
         // Call the actual generation function instead of just logging
         await onConfirm({
-          opportunityId: selectedOpportunity,
+          opportunityId: selectedOpportunity || 'onboarding-generated',
           contentType: selectedContentType,
-          companyId: selectedCompany
+          companyId: selectedCompanyState
         });
         handleClose();
       } catch (error) {
@@ -175,7 +212,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
     switch (step) {
       case 1: return selectedOpportunity !== "";
       case 2: return selectedContentType !== "";
-      case 3: return selectedCompany !== "" && canGenerateContent;
+      case 3: return selectedCompanyState !== "" && canGenerateContent;
       default: return false;
     }
   };
@@ -297,7 +334,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
           {/* Step 2: Select Content Format */}
           {step === 2 && (
             <div className="grid gap-3 md:grid-cols-2">
-              {contentFormats.map((format) => (
+              {getPrioritizedFormats().map((format) => (
                 <Card
                   key={format.type}
                   className={`cursor-pointer transition-all hover:shadow-md ${
@@ -330,8 +367,8 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
             <div className="space-y-4">
               <Label htmlFor="company-select">Empresa</Label>
               <Select 
-                value={selectedCompany} 
-                onValueChange={setSelectedCompany}
+                value={selectedCompanyState} 
+                onValueChange={setSelectedCompanyState}
                 disabled={loading}
               >
                 <SelectTrigger>
@@ -349,7 +386,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
                 </SelectContent>
               </Select>
               
-              {selectedCompany && !canGenerateContent && (
+              {selectedCompanyState && !canGenerateContent && (
                 <Alert className="border-amber-200 bg-amber-50">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800">
@@ -388,11 +425,11 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
                 </Alert>
               )}
               
-              {selectedCompany && canGenerateContent && (
+              {selectedCompanyState && canGenerateContent && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h4 className="font-medium mb-2 text-green-800">✓ Base de conhecimento válida ({completionPercentage}%)</h4>
                   <div className="text-sm text-green-700">
-                    {companies.find(c => c.id === selectedCompany)?.description || 
+                    {companies.find(c => c.id === selectedCompanyState)?.description || 
                      "A IA utilizará as informações de marca, público-alvo, produtos e estratégias desta empresa."}
                   </div>
                 </div>

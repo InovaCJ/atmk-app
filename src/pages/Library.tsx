@@ -18,17 +18,22 @@ import {
   Copy, 
   Star,
   Search,
+  Filter,
+  Sparkles,
   Calendar,
   Eye,
   ExternalLink,
   Mic,
   Edit2,
-  Images,
-  Sparkles
+  Images
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { ContentGenerationModal } from "@/components/ContentGenerationModal";
+import { PlanModal } from "@/components/PlanModal";
+import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
+import { useCompanyContext } from "@/contexts/CompanyContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 import { useNavigate } from "react-router-dom";
@@ -329,6 +334,15 @@ export default function Library() {
     });
   };
 
+  const handleGenerationConfirm = async (config: any) => {
+    try {
+      // Navigate to generate page to show loading screen
+      window.location.href = `/generate?config=${encodeURIComponent(JSON.stringify(config))}`;
+    } catch (error) {
+      console.error('Error generating content:', error);
+    }
+  };
+
   const handleRating = (contentId: number, newRating: number) => {
     setContentFeedbacks(prev => ({
       ...prev,
@@ -383,6 +397,25 @@ export default function Library() {
             Seus conteúdos gerados organizados por categoria
           </p>
         </div>
+        <Button 
+          onClick={() => {
+            if (!canGenerateContent) {
+              toast({
+                title: "Base de conhecimento incompleta",
+                description: `Complete pelo menos 50% da sua base de conhecimento para gerar conteúdos. Atual: ${completionPercentage}%`,
+                variant: "destructive"
+              });
+              navigate("/knowledge");
+              return;
+            }
+            setIsGenerationModalOpen(true);
+          }}
+          className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+          disabled={!canGenerateContent}
+        >
+          <Sparkles className="h-4 w-4 mr-2" />
+          Gerar Novo Conteúdo
+        </Button>
       </div>
 
       {/* Search and Tabs */}
@@ -738,7 +771,21 @@ export default function Library() {
             )}
           </div>
         </SheetContent>
-      </Sheet>
-    </div>
-  );
-}
+        </Sheet>
+
+        {/* Content Generation Modal */}
+        {selectedCompany?.plan_type === 'free' ? (
+          <PlanModal 
+            isOpen={isGenerationModalOpen} 
+            onClose={() => setIsGenerationModalOpen(false)} 
+          />
+        ) : (
+          <ContentGenerationModal
+            open={isGenerationModalOpen}
+            onOpenChange={setIsGenerationModalOpen}
+            onConfirm={handleGenerationConfirm}
+          />
+        )}
+      </div>
+    );
+  }
