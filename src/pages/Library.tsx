@@ -61,6 +61,11 @@ const EmptyState = ({ type, title, description, icon }: {
 
   const handleGenerate = async (config: any) => {
     try {
+      toast({
+        title: "Gerando conteúdo...",
+        description: "Nossa IA está criando seu conteúdo personalizado. Isso pode levar alguns segundos.",
+      });
+      
       const { generateContentWithAI } = await import('@/utils/contentGeneration');
       await generateContentWithAI(config);
       // The utility function handles all toasts and UI feedback
@@ -354,8 +359,20 @@ export default function Library() {
 
   const handleGenerationConfirm = async (config: any) => {
     try {
-      // Navigate to generate page to show loading screen
-      window.location.href = `/generate?config=${encodeURIComponent(JSON.stringify(config))}`;
+      setIsGenerationModalOpen(false);
+      
+      // Show loading toast
+      toast({
+        title: "Gerando conteúdo...",
+        description: "Nossa IA está criando seu conteúdo personalizado. Isso pode levar alguns segundos.",
+      });
+
+      const { generateContentWithAI } = await import('@/utils/contentGeneration');
+      await generateContentWithAI(config);
+      
+      // Content generation utility already shows success toast
+      // No need to navigate - we're already in the library
+      
     } catch (error) {
       console.error('Error generating content:', error);
     }

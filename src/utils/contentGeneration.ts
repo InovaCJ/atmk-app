@@ -37,6 +37,11 @@ export async function generateContentWithAI(config: GenerationConfig) {
       description: "Seu conteúdo foi criado e salvo na biblioteca.",
     });
 
+    // Trigger a page refresh to show the new content in the library
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+
     return data.content;
 
   } catch (error) {
