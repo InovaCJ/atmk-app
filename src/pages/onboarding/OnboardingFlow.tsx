@@ -10,6 +10,8 @@ import { toast } from "@/hooks/use-toast";
 import { OnboardingData } from "@/types/onboarding";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useKnowledgeBase } from "@/hooks/useKnowledgeBase";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export function OnboardingFlow() {
   const navigate = useNavigate();
@@ -59,57 +61,101 @@ export function OnboardingFlow() {
   const finalizeOnboarding = async () => {
     try {
       console.log('Finalizing onboarding with data:', onboardingData);
-      console.log('Current companies:', companies);
       
-      let currentCompany = companies.length > 0 ? companies[0] : null;
+      // Garantir que o usuário está autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.error('User not authenticated');
+        toast({
+          title: "Erro de autenticação",
+          description: "Usuário não autenticado. Faça login novamente.",
+          variant: "destructive"
+        });
+        navigate('/auth');
+        return;
+      }
+
+      console.log('User authenticated:', user.email);
+      
+      const companyName = onboardingData.basicInfo?.companyName?.trim();
+      if (!companyName) {
+        console.error('Company name not provided');
+        toast({
+          title: "Erro",
+          description: "Nome da empresa não informado. Volte à primeira etapa e preencha o nome da empresa.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Verificar se já existe empresa para o usuário
+      console.log('Checking existing companies for user:', user.id);
+      const { data: existingCompanies, error: fetchError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('owner_id', user.id);
+
+      if (fetchError) {
+        console.error('Error fetching companies:', fetchError);
+      } else {
+        console.log('Existing companies:', existingCompanies);
+      }
+
+      let currentCompany = existingCompanies && existingCompanies.length > 0 ? existingCompanies[0] : null;
 
       // Se não existe empresa, criar uma automaticamente
-      const companyName = onboardingData.basicInfo?.companyName?.trim();
-      if (!currentCompany && companyName) {
-        console.log('Creating company automatically with name:', companyName);
+      if (!currentCompany) {
+        console.log('Creating company directly with Supabase client. Company name:', companyName);
         
-        currentCompany = await createCompany({
-          name: companyName,
-          description: null,
-          website: null,
-          industry: null,
-          target_audience: null,
-          brand_voice: null,
-          logo_url: null,
-          plan_type: 'free' as const,
-          plan_expires_at: null
-        });
+        const { data: newCompany, error: createError } = await supabase
+          .from('companies')
+          .insert({
+            name: companyName,
+            owner_id: user.id,
+            description: null,
+            website: null,
+            industry: null,
+            target_audience: null,
+            brand_voice: null,
+            logo_url: null,
+            plan_type: 'free' as const,
+            plan_expires_at: null
+          })
+          .select()
+          .single();
 
-        if (!currentCompany) {
-          console.error('Failed to create company');
+        if (createError) {
+          console.error('Error creating company:', createError);
           toast({
-            title: "Erro",
-            description: "Não foi possível criar a empresa. Tente novamente.",
+            title: "Erro ao criar empresa",
+            description: `Erro: ${createError.message}`,
             variant: "destructive"
           });
           return;
         }
 
+        currentCompany = newCompany;
         console.log('Company created successfully:', currentCompany);
+        
         toast({
           title: "Empresa criada!",
-          description: `Empresa "${currentCompany.name}" foi criada automaticamente.`,
+          description: `Empresa "${currentCompany.name}" foi criada com sucesso.`,
         });
       }
 
       if (!currentCompany) {
-        console.error('No company available and could not create one. Company name:', companyName);
+        console.error('No company available after creation attempt');
         toast({
           title: "Erro",
-          description: !companyName 
-            ? "Nome da empresa não informado. Volte à primeira etapa e preencha o nome da empresa."
-            : "Nenhuma empresa encontrada e não foi possível criar uma automaticamente.",
+          description: "Não foi possível criar ou encontrar uma empresa. Tente novamente.",
           variant: "destructive"
         });
         return;
       }
 
       // Salvar dados completos do onboarding na base de conhecimento
+      console.log('Saving onboarding data for company:', currentCompany.id);
       await saveOnboardingDataForCompany(onboardingData, currentCompany.name, currentCompany.id);
       
       toast({
@@ -122,13 +168,14 @@ export function OnboardingFlow() {
         navigate("/generate");
       }, 1500);
     } catch (error) {
-      console.error('Error saving onboarding data:', error);
+      console.error('Error in finalizeOnboarding:', error);
       toast({
         title: "Erro",
-        description: "Erro ao salvar dados do onboarding. Redirecionando mesmo assim...",
+        description: "Erro ao finalizar onboarding. Tente novamente.",
         variant: "destructive"
       });
       
+      // Em caso de erro, ainda navegar para não deixar o usuário preso
       setTimeout(() => {
         navigate("/generate");
       }, 2000);
