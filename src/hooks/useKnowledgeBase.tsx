@@ -187,6 +187,78 @@ export const useKnowledgeBase = (companyId?: string) => {
     );
   };
 
+  const saveOnboardingDataForCompany = async (data: any, companyName: string, targetCompanyId: string) => {
+    if (!user || !targetCompanyId) {
+      console.error('User or company ID not available');
+      return null;
+    }
+
+    try {
+      const title = `Onboarding - ${companyName}`;
+      const tags = ['onboarding', 'brand', 'business', 'audience'];
+
+      // Check if item already exists
+      const { data: existing } = await supabase
+        .from('knowledge_base')
+        .select('id')
+        .eq('company_id', targetCompanyId)
+        .eq('content_type', 'onboarding_data')
+        .maybeSingle();
+
+      let result;
+      if (existing) {
+        // Update existing
+        const { data: updated, error } = await supabase
+          .from('knowledge_base')
+          .update({
+            title,
+            content: JSON.stringify(data),
+            metadata: data,
+            tags,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existing.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        result = updated;
+      } else {
+        // Create new
+        const { data: created, error } = await supabase
+          .from('knowledge_base')
+          .insert({
+            company_id: targetCompanyId,
+            title,
+            content: JSON.stringify(data),
+            content_type: 'onboarding_data',
+            metadata: data,
+            tags
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        result = created;
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Dados do onboarding salvos com sucesso!"
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error saving onboarding data:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar dados do onboarding.",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
   return {
     items,
     loading,
@@ -194,6 +266,7 @@ export const useKnowledgeBase = (companyId?: string) => {
     deleteKnowledgeItem,
     getKnowledgeItemByType,
     saveOnboardingData,
+    saveOnboardingDataForCompany,
     refreshKnowledgeItems: fetchKnowledgeItems
   };
 };

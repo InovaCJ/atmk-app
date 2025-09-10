@@ -17,8 +17,8 @@ export function OnboardingFlow() {
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     completedSteps: []
   });
-  const { companies } = useCompanies();
-  const { saveOnboardingData } = useKnowledgeBase(companies[0]?.id);
+  const { companies, createCompany } = useCompanies();
+  const { saveOnboardingDataForCompany } = useKnowledgeBase();
 
   const handleStepNext = async (stepData: any, step: number) => {
     const stepKeys = ['basicInfo', 'brandIdentity', 'business', 'audience', 'seo', 'contentFormats'];
@@ -57,18 +57,51 @@ export function OnboardingFlow() {
   };
 
   const finalizeOnboarding = async () => {
-    if (companies.length === 0) {
-      toast({
-        title: "Erro",
-        description: "Nenhuma empresa encontrada para salvar os dados.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
+      let currentCompany = companies.length > 0 ? companies[0] : null;
+
+      // Se não existe empresa, criar uma automaticamente
+      if (!currentCompany && onboardingData.basicInfo?.companyName) {
+        console.log('Creating company automatically with name:', onboardingData.basicInfo.companyName);
+        
+        currentCompany = await createCompany({
+          name: onboardingData.basicInfo.companyName,
+          description: null,
+          website: null,
+          industry: null,
+          target_audience: null,
+          brand_voice: null,
+          logo_url: null,
+          plan_type: 'free' as const,
+          plan_expires_at: null
+        });
+
+        if (!currentCompany) {
+          toast({
+            title: "Erro",
+            description: "Não foi possível criar a empresa. Tente novamente.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        toast({
+          title: "Empresa criada!",
+          description: `Empresa "${currentCompany.name}" foi criada automaticamente.`,
+        });
+      }
+
+      if (!currentCompany) {
+        toast({
+          title: "Erro",
+          description: "Nenhuma empresa encontrada e não foi possível criar uma automaticamente.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Salvar dados completos do onboarding na base de conhecimento
-      await saveOnboardingData(onboardingData, companies[0].name);
+      await saveOnboardingDataForCompany(onboardingData, currentCompany.name, currentCompany.id);
       
       toast({
         title: "Onboarding concluído!",
