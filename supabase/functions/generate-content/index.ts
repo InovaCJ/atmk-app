@@ -329,12 +329,25 @@ async function saveGeneratedContent(
     throw new Error('User not authenticated');
   }
 
+  // Map content types to valid enum values
+  const mapContentType = (type: string): string => {
+    switch (type) {
+      case 'social': return 'post';
+      case 'email': return 'newsletter';
+      case 'blog': return 'article';
+      case 'podcast':
+      case 'video':
+      case 'webinar': return 'post'; // These are mapped to post for now
+      default: return 'post';
+    }
+  };
+
   // Save to content_calendar table
   const contentData = {
     company_id: companyId,
     title: content.title || `Conteúdo ${contentType}`,
     content: typeof content.content === 'string' ? content.content : JSON.stringify(content),
-    content_type: contentType === 'social' ? 'post' : contentType,
+    content_type: mapContentType(contentType),
     status: 'draft',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
