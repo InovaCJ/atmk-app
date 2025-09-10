@@ -43,18 +43,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // User is logged in
           const currentPath = window.location.pathname;
           
-          // If user is on auth page, redirect to onboarding for new users or dashboard for existing users
+          // If user is on auth page, redirect to dashboard
           if (currentPath === '/auth') {
-            // Check if user needs onboarding (you can customize this logic)
-            navigate('/onboarding');
+            navigate('/');
           }
         } else {
-          // User is logged out
+          // User is logged out - only redirect if not on allowed public pages
           const currentPath = window.location.pathname;
+          const allowedPaths = ['/onboarding', '/auth'];
           
-          // Redirect to onboarding (which includes signup) for new users
-          if (currentPath !== '/onboarding' && currentPath !== '/auth') {
-            navigate('/onboarding');
+          if (!allowedPaths.includes(currentPath)) {
+            navigate('/auth');
           }
         }
         
@@ -69,11 +68,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // If no session, redirect to onboarding
+        // If no session, allow staying on onboarding or redirect to auth
         if (!session) {
           const currentPath = window.location.pathname;
           if (currentPath !== '/onboarding' && currentPath !== '/auth') {
-            navigate('/onboarding');
+            navigate('/auth');
           }
         }
       } catch (error) {

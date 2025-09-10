@@ -103,13 +103,30 @@ export function BasicInfo({ onNext, onSkip, initialData = {} }: BasicInfoProps) 
       }
 
       if (data.user) {
-        toast({
-          title: "Conta criada com sucesso!",
-          description: "Vamos configurar seu perfil e empresa.",
-        });
-        
-        // Continue to next step
-        onNext(formData);
+        // Se o usuário foi criado mas não há sessão (email precisa ser confirmado)
+        if (!data.session) {
+          toast({
+            title: "Conta criada!",
+            description: "Verifique seu email para confirmar a conta e continue o onboarding.",
+            variant: "default"
+          });
+          
+          // Aguarda alguns segundos para o usuário ler a mensagem, então continua
+          setTimeout(() => {
+            toast({
+              title: "Continuando onboarding...",
+              description: "Vamos configurar seu perfil enquanto aguarda a confirmação.",
+            });
+            onNext(formData);
+          }, 3000);
+        } else {
+          // Usuário logado automaticamente
+          toast({
+            title: "Conta criada com sucesso!",
+            description: "Vamos configurar seu perfil e empresa.",
+          });
+          onNext(formData);
+        }
       }
     } catch (error: any) {
       toast({
