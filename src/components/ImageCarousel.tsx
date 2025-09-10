@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Copy, Download, Loader2, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useUnsplashImages } from "@/hooks/useUnsplashImages";
 
 interface ImageCarouselProps {
   images: string[];
@@ -13,57 +12,14 @@ interface ImageCarouselProps {
 
 export function ImageCarousel({ images, captions = [], title }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  
-  // Verificar se as imagens são placeholders ou estão vazias
-  const hasPlaceholderImages = images.length === 0 || images.every(img => 
-    img.includes('/placeholder.svg') || img.includes('placeholder') || img === ''
-  );
-  
-  // Buscar imagens do Unsplash se necessário
-  const { images: unsplashImages, loading, error } = useUnsplashImages(
-    hasPlaceholderImages ? title : '', 
-    hasPlaceholderImages ? Math.max(images.length, 5) : 0
-  );
-  
-  // Usar imagens do Unsplash se as originais são placeholders
-  const finalImages = hasPlaceholderImages && unsplashImages.length > 0 ? unsplashImages : images;
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % finalImages.length);
+    setCurrentIndex((prev) => (prev + 1) % images.length);
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + finalImages.length) % finalImages.length);
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   };
-
-  // Se está carregando imagens do Unsplash
-  if (hasPlaceholderImages && loading) {
-    return (
-      <div className="w-full space-y-4">
-        <div className="flex items-center justify-center py-16">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-sm text-muted-foreground">Carregando imagens relacionadas...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Se não há imagens para mostrar
-  if (finalImages.length === 0) {
-    return (
-      <div className="w-full space-y-4">
-        <div className="flex items-center justify-center py-16 border-2 border-dashed rounded-lg">
-          <div className="text-center">
-            <RefreshCw className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Nenhuma imagem disponível</p>
-            {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -100,18 +56,10 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
 
   return (
     <div className="w-full space-y-4">
-      {/* Header com info sobre imagens do Unsplash */}
-      {hasPlaceholderImages && unsplashImages.length > 0 && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 px-3 py-2 rounded-lg">
-          <RefreshCw className="h-3 w-3" />
-          Imagens sugeridas baseadas no tema: "{title}"
-        </div>
-      )}
-      
       {/* Navigation Indicator */}
       <div className="flex items-center justify-between">
         <div className="flex gap-1">
-          {finalImages.map((_, index) => (
+          {images.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
@@ -122,7 +70,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
           ))}
         </div>
         <span className="text-sm text-muted-foreground">
-          {currentIndex + 1} de {finalImages.length}
+          {currentIndex + 1} de {images.length}
         </span>
       </div>
 
@@ -133,7 +81,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
             className="flex transition-transform duration-300 ease-in-out w-full"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
-            {finalImages.map((image, index) => (
+            {images.map((image, index) => (
               <div key={index} className="w-full flex-shrink-0 space-y-3">
                 {/* Caption */}
                 <div className="flex items-start gap-2 px-2">
@@ -157,7 +105,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
                   <img 
                     src={image} 
                     alt={`Slide ${index + 1}`} 
-                    className="w-96 h-96 object-cover rounded-lg shadow-lg" 
+                    className="w-96 h-96 object-cover rounded-lg" 
                   />
                 </div>
                 
@@ -179,7 +127,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
         </div>
 
         {/* Navigation Arrows */}
-        {finalImages.length > 1 && (
+        {images.length > 1 && (
           <>
             <Button
               variant="outline"
@@ -203,7 +151,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
 
       {/* Thumbnail Navigation */}
       <div className="flex gap-2 overflow-x-auto pb-2 px-2">
-        {finalImages.map((image, index) => (
+        {images.map((image, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
