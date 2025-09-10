@@ -14,12 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
   Target, 
   Users, 
   Search, 
-  FileText, 
   X, 
   Plus,
   Save,
-  Trash2,
-  Edit
+  Trash2
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -257,142 +255,6 @@ export default function Knowledge() {
     });
   };
 
-  const formatOptions = [
-    { type: 'email', label: 'E-mail Marketing' },
-    { type: 'blog', label: 'Blog Post' },
-    { type: 'social', label: 'Post para Redes Sociais' },
-    { type: 'video', label: 'Roteiro para Vídeo' },
-    { type: 'podcast', label: 'Roteiro para Podcast' },
-    { type: 'webinar', label: 'Roteiro para Webinar' }
-  ];
-
-  const [selectedFormat, setSelectedFormat] = useState({
-    type: 'email',
-    priority: 1,
-    frequency: '',
-    platforms: [] as string[]
-  });
-
-  const [editingFormatIndex, setEditingFormatIndex] = useState<number | null>(null);
-
-  const addFormat = () => {
-    if (!selectedFormat.frequency || !selectedFormat.type) {
-      toast({
-        title: "Erro",
-        description: "Preencha todos os campos obrigatórios.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (editingFormatIndex !== null) {
-      // Editando formato existente
-      setKnowledgeData(prev => ({
-        ...prev,
-        contentFormats: {
-          ...prev.contentFormats,
-          preferredFormats: prev.contentFormats?.preferredFormats?.map((format, index) => 
-            index === editingFormatIndex 
-              ? {
-                  type: selectedFormat.type as "email" | "blog" | "social" | "video" | "podcast" | "webinar",
-                  priority: selectedFormat.priority,
-                  frequency: selectedFormat.frequency,
-                  platforms: selectedFormat.platforms
-                }
-              : format
-          ) || []
-        }
-      }));
-      
-      setEditingFormatIndex(null);
-      toast({
-        title: "Sucesso",
-        description: "Formato de conteúdo atualizado com sucesso!"
-      });
-    } else {
-      // Adicionando novo formato
-      // Verificar se o formato já existe
-      const exists = knowledgeData.contentFormats?.preferredFormats?.some(
-        format => format.type === selectedFormat.type && format.frequency === selectedFormat.frequency
-      );
-      
-      if (exists) {
-        toast({
-          title: "Formato já existe",
-          description: "Este formato com essa frequência já foi adicionado.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      setKnowledgeData(prev => ({
-        ...prev,
-        contentFormats: {
-          ...prev.contentFormats,
-          preferredFormats: [
-            ...(prev.contentFormats?.preferredFormats || []),
-            {
-              type: selectedFormat.type as "email" | "blog" | "social" | "video" | "podcast" | "webinar",
-              priority: selectedFormat.priority,
-              frequency: selectedFormat.frequency,
-              platforms: selectedFormat.platforms
-            }
-          ]
-        }
-      }));
-      
-      toast({
-        title: "Sucesso",
-        description: "Formato de conteúdo adicionado com sucesso!"
-      });
-    }
-    
-    setSelectedFormat({
-      type: 'email',
-      priority: 1,
-      frequency: '',
-      platforms: []
-    });
-  };
-
-  const editFormat = (index: number) => {
-    const format = knowledgeData.contentFormats?.preferredFormats?.[index];
-    if (format) {
-      setSelectedFormat({
-        type: format.type,
-        priority: format.priority,
-        frequency: format.frequency,
-        platforms: format.platforms || []
-      });
-      setEditingFormatIndex(index);
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingFormatIndex(null);
-    setSelectedFormat({
-      type: 'email',
-      priority: 1,
-      frequency: '',
-      platforms: []
-    });
-  };
-
-  const removeFormat = (index: number) => {
-    setKnowledgeData(prev => ({
-      ...prev,
-      contentFormats: {
-        ...prev.contentFormats,
-        preferredFormats: prev.contentFormats?.preferredFormats?.filter((_, i) => i !== index) || []
-      }
-    }));
-    
-    toast({
-      title: "Sucesso",
-      description: "Formato de conteúdo removido com sucesso!"
-    });
-  };
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-8">
@@ -403,7 +265,7 @@ export default function Knowledge() {
       </div>
 
       <Tabs defaultValue="identidade" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="identidade" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
             Identidade
@@ -419,10 +281,6 @@ export default function Knowledge() {
           <TabsTrigger value="seo" className="flex items-center gap-2">
             <Search className="h-4 w-4" />
             SEO
-          </TabsTrigger>
-          <TabsTrigger value="formatos" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Formatos
           </TabsTrigger>
         </TabsList>
 
@@ -980,112 +838,6 @@ export default function Knowledge() {
                   </div>
                 </div>
               </div>
-
-              <div className="flex justify-end">
-                <Button 
-                  onClick={saveData} 
-                  className="flex items-center gap-2"
-                  disabled={!selectedCompanyId || knowledgeLoading}
-                >
-                  <Save className="h-4 w-4" />
-                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Formatos de Conteúdo */}
-        <TabsContent value="formatos" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Formatos de Conteúdo</CardTitle>
-              <CardDescription>
-                Configure os formatos preferidos para criação de conteúdo
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg">
-                  <div className="space-y-2">
-                    <Label htmlFor="formatType">Tipo de Conteúdo</Label>
-                    <Select value={selectedFormat.type} onValueChange={(value) => setSelectedFormat({...selectedFormat, type: value as any})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formatOptions.map((option) => (
-                          <SelectItem key={option.type} value={option.type}>{option.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="frequency">Frequência</Label>
-                    <Select value={selectedFormat.frequency} onValueChange={(value) => setSelectedFormat({...selectedFormat, frequency: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily">Diário</SelectItem>
-                        <SelectItem value="weekly">Semanal</SelectItem>
-                        <SelectItem value="monthly">Mensal</SelectItem>
-                        <SelectItem value="quarterly">Trimestral</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Prioridade</Label>
-                    <Select value={selectedFormat.priority.toString()} onValueChange={(value) => setSelectedFormat({...selectedFormat, priority: parseInt(value)})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Alta</SelectItem>
-                        <SelectItem value="2">Média</SelectItem>
-                        <SelectItem value="3">Baixa</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Button onClick={addFormat} disabled={!selectedFormat.frequency}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Formato
-                </Button>
-              </div>
-
-              {knowledgeData.contentFormats?.preferredFormats && knowledgeData.contentFormats.preferredFormats.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Formatos Configurados</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {knowledgeData.contentFormats.preferredFormats.map((format, index) => (
-                      <div key={index} className="p-4 border rounded-lg flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium">
-                            {formatOptions.find(opt => opt.type === format.type)?.label}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            Frequência: {format.frequency}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Prioridade: {format.priority === 1 ? 'Alta' : format.priority === 2 ? 'Média' : 'Baixa'}
-                          </p>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => removeFormat(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <div className="flex justify-end">
                 <Button 
