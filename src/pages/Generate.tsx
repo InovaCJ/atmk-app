@@ -6,8 +6,8 @@ import { ArrowLeft, FileSearch, Sparkles, Wand2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
-import { useCompanies } from "@/hooks/useCompanies";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
+import { useCompanyContext } from "@/contexts/CompanyContext";
 
 export default function Generate() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -15,11 +15,9 @@ export default function Generate() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { companies } = useCompanies();
+  const { selectedCompanyId } = useCompanyContext();
   
-  // Usar primeira empresa para validação ou undefined se não houver
-  const selectedCompanyId = companies.length > 0 ? companies[0].id : undefined;
-  const { canGenerateContent, completionPercentage } = useKnowledgeValidation(selectedCompanyId);
+  const { canGenerateContent, completionPercentage } = useKnowledgeValidation(selectedCompanyId || undefined);
 
   // Auto-start generation if coming from onboarding or with config from dashboard
   useEffect(() => {

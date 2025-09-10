@@ -15,19 +15,17 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { toast } from "@/hooks/use-toast";
-import { useCompanies } from "@/hooks/useCompanies";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 import { useNavigate } from "react-router-dom";
+import { useCompanyContext } from "@/contexts/CompanyContext";
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | undefined>();
-  const { companies } = useCompanies();
+  const { selectedCompanyId } = useCompanyContext();
   const navigate = useNavigate();
   
-  // Usar primeira empresa para validação ou undefined se não houver
-  const selectedCompanyId = companies.length > 0 ? companies[0].id : undefined;
-  const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedCompanyId);
+  const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedCompanyId || undefined);
 
   // Mock data para trends/oportunidades de conteúdo
   const opportunities = [

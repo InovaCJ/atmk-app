@@ -23,12 +23,12 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useKnowledgeBase } from "@/hooks/useKnowledgeBase";
+import { useCompanyContext } from "@/contexts/CompanyContext";
 import type { OnboardingData, BrandIdentityData, BusinessData, AudienceData, SEOData, ContentFormatsData } from "@/types/onboarding";
 
 export default function Knowledge() {
-  const { companies, loading } = useCompanies();
-  const [selectedCompany, setSelectedCompany] = useState("");
-  const { createOrUpdateKnowledgeItem, getKnowledgeItemByType, loading: knowledgeLoading } = useKnowledgeBase(selectedCompany);
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
+  const { createOrUpdateKnowledgeItem, getKnowledgeItemByType, loading: knowledgeLoading } = useKnowledgeBase(selectedCompanyId || undefined);
 
   const [knowledgeData, setKnowledgeData] = useState<OnboardingData>({
     brandIdentity: {
@@ -107,20 +107,13 @@ export default function Knowledge() {
 
   // Auto-select first company when companies are loaded
   useEffect(() => {
-    if (companies.length > 0 && !selectedCompany) {
-      setSelectedCompany(companies[0].id);
-    }
-  }, [companies, selectedCompany]);
-
-  // Load data from Supabase when company is selected
-  useEffect(() => {
-    if (selectedCompany) {
+    if (selectedCompanyId) {
       loadKnowledgeData();
     }
-  }, [selectedCompany, getKnowledgeItemByType]);
+  }, [selectedCompanyId, getKnowledgeItemByType]);
 
   const loadKnowledgeData = () => {
-    if (!selectedCompany) return;
+    if (!selectedCompanyId) return;
     
     const knowledgeItem = getKnowledgeItemByType('onboarding_data');
     if (knowledgeItem && knowledgeItem.metadata) {
@@ -181,7 +174,7 @@ export default function Knowledge() {
   };
 
   const saveData = async () => {
-    if (!selectedCompany) {
+    if (!selectedCompanyId) {
       toast({
         title: "Erro",
         description: "Selecione uma empresa primeiro.",
@@ -190,8 +183,7 @@ export default function Knowledge() {
       return;
     }
 
-    const selectedCompanyData = companies.find(c => c.id === selectedCompany);
-    const companyName = selectedCompanyData?.name || 'Empresa';
+    const companyName = selectedCompany?.name || 'Empresa';
 
     const existingItem = getKnowledgeItemByType('onboarding_data');
     
@@ -352,32 +344,9 @@ export default function Knowledge() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">Base de Conhecimento</h1>
         <p className="text-muted-foreground">
-          Gerencie e edite todas as informações da sua empresa e estratégia de marca
+          Gerencie e edite todas as informações da {selectedCompany?.name || 'empresa'}
         </p>
       </div>
-
-      {/* Seletor de Empresa */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <Label htmlFor="company-select" className="font-medium">
-              Configurando empresa:
-            </Label>
-            <Select value={selectedCompany} onValueChange={setSelectedCompany} disabled={loading}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder={loading ? "Carregando..." : "Selecione uma empresa"} />
-              </SelectTrigger>
-              <SelectContent>
-                {companies.map((company) => (
-                  <SelectItem key={company.id} value={company.id}>
-                    {company.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
 
       <Tabs defaultValue="identidade" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
@@ -487,7 +456,7 @@ export default function Knowledge() {
                 <Button 
                   onClick={saveData} 
                   className="flex items-center gap-2"
-                  disabled={!selectedCompany || knowledgeLoading}
+                  disabled={!selectedCompanyId || knowledgeLoading}
                 >
                   <Save className="h-4 w-4" />
                   {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
@@ -613,7 +582,7 @@ export default function Knowledge() {
                 <Button 
                   onClick={saveData} 
                   className="flex items-center gap-2"
-                  disabled={!selectedCompany || knowledgeLoading}
+                  disabled={!selectedCompanyId || knowledgeLoading}
                 >
                   <Save className="h-4 w-4" />
                   {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
@@ -818,7 +787,7 @@ export default function Knowledge() {
                 <Button 
                   onClick={saveData} 
                   className="flex items-center gap-2"
-                  disabled={!selectedCompany || knowledgeLoading}
+                  disabled={!selectedCompanyId || knowledgeLoading}
                 >
                   <Save className="h-4 w-4" />
                   {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
@@ -962,7 +931,7 @@ export default function Knowledge() {
                 <Button 
                   onClick={saveData} 
                   className="flex items-center gap-2"
-                  disabled={!selectedCompany || knowledgeLoading}
+                  disabled={!selectedCompanyId || knowledgeLoading}
                 >
                   <Save className="h-4 w-4" />
                   {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
@@ -1068,7 +1037,7 @@ export default function Knowledge() {
                 <Button 
                   onClick={saveData} 
                   className="flex items-center gap-2"
-                  disabled={!selectedCompany || knowledgeLoading}
+                  disabled={!selectedCompanyId || knowledgeLoading}
                 >
                   <Save className="h-4 w-4" />
                   {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
