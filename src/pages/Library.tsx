@@ -520,16 +520,14 @@ export default function Library() {
 
               {selectedContent.type === "social" && (
                 <div className="space-y-4">
-                  {selectedContent.images && selectedContent.images.length > 0 && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Imagens do Carrossel</label>
-                      <ImageCarousel 
-                        images={selectedContent.images}
-                        captions={selectedContent.captions}
-                        title={selectedContent.title}
-                      />
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Imagens do Carrossel</label>
+                    <ImageCarousel 
+                      images={selectedContent.images || []}
+                      captions={selectedContent.captions}
+                      title={selectedContent.title}
+                    />
+                  </div>
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -554,16 +552,14 @@ export default function Library() {
 
               {selectedContent.type === "carrossel" && (
                 <div className="space-y-4">
-                  {selectedContent.images && selectedContent.images.length > 0 && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Imagens do Carrossel</label>
-                      <ImageCarousel 
-                        images={selectedContent.images}
-                        captions={selectedContent.slides?.map((slide: any) => slide.title)}
-                        title={selectedContent.title}
-                      />
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Imagens do Carrossel</label>
+                    <ImageCarousel 
+                      images={selectedContent.images || []}
+                      captions={selectedContent.slides?.map((slide: any) => slide.title)}
+                      title={selectedContent.title}
+                    />
+                  </div>
                   
                   {selectedContent.slides && selectedContent.slides.length > 0 && (
                     <div className="space-y-2">
