@@ -29,23 +29,19 @@ export const useKnowledgeValidation = (companyId?: string) => {
     const data: OnboardingData = knowledgeItem.metadata;
     const missingFields: string[] = [];
     let filledFields = 0;
-    const totalFields = 15; // Total de campos obrigatórios
+    const totalFields = 10; // Total de campos obrigatórios
 
-    // Validar Brand Identity (5 campos obrigatórios)
-    if (!data.brandIdentity?.mission?.trim()) {
-      missingFields.push('Missão da empresa');
-    } else filledFields++;
-
-    if (!data.brandIdentity?.vision?.trim()) {
-      missingFields.push('Visão da empresa');
-    } else filledFields++;
-
+    // Validar Brand Identity (3 campos obrigatórios)
     if (!data.brandIdentity?.valueProposition?.trim()) {
       missingFields.push('Proposta de valor');
     } else filledFields++;
 
-    if (!data.brandIdentity?.values || data.brandIdentity.values.length === 0) {
-      missingFields.push('Valores da empresa');
+    if (!data.brandIdentity?.differentials || data.brandIdentity.differentials.length === 0) {
+      missingFields.push('Diferenciais da empresa');
+    } else filledFields++;
+
+    if (!data.brandIdentity?.wordsToUse || data.brandIdentity.wordsToUse.length === 0) {
+      missingFields.push('Palavras que usamos');
     } else filledFields++;
 
     if (!data.brandIdentity?.personalityScales) {

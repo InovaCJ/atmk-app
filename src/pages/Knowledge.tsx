@@ -32,23 +32,15 @@ export default function Knowledge() {
 
   const [knowledgeData, setKnowledgeData] = useState<OnboardingData>({
     brandIdentity: {
-      mission: "",
-      vision: "",
-      values: [],
-      purpose: "",
-      archetypes: [],
       valueProposition: "",
       differentials: [],
-      categories: [],
       personalityScales: {
         formalInformal: 3,
         technicalAccessible: 3,
         seriousFun: 3
       },
       wordsToUse: [],
-      wordsToBan: [],
-      slogans: [],
-      messagePillars: []
+      wordsToBan: []
     },
     business: {
       sector: "",
@@ -90,13 +82,9 @@ export default function Knowledge() {
   });
 
   // Temporary input states
-  const [newValue, setNewValue] = useState("");
   const [newDifferential, setNewDifferential] = useState("");
-  const [newArchetype, setNewArchetype] = useState("");
-  const [newCategory, setNewCategory] = useState("");
   const [newWordToUse, setNewWordToUse] = useState("");
   const [newWordToBan, setNewWordToBan] = useState("");
-  const [newSlogan, setNewSlogan] = useState("");
   const [newKeyword, setNewKeyword] = useState("");
   const [newSearchIntent, setNewSearchIntent] = useState("");
   const [newProduct, setNewProduct] = useState({ name: "", features: [], priceRange: "" });
@@ -141,23 +129,15 @@ export default function Knowledge() {
       // Se não houver dados salvos, resetar para o estado inicial
       setKnowledgeData({
         brandIdentity: {
-          mission: "",
-          vision: "",
-          values: [],
-          purpose: "",
-          archetypes: [],
           valueProposition: "",
           differentials: [],
-          categories: [],
           personalityScales: {
             formalInformal: 3,
             technicalAccessible: 3,
             seriousFun: 3
           },
           wordsToUse: [],
-          wordsToBan: [],
-          slogans: [],
-          messagePillars: []
+          wordsToBan: []
         },
         business: {
           sector: "",
@@ -381,62 +361,12 @@ export default function Knowledge() {
         <TabsContent value="identidade" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Essência da Marca</CardTitle>
+              <CardTitle>Posicionamento</CardTitle>
               <CardDescription>
-                Defina a missão, visão e valores da sua marca
+                Defina como sua marca se posiciona no mercado
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="mission">Missão *</Label>
-                <Textarea
-                  id="mission"
-                  placeholder="Por que sua empresa existe? Qual o propósito dela?"
-                  value={knowledgeData.brandIdentity?.mission || ""}
-                  onChange={(e) => updateBrandIdentity("mission", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="vision">Visão *</Label>
-                <Textarea
-                  id="vision"
-                  placeholder="Como você enxerga o futuro da sua empresa?"
-                  value={knowledgeData.brandIdentity?.vision || ""}
-                  onChange={(e) => updateBrandIdentity("vision", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Valores da Empresa</Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Digite um valor"
-                    value={newValue}
-                    onChange={(e) => setNewValue(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        addToArray('brandIdentity', 'values', newValue, setNewValue);
-                      }
-                    }}
-                  />
-                  <Button onClick={() => addToArray('brandIdentity', 'values', newValue, setNewValue)}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {knowledgeData.brandIdentity?.values?.map((value, index) => (
-                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                      {value}
-                      <X 
-                        className="h-3 w-3 cursor-pointer" 
-                        onClick={() => removeFromArray('brandIdentity', 'values', index)}
-                      />
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="valueProposition">Proposta de Valor *</Label>
                 <Textarea

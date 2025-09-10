@@ -1,19 +1,14 @@
 export interface BasicInfoData {
   fullName: string;
   email: string;
+  password: string;
   phone: string;
   companyName: string;
 }
 
 export interface BrandIdentityData {
-  mission: string;
-  vision: string;
-  values: string[];
-  purpose: string;
-  archetypes: string[];
   valueProposition: string;
   differentials: string[];
-  categories: string[];
   personalityScales: {
     formalInformal: number; // 1-5 scale
     technicalAccessible: number;
@@ -21,11 +16,6 @@ export interface BrandIdentityData {
   };
   wordsToUse: string[];
   wordsToBan: string[];
-  slogans: string[];
-  messagePillars: Array<{
-    theme: string;
-    keyMessages: string[];
-  }>;
 }
 
 export interface BusinessData {
