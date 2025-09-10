@@ -168,7 +168,10 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
   const getPrioritizedFormats = () => {
     try {
       const onboardingData = getKnowledgeItemByType('onboarding_data');
-      const selectedFormats = onboardingData?.content?.contentFormats?.preferredFormats || [];
+      const parsedContent = typeof onboardingData?.content === 'string' 
+        ? JSON.parse(onboardingData.content) 
+        : onboardingData?.content;
+      const selectedFormats = parsedContent?.contentFormats?.preferredFormats || [];
       
       // Sort selected formats by priority and put them first
       const prioritizedFormats = selectedFormats

@@ -29,17 +29,15 @@ import {
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { PlanModal } from "@/components/PlanModal";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 import { useCompanyContext } from "@/contexts/CompanyContext";
 import { useCompanies } from "@/hooks/useCompanies";
-import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
-import { useNavigate } from "react-router-dom";
 import { ContentFeedback } from "@/components/ContentFeedback";
 import { ImageCarousel } from "@/components/ImageCarousel";
-import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 
 // Componente para estado vazio
 const EmptyState = ({ type, title, description, icon }: {
@@ -51,7 +49,7 @@ const EmptyState = ({ type, title, description, icon }: {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { companies } = useCompanies();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: toastFunc } = useToast();
   
   // Usar primeira empresa para validação ou undefined se não houver
   const selectedCompanyId = companies.length > 0 ? companies[0].id : undefined;
@@ -115,6 +113,13 @@ export default function Library() {
   const [selectedContent, setSelectedContent] = useState<any>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [contentFeedbacks, setContentFeedbacks] = useState<{[key: number]: {rating: number, feedback: string}}>({});
+  const [isGenerationModalOpen, setIsGenerationModalOpen] = useState(false);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  
+  const navigate = useNavigate();
+  const { selectedCompany, selectedCompanyId } = useCompanyContext();
+  const { canGenerateContent, completionPercentage } = useKnowledgeValidation(selectedCompanyId || undefined);
+  const { toast } = useToast();
 
   // Conteúdos de exemplo para teste
   const contents = [
