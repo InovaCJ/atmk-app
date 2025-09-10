@@ -32,7 +32,12 @@ export const useKnowledgeBase = (companyId?: string) => {
   }, [user, companyId]);
 
   const fetchKnowledgeItems = async () => {
-    if (!companyId) return;
+    if (!companyId) {
+      console.log('No companyId provided to fetchKnowledgeItems');
+      return;
+    }
+
+    console.log('Fetching knowledge items for company:', companyId);
 
     try {
       setLoading(true);
@@ -52,6 +57,7 @@ export const useKnowledgeBase = (companyId?: string) => {
         return;
       }
 
+      console.log('Fetched knowledge items:', data);
       setItems(data || []);
     } catch (error) {
       console.error('Error fetching knowledge items:', error);
@@ -175,7 +181,11 @@ export const useKnowledgeBase = (companyId?: string) => {
   };
 
   const getKnowledgeItemByType = (contentType: string) => {
-    return items.find(item => item.content_type === contentType);
+    console.log('Searching for knowledge item with type:', contentType);
+    console.log('Available items:', items.map(item => ({ id: item.id, type: item.content_type, title: item.title })));
+    const found = items.find(item => item.content_type === contentType);
+    console.log('Found item:', found ? { id: found.id, type: found.content_type, hasMetadata: !!found.metadata } : 'Not found');
+    return found;
   };
 
   const saveOnboardingData = async (data: any, companyName: string) => {

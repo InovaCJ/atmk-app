@@ -164,16 +164,32 @@ export default function Knowledge() {
   };
 
   useEffect(() => {
+    console.log('useEffect triggered, selectedCompanyId:', selectedCompanyId);
     if (selectedCompanyId) {
       loadKnowledgeData();
     }
   }, [selectedCompanyId, getKnowledgeItemByType]);
 
+  // Debug effect para monitorar mudanças no knowledgeData
+  useEffect(() => {
+    console.log('Knowledge data changed:', knowledgeData);
+  }, [knowledgeData]);
+
   const loadKnowledgeData = () => {
-    if (!selectedCompanyId) return;
+    if (!selectedCompanyId) {
+      console.log('No selectedCompanyId, cannot load data');
+      return;
+    }
     
+    console.log('Attempting to load knowledge data for company:', selectedCompanyId);
     const knowledgeItem = getKnowledgeItemByType('onboarding_data');
-    if (knowledgeItem && knowledgeItem.content) {
+    console.log('Found knowledge item:', knowledgeItem);
+    
+    if (knowledgeItem && knowledgeItem.metadata) {
+      console.log('Loading knowledge data from metadata:', knowledgeItem.metadata);
+      setKnowledgeData(knowledgeItem.metadata);
+    } else if (knowledgeItem && knowledgeItem.content) {
+      // Fallback para content se metadata não existir
       try {
         let parsedData;
         if (typeof knowledgeItem.content === 'string') {
@@ -181,10 +197,13 @@ export default function Knowledge() {
         } else {
           parsedData = knowledgeItem.content;
         }
+        console.log('Loading knowledge data from content:', parsedData);
         setKnowledgeData(parsedData);
       } catch (error) {
-        console.error('Error parsing knowledge data:', error);
+        console.error('Error parsing knowledge content:', error);
       }
+    } else {
+      console.log('No knowledge data found, keeping current state or using defaults');
     }
   };
 
@@ -198,16 +217,32 @@ export default function Knowledge() {
       return;
     }
 
+    console.log('Saving knowledge data:', knowledgeData);
+
     const companyName = selectedCompany?.name || 'Empresa';
     const existingItem = getKnowledgeItemByType('onboarding_data');
     
-    await createOrUpdateKnowledgeItem(
-      `Base de Conhecimento - ${companyName}`,
-      knowledgeData,
-      'onboarding_data',
-      ['onboarding', 'brand', 'business', 'audience', 'seo'],
-      existingItem?.id
-    );
+    try {
+      await createOrUpdateKnowledgeItem(
+        `Base de Conhecimento - ${companyName}`,
+        knowledgeData,
+        'onboarding_data',
+        ['onboarding', 'brand', 'business', 'audience', 'seo'],
+        existingItem?.id
+      );
+      
+      // Recarregar os dados para garantir que estão atualizados
+      setTimeout(() => {
+        loadKnowledgeData();
+      }, 500);
+    } catch (error) {
+      console.error('Error saving knowledge data:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar dados.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Helper functions for adding/removing items from arrays
@@ -320,6 +355,29 @@ export default function Knowledge() {
             Formatos
           </TabsTrigger>
         </TabsList>
+
+        {/* Debug Info - Temporário */}
+        {process.env.NODE_ENV === 'development' && (
+          <Card className="mt-4 bg-yellow-50 border-yellow-200">
+            <CardContent className="p-4">
+              <div className="text-sm">
+                <p><strong>Debug Info:</strong></p>
+                <p>Company ID: {selectedCompanyId}</p>
+                <p>Loading: {knowledgeLoading ? 'Yes' : 'No'}</p>
+                <p>Knowledge Item exists: {getKnowledgeItemByType('onboarding_data') ? 'Yes' : 'No'}</p>
+                <p>Value Proposition: {knowledgeData.brandIdentity?.valueProposition || 'Empty'}</p>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={loadKnowledgeData}
+                  className="mt-2"
+                >
+                  Recarregar Dados
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Identidade */}
         <TabsContent value="identidade">
