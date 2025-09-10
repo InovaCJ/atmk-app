@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-  import { 
+import { 
   Building, 
   Target, 
   Users, 
@@ -17,7 +17,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
   X, 
   Plus,
   Save,
-  Trash2
+  Trash2,
+  FileText,
+  Mail,
+  Share2,
+  Video,
+  Mic,
+  Monitor,
+  User,
+  Phone
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -30,6 +38,13 @@ export default function Knowledge() {
   const { createOrUpdateKnowledgeItem, getKnowledgeItemByType, loading: knowledgeLoading } = useKnowledgeBase(selectedCompanyId || undefined);
 
   const [knowledgeData, setKnowledgeData] = useState<OnboardingData>({
+    basicInfo: {
+      fullName: "",
+      email: "",
+      password: "",
+      phone: "",
+      companyName: ""
+    },
     brandIdentity: {
       valueProposition: "",
       differentials: [],
@@ -121,6 +136,13 @@ export default function Knowledge() {
     } else {
       // Se não houver dados salvos, resetar para o estado inicial
       setKnowledgeData({
+        basicInfo: {
+          fullName: "",
+          email: "",
+          password: "",
+          phone: "",
+          companyName: ""
+        },
         brandIdentity: {
           valueProposition: "",
           differentials: [],
@@ -220,6 +242,16 @@ export default function Knowledge() {
     }));
   };
 
+  const updateBasicInfo = (field: string, value: any) => {
+    setKnowledgeData(prev => ({
+      ...prev,
+      basicInfo: {
+        ...prev.basicInfo!,
+        [field]: value
+      }
+    }));
+  };
+
   const updateBrandIdentity = (field: string, value: any) => {
     setKnowledgeData(prev => ({
       ...prev,
@@ -265,7 +297,7 @@ export default function Knowledge() {
       </div>
 
       <Tabs defaultValue="identidade" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="identidade" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
             Identidade
@@ -282,10 +314,84 @@ export default function Knowledge() {
             <Search className="h-4 w-4" />
             SEO
           </TabsTrigger>
+          <TabsTrigger value="formatos" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Formatos
+          </TabsTrigger>
         </TabsList>
 
         {/* Identidade e Estratégia de Marca */}
         <TabsContent value="identidade" className="space-y-6">
+          {/* Informações Básicas */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações Básicas</CardTitle>
+              <CardDescription>
+                Dados básicos do usuário e da empresa
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nome Completo</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="fullName"
+                      placeholder="Seu nome completo"
+                      value={knowledgeData.basicInfo?.fullName || ""}
+                      onChange={(e) => updateBasicInfo("fullName", e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={knowledgeData.basicInfo?.email || ""}
+                      onChange={(e) => updateBasicInfo("email", e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      placeholder="(11) 99999-9999"
+                      value={knowledgeData.basicInfo?.phone || ""}
+                      onChange={(e) => updateBasicInfo("phone", e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Nome da Empresa</Label>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="companyName"
+                      placeholder="Nome da sua empresa"
+                      value={knowledgeData.basicInfo?.companyName || ""}
+                      onChange={(e) => updateBasicInfo("companyName", e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Posicionamento</CardTitle>
@@ -837,6 +943,118 @@ export default function Knowledge() {
                     ))}
                   </div>
                 </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button 
+                  onClick={saveData} 
+                  className="flex items-center gap-2"
+                  disabled={!selectedCompanyId || knowledgeLoading}
+                >
+                  <Save className="h-4 w-4" />
+                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Formatos de Conteúdo */}
+        <TabsContent value="formatos" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Formatos Preferidos</CardTitle>
+              <CardDescription>
+                Configure os formatos de conteúdo que sua empresa mais utiliza
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <Label>Formatos Selecionados</Label>
+                
+                {knowledgeData.contentFormats?.preferredFormats?.length ? (
+                  <div className="space-y-3">
+                    {knowledgeData.contentFormats.preferredFormats.map((format, index) => {
+                      const formatIcons = {
+                        email: Mail,
+                        blog: FileText,
+                        social: Share2,
+                        video: Video,
+                        podcast: Mic,
+                        webinar: Monitor
+                      };
+                      
+                      const formatLabels = {
+                        email: 'E-mail Marketing',
+                        blog: 'Blog Posts',
+                        social: 'Social Media',
+                        video: 'Roteiro para Vídeos',
+                        podcast: 'Roteiro para Podcasts',
+                        webinar: 'Roteiro para Webinars'
+                      };
+                      
+                      const priorityLabels = {
+                        1: 'Alta',
+                        2: 'Média',
+                        3: 'Baixa'
+                      };
+                      
+                      const Icon = formatIcons[format.type as keyof typeof formatIcons] || FileText;
+                      
+                      return (
+                        <div key={index} className="flex items-center justify-between p-4 bg-accent/5 rounded-lg">
+                          <div className="flex items-center gap-4">
+                            <div className="p-2 bg-primary/10 rounded-lg">
+                              <Icon className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">{formatLabels[format.type as keyof typeof formatLabels]}</h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant={format.priority === 1 ? "default" : format.priority === 2 ? "secondary" : "outline"}>
+                                  Prioridade {priorityLabels[format.priority as keyof typeof priorityLabels]}
+                                </Badge>
+                                <span className="text-sm text-muted-foreground">
+                                  {format.frequency}
+                                </span>
+                              </div>
+                              {format.platforms && format.platforms.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {format.platforms.map((platform: string) => (
+                                    <Badge key={platform} variant="outline" className="text-xs">
+                                      {platform}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const newFormats = knowledgeData.contentFormats?.preferredFormats?.filter((_, i) => i !== index) || [];
+                              setKnowledgeData(prev => ({
+                                ...prev,
+                                contentFormats: {
+                                  ...prev.contentFormats,
+                                  preferredFormats: newFormats
+                                }
+                              }));
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center p-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>Nenhum formato configurado</p>
+                    <p className="text-xs mt-2">Complete o onboarding para definir seus formatos preferidos</p>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end">
