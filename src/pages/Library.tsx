@@ -246,6 +246,21 @@ export default function Library() {
     },
     {
       id: 7,
+      title: "5 Passos para Criar um Blog de Sucesso",
+      description: "Guia prático para lançar e fazer crescer um blog que gera resultados",
+      type: "blog",
+      status: "published",
+      createdAt: new Date("2024-12-07"),
+      content: "Criar um blog de sucesso não é sobre sorte - é sobre estratégia. Neste guia, vou te mostrar exatamente como construir um blog que atrai leitores e gera resultados.\n\n## 1. Defina seu nicho\n\nEscolha um tópico específico que você domina e que há demanda no mercado.\n\n## 2. Crie conteúdo valioso\n\nSeus artigos devem resolver problemas reais dos seus leitores.\n\n## 3. Otimize para SEO\n\nUse palavras-chave estratégicas e otimize seus títulos e meta descrições.\n\n## 4. Promova seu conteúdo\n\nCompartilhe nas redes sociais e construa uma lista de email.\n\n## 5. Seja consistente\n\nPublique regularmente para manter sua audiência engajada.",
+      slug: "5-passos-blog-sucesso",
+      metaDescription: "Descubra os 5 passos essenciais para criar um blog de sucesso que atrai leitores e gera resultados. Guia completo com estratégias comprovadas.",
+      tags: ["blog", "content marketing", "SEO"],
+      readTime: "6 min",
+      images: ["/placeholder.svg"],
+      rating: 4
+    },
+    {
+      id: 8,
       title: "Email: Boas-vindas Novo Assinante",
       description: "Email de boas-vindas automatizado para novos leads da lista",
       type: "email",
@@ -482,35 +497,43 @@ export default function Library() {
                 ))}
               </div>
 
-              {selectedContent.type === "blog" && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Slug URL</label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Input value={selectedContent.slug} readOnly />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleCopy(selectedContent.slug || "", "Slug")}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
+                {selectedContent.type === "blog" && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Meta Description (SEO)</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Textarea 
+                          value={selectedContent.metaDescription || ""} 
+                          readOnly 
+                          className="min-h-[60px] resize-none"
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleCopy(selectedContent.metaDescription || "", "Meta Description")}
+                          className="shrink-0"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Ideal para SEO: até 160 caracteres
+                      </p>
                     </div>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium">Meta Description</label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Input value={selectedContent.metaDescription || ""} readOnly />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleCopy(selectedContent.metaDescription || "", "Meta Description")}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
+
+                    <div>
+                      <label className="text-sm font-medium">Slug URL</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input value={selectedContent.slug} readOnly />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleCopy(selectedContent.slug || "", "Slug")}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
