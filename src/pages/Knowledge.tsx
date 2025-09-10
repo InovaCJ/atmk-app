@@ -23,9 +23,7 @@ import {
   Share2,
   Video,
   Mic,
-  Monitor,
-  User,
-  Phone
+  Monitor
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -38,13 +36,6 @@ export default function Knowledge() {
   const { createOrUpdateKnowledgeItem, getKnowledgeItemByType, loading: knowledgeLoading } = useKnowledgeBase(selectedCompanyId || undefined);
 
   const [knowledgeData, setKnowledgeData] = useState<OnboardingData>({
-    basicInfo: {
-      fullName: "",
-      email: "",
-      password: "",
-      phone: "",
-      companyName: ""
-    },
     brandIdentity: {
       valueProposition: "",
       differentials: [],
@@ -95,32 +86,83 @@ export default function Knowledge() {
     completedSteps: []
   });
 
-  // Temporary input states
+  // Form inputs state
   const [newDifferential, setNewDifferential] = useState("");
   const [newWordToUse, setNewWordToUse] = useState("");
   const [newWordToBan, setNewWordToBan] = useState("");
-  const [newKeyword, setNewKeyword] = useState("");
-  const [newSearchIntent, setNewSearchIntent] = useState("");
-  const [newProduct, setNewProduct] = useState({ name: "", features: [], priceRange: "" });
-  const [newService, setNewService] = useState({ name: "", description: "", priceRange: "" });
   const [newLocation, setNewLocation] = useState("");
   const [newIndustry, setNewIndustry] = useState("");
   const [newJobTitle, setNewJobTitle] = useState("");
   const [newQuestion, setNewQuestion] = useState("");
   const [newPlatform, setNewPlatform] = useState("");
+  const [newKeyword, setNewKeyword] = useState("");
+  const [newSearchIntent, setNewSearchIntent] = useState("");
+  
+  const [newProduct, setNewProduct] = useState({ name: "", features: [""], priceRange: "" });
+  const [newService, setNewService] = useState({ name: "", description: "", priceRange: "" });
   const [newPersona, setNewPersona] = useState({
     name: "",
     demographics: {},
-    painPoints: [],
-    objections: [],
-    buyingTriggers: []
+    painPoints: [""],
+    objections: [""],
+    buyingTriggers: [""]
+  });
+  const [selectedFormat, setSelectedFormat] = useState<{
+    type: 'email' | 'blog' | 'social' | 'video' | 'podcast' | 'webinar';
+    priority: number;
+    frequency: string;
+    platforms?: string[];
+  }>({
+    type: 'blog',
+    priority: 1,
+    frequency: "",
+    platforms: []
   });
 
-  // Relevance flags
-  const [isB2CRelevant, setIsB2CRelevant] = useState(true);
-  const [isB2BRelevant, setIsB2BRelevant] = useState(true);
+  // Format labels and icons
+  const formatIcons = {
+    email: Mail,
+    blog: FileText,
+    social: Share2,
+    video: Video,
+    podcast: Mic,
+    webinar: Monitor
+  };
 
-  // Auto-select first company when companies are loaded
+  const formatLabels = {
+    email: 'E-mail Marketing',
+    blog: 'Blog Posts',
+    social: 'Social Media',
+    video: 'Roteiro para Vídeos',
+    podcast: 'Roteiro para Podcasts',
+    webinar: 'Roteiro para Webinars'
+  };
+
+  const priorityLabels = {
+    1: 'Alta',
+    2: 'Média',
+    3: 'Baixa'
+  };
+
+  const frequencyOptions = [
+    'Diário',
+    '2-3x por semana',
+    'Semanal',
+    'Quinzenal',
+    'Mensal',
+    'Trimestral',
+    'Conforme demanda'
+  ];
+
+  const platformsByFormat = {
+    email: ['Newsletter', 'Campanhas', 'Automação', 'Mailchimp', 'ConvertKit'],
+    blog: ['Site próprio', 'Medium', 'LinkedIn Articles', 'WordPress'],
+    social: ['LinkedIn', 'Instagram', 'Facebook', 'Twitter/X', 'YouTube', 'TikTok'],
+    video: ['YouTube', 'Instagram Reels', 'TikTok', 'LinkedIn Video', 'Vimeo'],
+    podcast: ['Spotify', 'Apple Podcasts', 'Google Podcasts', 'Anchor', 'Buzzsprout'],
+    webinar: ['Zoom', 'Teams', 'Google Meet', 'Streamyard', 'WebinarJam']
+  };
+
   useEffect(() => {
     if (selectedCompanyId) {
       loadKnowledgeData();
@@ -131,67 +173,18 @@ export default function Knowledge() {
     if (!selectedCompanyId) return;
     
     const knowledgeItem = getKnowledgeItemByType('onboarding_data');
-    if (knowledgeItem && knowledgeItem.metadata) {
-      setKnowledgeData(knowledgeItem.metadata);
-    } else {
-      // Se não houver dados salvos, resetar para o estado inicial
-      setKnowledgeData({
-        basicInfo: {
-          fullName: "",
-          email: "",
-          password: "",
-          phone: "",
-          companyName: ""
-        },
-        brandIdentity: {
-          valueProposition: "",
-          differentials: [],
-          personalityScales: {
-            formalInformal: 3,
-            technicalAccessible: 3,
-            seriousFun: 3
-          },
-          wordsToUse: [],
-          wordsToBan: []
-        },
-        business: {
-          sector: "",
-          market: "",
-          maturity: "growing",
-          regulatoryStatus: "",
-          products: [],
-          services: [],
-          roadmap: []
-        },
-        audience: {
-          icp: {
-            demographics: {
-              ageRange: "",
-              gender: "",
-              income: "",
-              education: "",
-              location: []
-            },
-            firmographics: {
-              companySize: "",
-              industry: [],
-              jobTitles: [],
-              regions: [],
-              languages: []
-            }
-          },
-          personas: [],
-          frequentQuestions: []
-        },
-        seo: {
-          keywords: [],
-          searchIntents: []
-        },
-        contentFormats: {
-          preferredFormats: []
-        },
-        completedSteps: []
-      });
+    if (knowledgeItem && knowledgeItem.content) {
+      try {
+        let parsedData;
+        if (typeof knowledgeItem.content === 'string') {
+          parsedData = JSON.parse(knowledgeItem.content);
+        } else {
+          parsedData = knowledgeItem.content;
+        }
+        setKnowledgeData(parsedData);
+      } catch (error) {
+        console.error('Error parsing knowledge data:', error);
+      }
     }
   };
 
@@ -206,7 +199,6 @@ export default function Knowledge() {
     }
 
     const companyName = selectedCompany?.name || 'Empresa';
-
     const existingItem = getKnowledgeItemByType('onboarding_data');
     
     await createOrUpdateKnowledgeItem(
@@ -219,72 +211,81 @@ export default function Knowledge() {
   };
 
   // Helper functions for adding/removing items from arrays
-  const addToArray = (section: keyof OnboardingData, field: string, value: string, setter: (value: string) => void) => {
-    if (!value.trim()) return;
-    
-    setKnowledgeData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: [...(prev[section]?.[field] || []), value]
-      }
-    }));
-    setter("");
+  const addItem = (field: string, section: string, value: string, setter: (value: string) => void) => {
+    if (value.trim()) {
+      setKnowledgeData(prev => {
+        const currentSection = prev[section as keyof OnboardingData] as any;
+        return {
+          ...prev,
+          [section]: {
+            ...currentSection,
+            [field]: [...(currentSection[field] || []), value.trim()]
+          }
+        };
+      });
+      setter("");
+    }
   };
 
-  const removeFromArray = (section: keyof OnboardingData, field: string, index: number) => {
-    setKnowledgeData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: prev[section]?.[field]?.filter((_, i) => i !== index) || []
-      }
-    }));
-  };
-
-  const updateBasicInfo = (field: string, value: any) => {
-    setKnowledgeData(prev => ({
-      ...prev,
-      basicInfo: {
-        ...prev.basicInfo!,
-        [field]: value
-      }
-    }));
-  };
-
-  const updateBrandIdentity = (field: string, value: any) => {
-    setKnowledgeData(prev => ({
-      ...prev,
-      brandIdentity: {
-        ...prev.brandIdentity!,
-        [field]: value
-      }
-    }));
-  };
-
-  const updateBusiness = (field: string, value: any) => {
-    setKnowledgeData(prev => ({
-      ...prev,
-      business: {
-        ...prev.business!,
-        [field]: value
-      }
-    }));
-  };
-
-  const updateAudience = (path: string[], value: any) => {
+  const removeItem = (field: string, section: string, index: number) => {
     setKnowledgeData(prev => {
-      const newData = { ...prev };
-      let current = newData.audience!;
-      
-      for (let i = 0; i < path.length - 1; i++) {
-        current = current[path[i]];
-      }
-      
-      current[path[path.length - 1]] = value;
-      
-      return newData;
+      const currentSection = prev[section as keyof OnboardingData] as any;
+      return {
+        ...prev,
+        [section]: {
+          ...currentSection,
+          [field]: currentSection[field]?.filter((_: any, i: number) => i !== index) || []
+        }
+      };
     });
+  };
+
+  // Format functions
+  const addPlatform = (platform: string) => {
+    if (platform && !selectedFormat.platforms?.includes(platform)) {
+      setSelectedFormat(prev => ({
+        ...prev,
+        platforms: [...(prev.platforms || []), platform]
+      }));
+    }
+  };
+
+  const removePlatform = (platform: string) => {
+    setSelectedFormat(prev => ({
+      ...prev,
+      platforms: prev.platforms?.filter(p => p !== platform) || []
+    }));
+  };
+
+  const addFormat = () => {
+    if (selectedFormat.frequency && !knowledgeData.contentFormats?.preferredFormats?.some(f => f.type === selectedFormat.type)) {
+      setKnowledgeData(prev => ({
+        ...prev,
+        contentFormats: {
+          ...prev.contentFormats!,
+          preferredFormats: [...(prev.contentFormats?.preferredFormats || []), {
+            ...selectedFormat,
+            platforms: selectedFormat.platforms && selectedFormat.platforms.length > 0 ? selectedFormat.platforms : undefined
+          }]
+        }
+      }));
+      setSelectedFormat({
+        type: 'blog',
+        priority: 1,
+        frequency: "",
+        platforms: []
+      });
+    }
+  };
+
+  const removeFormat = (index: number) => {
+    setKnowledgeData(prev => ({
+      ...prev,
+      contentFormats: {
+        ...prev.contentFormats!,
+        preferredFormats: prev.contentFormats?.preferredFormats?.filter((_, i) => i !== index) || []
+      }
+    }));
   };
 
   return (
@@ -320,503 +321,1034 @@ export default function Knowledge() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Identidade e Estratégia de Marca */}
-        <TabsContent value="identidade" className="space-y-6">
-          {/* Informações Básicas */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações Básicas</CardTitle>
-              <CardDescription>
-                Dados básicos do usuário e da empresa
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Identidade */}
+        <TabsContent value="identidade">
+          <div className="space-y-8">
+            {/* Posicionamento */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Posicionamento</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Nome Completo</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="fullName"
-                      placeholder="Seu nome completo"
-                      value={knowledgeData.basicInfo?.fullName || ""}
-                      onChange={(e) => updateBasicInfo("fullName", e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
+                  <Label htmlFor="valueProposition">Proposta de Valor</Label>
+                  <Textarea
+                    id="valueProposition"
+                    placeholder="O que nos torna únicos e valiosos para nossos clientes..."
+                    value={knowledgeData.brandIdentity?.valueProposition || ""}
+                    onChange={(e) => setKnowledgeData(prev => ({
+                      ...prev,
+                      brandIdentity: {
+                        ...prev.brandIdentity!,
+                        valueProposition: e.target.value
+                      }
+                    }))}
+                    className="min-h-[80px]"
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="differentials">Diferenciais (USPs)</Label>
+                  <div className="flex gap-2">
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={knowledgeData.basicInfo?.email || ""}
-                      onChange={(e) => updateBasicInfo("email", e.target.value)}
-                      className="pl-9"
+                      placeholder="Adicionar diferencial..."
+                      value={newDifferential}
+                      onChange={(e) => setNewDifferential(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addItem('differentials', 'brandIdentity', newDifferential, setNewDifferential)}
                     />
+                    <Button type="button" onClick={() => addItem('differentials', 'brandIdentity', newDifferential, setNewDifferential)}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(knowledgeData.brandIdentity?.differentials || []).map((diff, index) => (
+                      <Badge key={index} variant="outline" className="pr-1">
+                        {diff}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-1 ml-1"
+                          onClick={() => removeItem('differentials', 'brandIdentity', index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      placeholder="(11) 99999-9999"
-                      value={knowledgeData.basicInfo?.phone || ""}
-                      onChange={(e) => updateBasicInfo("phone", e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Nome da Empresa</Label>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="companyName"
-                      placeholder="Nome da sua empresa"
-                      value={knowledgeData.basicInfo?.companyName || ""}
-                      onChange={(e) => updateBasicInfo("companyName", e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Posicionamento</CardTitle>
-              <CardDescription>
-                Defina como sua marca se posiciona no mercado
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="valueProposition">Proposta de Valor *</Label>
-                <Textarea
-                  id="valueProposition"
-                  placeholder="O que torna sua empresa única no mercado?"
-                  value={knowledgeData.brandIdentity?.valueProposition || ""}
-                  onChange={(e) => updateBrandIdentity("valueProposition", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-4">
-                <Label>Personalidade da Marca</Label>
-                
+            {/* Personalidade & Tom de Voz */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Personalidade & Tom de Voz</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">Formal</span>
-                      <span className="text-sm">Informal</span>
-                    </div>
+                    <Label>Formal ↔ Informal</Label>
                     <Slider
                       value={[knowledgeData.brandIdentity?.personalityScales?.formalInformal || 3]}
-                      onValueChange={(value) => updateBrandIdentity("personalityScales", {
-                        ...knowledgeData.brandIdentity?.personalityScales,
-                        formalInformal: value[0]
-                      })}
+                      onValueChange={([value]) => 
+                        setKnowledgeData(prev => ({
+                          ...prev,
+                          brandIdentity: {
+                            ...prev.brandIdentity!,
+                            personalityScales: { 
+                              ...prev.brandIdentity!.personalityScales, 
+                              formalInformal: value 
+                            }
+                          }
+                        }))
+                      }
                       max={5}
                       min={1}
-                      step={1}
-                      className="w-full"
+                      step={0.1}
+                      className="w-full [&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
                     />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Muito Formal</span>
+                      <span>Muito Informal</span>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">Técnico</span>
-                      <span className="text-sm">Acessível</span>
-                    </div>
+                    <Label>Técnico ↔ Acessível</Label>
                     <Slider
                       value={[knowledgeData.brandIdentity?.personalityScales?.technicalAccessible || 3]}
-                      onValueChange={(value) => updateBrandIdentity("personalityScales", {
-                        ...knowledgeData.brandIdentity?.personalityScales,
-                        technicalAccessible: value[0]
-                      })}
+                      onValueChange={([value]) => 
+                        setKnowledgeData(prev => ({
+                          ...prev,
+                          brandIdentity: {
+                            ...prev.brandIdentity!,
+                            personalityScales: { 
+                              ...prev.brandIdentity!.personalityScales, 
+                              technicalAccessible: value 
+                            }
+                          }
+                        }))
+                      }
                       max={5}
                       min={1}
-                      step={1}
-                      className="w-full"
+                      step={0.1}
+                      className="w-full [&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Muito Técnico</span>
+                      <span>Muito Acessível</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Sério ↔ Bem-humorado</Label>
+                    <Slider
+                      value={[knowledgeData.brandIdentity?.personalityScales?.seriousFun || 3]}
+                      onValueChange={([value]) => 
+                        setKnowledgeData(prev => ({
+                          ...prev,
+                          brandIdentity: {
+                            ...prev.brandIdentity!,
+                            personalityScales: { 
+                              ...prev.brandIdentity!.personalityScales, 
+                              seriousFun: value 
+                            }
+                          }
+                        }))
+                      }
+                      max={5}
+                      min={1}
+                      step={0.1}
+                      className="w-full [&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Muito Sério</span>
+                      <span>Bem-humorado</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Palavras que Usamos</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Adicionar palavra..."
+                        value={newWordToUse}
+                        onChange={(e) => setNewWordToUse(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addItem('wordsToUse', 'brandIdentity', newWordToUse, setNewWordToUse)}
+                      />
+                      <Button type="button" onClick={() => addItem('wordsToUse', 'brandIdentity', newWordToUse, setNewWordToUse)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(knowledgeData.brandIdentity?.wordsToUse || []).map((word, index) => (
+                        <Badge key={index} variant="default" className="pr-1">
+                          {word}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-1 ml-1 text-current"
+                            onClick={() => removeItem('wordsToUse', 'brandIdentity', index)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Palavras Banidas</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Adicionar palavra banida..."
+                        value={newWordToBan}
+                        onChange={(e) => setNewWordToBan(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addItem('wordsToBan', 'brandIdentity', newWordToBan, setNewWordToBan)}
+                      />
+                      <Button type="button" onClick={() => addItem('wordsToBan', 'brandIdentity', newWordToBan, setNewWordToBan)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(knowledgeData.brandIdentity?.wordsToBan || []).map((word, index) => (
+                        <Badge key={index} variant="destructive" className="pr-1">
+                          {word}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-1 ml-1 text-current"
+                            onClick={() => removeItem('wordsToBan', 'brandIdentity', index)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Button 
+              onClick={() => saveData()}
+              disabled={!selectedCompany || knowledgeLoading}
+              className="w-full"
+            >
+              {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* Negócio */}
+        <TabsContent value="negocio">
+          <div className="space-y-8">
+            {/* Mercado e Setor */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Mercado e Setor</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="sector">Setor *</Label>
+                    <Input
+                      id="sector"
+                      placeholder="Ex: Tecnologia, Saúde, Educação..."
+                      value={knowledgeData.business?.sector || ''}
+                      onChange={(e) => setKnowledgeData(prev => ({
+                        ...prev,
+                        business: {
+                          ...prev.business!,
+                          sector: e.target.value
+                        }
+                      }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="market">Mercado *</Label>
+                    <Input
+                      id="market"
+                      placeholder="Ex: B2B SaaS, E-commerce, Consultoria..."
+                      value={knowledgeData.business?.market || ''}
+                      onChange={(e) => setKnowledgeData(prev => ({
+                        ...prev,
+                        business: {
+                          ...prev.business!,
+                          market: e.target.value
+                        }
+                      }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="maturity">Maturidade da Categoria</Label>
+                    <Select 
+                      value={knowledgeData.business?.maturity || 'growing'} 
+                      onValueChange={(value: any) => setKnowledgeData(prev => ({
+                        ...prev,
+                        business: {
+                          ...prev.business!,
+                          maturity: value
+                        }
+                      }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="emerging">Emergente</SelectItem>
+                        <SelectItem value="growing">Em Crescimento</SelectItem>
+                        <SelectItem value="mature">Madura</SelectItem>
+                        <SelectItem value="declining">Em Declínio</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="regulatory">Status Regulatório</Label>
+                    <Input
+                      id="regulatory"
+                      placeholder="Ex: Regulamentado pela ANVISA, Sem regulação específica..."
+                      value={knowledgeData.business?.regulatoryStatus || ''}
+                      onChange={(e) => setKnowledgeData(prev => ({
+                        ...prev,
+                        business: {
+                          ...prev.business!,
+                          regulatoryStatus: e.target.value
+                        }
+                      }))}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Produtos */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Portfólio de Produtos</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="productName">Nome do Produto</Label>
+                    <Input
+                      id="productName"
+                      placeholder="Ex: Sistema de Gestão"
+                      value={newProduct.name}
+                      onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="productFeatures">Principais Features</Label>
+                    <Input
+                      id="productFeatures"
+                      placeholder="Ex: Dashboard, Relatórios, API"
+                      value={newProduct.features[0] || ""}
+                      onChange={(e) => setNewProduct(prev => ({ ...prev, features: [e.target.value] }))}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">Sério</span>
-                      <span className="text-sm">Bem-humorado</span>
-                    </div>
-                    <Slider
-                      value={[knowledgeData.brandIdentity?.personalityScales?.seriousFun || 3]}
-                      onValueChange={(value) => updateBrandIdentity("personalityScales", {
-                        ...knowledgeData.brandIdentity?.personalityScales,
-                        seriousFun: value[0]
-                      })}
-                      max={5}
-                      min={1}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <Button 
-                  onClick={saveData} 
-                  className="flex items-center gap-2"
-                  disabled={!selectedCompanyId || knowledgeLoading}
-                >
-                  <Save className="h-4 w-4" />
-                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Negócio e Oferta */}
-        <TabsContent value="negocio" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações do Negócio</CardTitle>
-              <CardDescription>
-                Detalhes sobre seu setor, mercado e ofertas
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sector">Setor/Mercado *</Label>
-                  <Input
-                    id="sector"
-                    placeholder="Ex: Tecnologia, Saúde, Educação..."
-                    value={knowledgeData.business?.sector || ""}
-                    onChange={(e) => updateBusiness("sector", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="market">Mercado de Atuação *</Label>
-                  <Input
-                    id="market"
-                    placeholder="Ex: B2B, B2C, Marketplace..."
-                    value={knowledgeData.business?.market || ""}
-                    onChange={(e) => updateBusiness("market", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="maturity">Maturidade do Mercado</Label>
-                  <Select value={knowledgeData.business?.maturity} onValueChange={(value) => updateBusiness("maturity", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="emerging">Emergente</SelectItem>
-                      <SelectItem value="growing">Em Crescimento</SelectItem>
-                      <SelectItem value="mature">Maduro</SelectItem>
-                      <SelectItem value="declining">Em Declínio</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="regulatoryStatus">Status Regulatório</Label>
-                  <Input
-                    id="regulatoryStatus"
-                    placeholder="Ex: Regulamentado pela ANVISA..."
-                    value={knowledgeData.business?.regulatoryStatus || ""}
-                    onChange={(e) => updateBusiness("regulatoryStatus", e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Produtos</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <Input
-                      placeholder="Nome do produto"
-                      value={newProduct.name}
-                      onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                    />
-                    <Input
-                      placeholder="Principais features"
-                      value={newProduct.features.join(", ")}
-                      onChange={(e) => setNewProduct({...newProduct, features: e.target.value.split(", ")})}
-                    />
+                    <Label htmlFor="productPrice">Faixa de Preço</Label>
                     <div className="flex gap-2">
                       <Input
-                        placeholder="Faixa de preço"
+                        id="productPrice"
+                        placeholder="Ex: R$ 99-499/mês"
                         value={newProduct.priceRange}
-                        onChange={(e) => setNewProduct({...newProduct, priceRange: e.target.value})}
+                        onChange={(e) => setNewProduct(prev => ({ ...prev, priceRange: e.target.value }))}
                       />
-                      <Button onClick={() => {
-                        if (newProduct.name) {
-                          updateBusiness("products", [...(knowledgeData.business?.products || []), newProduct]);
-                          setNewProduct({name: "", features: [], priceRange: ""});
+                      <Button type="button" onClick={() => {
+                        if (newProduct.name.trim()) {
+                          setKnowledgeData(prev => ({
+                            ...prev,
+                            business: {
+                              ...prev.business!,
+                              products: [...(prev.business?.products || []), {
+                                name: newProduct.name.trim(),
+                                features: newProduct.features.filter(f => f.trim()),
+                                priceRange: newProduct.priceRange.trim()
+                              }]
+                            }
+                          }));
+                          setNewProduct({ name: "", features: [""], priceRange: "" });
                         }
                       }}>
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
-                  
-                  <div className="space-y-2">
-                    {knowledgeData.business?.products?.map((product, index) => (
-                      <div key={index} className="p-3 border rounded-lg flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium">{product.name}</h4>
-                          <p className="text-sm text-muted-foreground">Features: {product.features.join(", ")}</p>
-                          <p className="text-sm text-muted-foreground">Preço: {product.priceRange}</p>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            const newProducts = knowledgeData.business?.products?.filter((_, i) => i !== index) || [];
-                            updateBusiness("products", newProducts);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
                 </div>
-              </div>
-
-              <div className="flex justify-end">
-                <Button 
-                  onClick={saveData} 
-                  className="flex items-center gap-2"
-                  disabled={!selectedCompanyId || knowledgeLoading}
-                >
-                  <Save className="h-4 w-4" />
-                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Público e Personas */}
-        <TabsContent value="publico" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Público-Alvo e Personas</CardTitle>
-              <CardDescription>
-                Defina seu ICP e personas detalhadas
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="b2c-relevant" 
-                    checked={isB2CRelevant}
-                    onCheckedChange={(checked) => setIsB2CRelevant(checked === true)}
-                  />
-                  <Label htmlFor="b2c-relevant">Perfil Demográfico (B2C) é relevante</Label>
-                </div>
-
-                {isB2CRelevant && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
-                    <div className="space-y-2">
-                      <Label htmlFor="ageRange">Faixa Etária</Label>
-                      <Input
-                        id="ageRange"
-                        placeholder="Ex: 25-40 anos"
-                        value={knowledgeData.audience?.icp?.demographics?.ageRange || ""}
-                        onChange={(e) => updateAudience(['icp', 'demographics', 'ageRange'], e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="gender">Gênero</Label>
-                      <Input
-                        id="gender"
-                        placeholder="Ex: Todos os gêneros"
-                        value={knowledgeData.audience?.icp?.demographics?.gender || ""}
-                        onChange={(e) => updateAudience(['icp', 'demographics', 'gender'], e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="income">Renda</Label>
-                      <Input
-                        id="income"
-                        placeholder="Ex: R$ 5.000 - R$ 15.000"
-                        value={knowledgeData.audience?.icp?.demographics?.income || ""}
-                        onChange={(e) => updateAudience(['icp', 'demographics', 'income'], e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="education">Escolaridade</Label>
-                      <Input
-                        id="education"
-                        placeholder="Ex: Ensino superior completo"
-                        value={knowledgeData.audience?.icp?.demographics?.education || ""}
-                        onChange={(e) => updateAudience(['icp', 'demographics', 'education'], e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="b2b-relevant" 
-                    checked={isB2BRelevant}
-                    onCheckedChange={(checked) => setIsB2BRelevant(checked === true)}
-                  />
-                  <Label htmlFor="b2b-relevant">Perfil Firmográfico (B2B) é relevante</Label>
-                </div>
-
-                {isB2BRelevant && (
-                  <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-                    <div className="space-y-2">
-                      <Label htmlFor="companySize">Tamanho da Empresa</Label>
-                      <Input
-                        id="companySize"
-                        placeholder="Ex: 10-50 funcionários"
-                        value={knowledgeData.audience?.icp?.firmographics?.companySize || ""}
-                        onChange={(e) => updateAudience(['icp', 'firmographics', 'companySize'], e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Setores de Atuação</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Digite um setor"
-                          value={newIndustry}
-                          onChange={(e) => setNewIndustry(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && newIndustry.trim()) {
-                              const currentIndustries = knowledgeData.audience?.icp?.firmographics?.industry || [];
-                              updateAudience(['icp', 'firmographics', 'industry'], [...currentIndustries, newIndustry]);
-                              setNewIndustry("");
-                            }
-                          }}
-                        />
-                        <Button onClick={() => {
-                          if (newIndustry.trim()) {
-                            const currentIndustries = knowledgeData.audience?.icp?.firmographics?.industry || [];
-                            updateAudience(['icp', 'firmographics', 'industry'], [...currentIndustries, newIndustry]);
-                            setNewIndustry("");
-                          }
-                        }}>
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {knowledgeData.audience?.icp?.firmographics?.industry?.map((industry, index) => (
-                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                            {industry}
-                            <X 
-                              className="h-3 w-3 cursor-pointer" 
-                              onClick={() => {
-                                const newIndustries = knowledgeData.audience?.icp?.firmographics?.industry?.filter((_, i) => i !== index) || [];
-                                updateAudience(['icp', 'firmographics', 'industry'], newIndustries);
-                              }}
-                            />
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 <div className="space-y-2">
-                  <Label>Perguntas Frequentes</Label>
+                  {(knowledgeData.business?.products || []).map((product, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 bg-accent/5 rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{product.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Features: {product.features.join(", ")} | Preço: {product.priceRange}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setKnowledgeData(prev => ({
+                          ...prev,
+                          business: {
+                            ...prev.business!,
+                            products: prev.business!.products.filter((_, i) => i !== index)
+                          }
+                        }))}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Serviços */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Portfólio de Serviços</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="serviceName">Nome do Serviço</Label>
+                    <Input
+                      id="serviceName"
+                      placeholder="Ex: Consultoria Estratégica"
+                      value={newService.name}
+                      onChange={(e) => setNewService(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="serviceDescription">Descrição</Label>
+                    <Input
+                      id="serviceDescription"
+                      placeholder="Ex: Análise e planejamento estratégico"
+                      value={newService.description}
+                      onChange={(e) => setNewService(prev => ({ ...prev, description: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="servicePrice">Faixa de Preço</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="servicePrice"
+                        placeholder="Ex: R$ 5.000-15.000"
+                        value={newService.priceRange}
+                        onChange={(e) => setNewService(prev => ({ ...prev, priceRange: e.target.value }))}
+                      />
+                      <Button type="button" onClick={() => {
+                        if (newService.name.trim()) {
+                          setKnowledgeData(prev => ({
+                            ...prev,
+                            business: {
+                              ...prev.business!,
+                              services: [...(prev.business?.services || []), {
+                                name: newService.name.trim(),
+                                description: newService.description.trim(),
+                                priceRange: newService.priceRange.trim()
+                              }]
+                            }
+                          }));
+                          setNewService({ name: "", description: "", priceRange: "" });
+                        }
+                      }}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {(knowledgeData.business?.services || []).map((service, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 bg-accent/5 rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{service.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {service.description} | Preço: {service.priceRange}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setKnowledgeData(prev => ({
+                          ...prev,
+                          business: {
+                            ...prev.business!,
+                            services: prev.business!.services.filter((_, i) => i !== index)
+                          }
+                        }))}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Button 
+              onClick={() => saveData()}
+              disabled={!selectedCompany || knowledgeLoading}
+              className="w-full"
+            >
+              {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* Público */}
+        <TabsContent value="publico">
+          <div className="space-y-8">
+            {/* ICP - Demografia B2C */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Perfil Demográfico (B2C)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="ageRange">Faixa Etária</Label>
+                    <Input
+                      id="ageRange"
+                      placeholder="Ex: 25-45 anos"
+                      value={knowledgeData.audience?.icp?.demographics?.ageRange || ''}
+                      onChange={(e) => setKnowledgeData(prev => ({
+                        ...prev,
+                        audience: {
+                          ...prev.audience!,
+                          icp: {
+                            ...prev.audience!.icp,
+                            demographics: {
+                              ...prev.audience!.icp.demographics,
+                              ageRange: e.target.value
+                            }
+                          }
+                        }
+                      }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">Gênero</Label>
+                    <Input
+                      id="gender"
+                      placeholder="Ex: Todos, Majoritariamente feminino..."
+                      value={knowledgeData.audience?.icp?.demographics?.gender || ''}
+                      onChange={(e) => setKnowledgeData(prev => ({
+                        ...prev,
+                        audience: {
+                          ...prev.audience!,
+                          icp: {
+                            ...prev.audience!.icp,
+                            demographics: {
+                              ...prev.audience!.icp.demographics,
+                              gender: e.target.value
+                            }
+                          }
+                        }
+                      }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="income">Renda</Label>
+                    <Input
+                      id="income"
+                      placeholder="Ex: R$ 5.000-15.000/mês"
+                      value={knowledgeData.audience?.icp?.demographics?.income || ''}
+                      onChange={(e) => setKnowledgeData(prev => ({
+                        ...prev,
+                        audience: {
+                          ...prev.audience!,
+                          icp: {
+                            ...prev.audience!.icp,
+                            demographics: {
+                              ...prev.audience!.icp.demographics,
+                              income: e.target.value
+                            }
+                          }
+                        }
+                      }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="education">Escolaridade</Label>
+                    <Input
+                      id="education"
+                      placeholder="Ex: Ensino superior completo"
+                      value={knowledgeData.audience?.icp?.demographics?.education || ''}
+                      onChange={(e) => setKnowledgeData(prev => ({
+                        ...prev,
+                        audience: {
+                          ...prev.audience!,
+                          icp: {
+                            ...prev.audience!.icp,
+                            demographics: {
+                              ...prev.audience!.icp.demographics,
+                              education: e.target.value
+                            }
+                          }
+                        }
+                      }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Localização</Label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Digite uma pergunta frequente"
-                      value={newQuestion}
-                      onChange={(e) => setNewQuestion(e.target.value)}
+                      placeholder="Ex: São Paulo, Rio de Janeiro..."
+                      value={newLocation}
+                      onChange={(e) => setNewLocation(e.target.value)}
                       onKeyPress={(e) => {
-                        if (e.key === 'Enter' && newQuestion.trim()) {
-                          const currentQuestions = knowledgeData.audience?.frequentQuestions || [];
+                        if (e.key === 'Enter' && newLocation.trim()) {
                           setKnowledgeData(prev => ({
                             ...prev,
                             audience: {
                               ...prev.audience!,
-                              frequentQuestions: [...currentQuestions, newQuestion]
+                              icp: {
+                                ...prev.audience!.icp,
+                                demographics: {
+                                  ...prev.audience!.icp.demographics,
+                                  location: [...(prev.audience!.icp.demographics.location || []), newLocation.trim()]
+                                }
+                              }
                             }
                           }));
-                          setNewQuestion("");
+                          setNewLocation("");
                         }
                       }}
                     />
-                    <Button onClick={() => {
-                      if (newQuestion.trim()) {
-                        const currentQuestions = knowledgeData.audience?.frequentQuestions || [];
+                    <Button type="button" onClick={() => {
+                      if (newLocation.trim()) {
                         setKnowledgeData(prev => ({
                           ...prev,
                           audience: {
                             ...prev.audience!,
-                            frequentQuestions: [...currentQuestions, newQuestion]
+                            icp: {
+                              ...prev.audience!.icp,
+                              demographics: {
+                                ...prev.audience!.icp.demographics,
+                                location: [...(prev.audience!.icp.demographics.location || []), newLocation.trim()]
+                              }
+                            }
                           }
                         }));
-                        setNewQuestion("");
+                        setNewLocation("");
                       }
                     }}>
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="space-y-2">
-                    {knowledgeData.audience?.frequentQuestions?.map((question, index) => (
-                      <div key={index} className="p-3 border rounded-lg flex justify-between items-start">
-                        <p className="text-sm">{question}</p>
-                        <Button 
-                          variant="ghost" 
+                  <div className="flex flex-wrap gap-2">
+                    {(knowledgeData.audience?.icp?.demographics?.location || []).map((loc, index) => (
+                      <Badge key={index} variant="outline" className="pr-1">
+                        {loc}
+                        <Button
+                          variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            const newQuestions = knowledgeData.audience?.frequentQuestions?.filter((_, i) => i !== index) || [];
-                            setKnowledgeData(prev => ({
-                              ...prev,
-                              audience: {
-                                ...prev.audience!,
-                                frequentQuestions: newQuestions
+                          className="h-auto p-1 ml-1"
+                          onClick={() => setKnowledgeData(prev => ({
+                            ...prev,
+                            audience: {
+                              ...prev.audience!,
+                              icp: {
+                                ...prev.audience!.icp,
+                                demographics: {
+                                  ...prev.audience!.icp.demographics,
+                                  location: prev.audience!.icp.demographics.location?.filter((_, i) => i !== index) || []
+                                }
                               }
-                            }));
-                          }}
+                            }
+                          }))}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
-                      </div>
+                      </Badge>
                     ))}
                   </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              <div className="flex justify-end">
-                <Button 
-                  onClick={saveData} 
-                  className="flex items-center gap-2"
-                  disabled={!selectedCompanyId || knowledgeLoading}
-                >
-                  <Save className="h-4 w-4" />
-                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            {/* ICP - Firmografia B2B */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Perfil Firmográfico (B2B)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="companySize">Tamanho da Empresa</Label>
+                  <Input
+                    id="companySize"
+                    placeholder="Ex: 50-200 funcionários, Startups, Grandes corporações..."
+                    value={knowledgeData.audience?.icp?.firmographics?.companySize || ''}
+                    onChange={(e) => setKnowledgeData(prev => ({
+                      ...prev,
+                      audience: {
+                        ...prev.audience!,
+                        icp: {
+                          ...prev.audience!.icp,
+                          firmographics: {
+                            ...prev.audience!.icp.firmographics,
+                            companySize: e.target.value
+                          }
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Setores/Indústrias</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ex: Tecnologia, Saúde, Varejo..."
+                      value={newIndustry}
+                      onChange={(e) => setNewIndustry(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && newIndustry.trim()) {
+                          setKnowledgeData(prev => ({
+                            ...prev,
+                            audience: {
+                              ...prev.audience!,
+                              icp: {
+                                ...prev.audience!.icp,
+                                firmographics: {
+                                  ...prev.audience!.icp.firmographics,
+                                  industry: [...(prev.audience!.icp.firmographics.industry || []), newIndustry.trim()]
+                                }
+                              }
+                            }
+                          }));
+                          setNewIndustry("");
+                        }
+                      }}
+                    />
+                    <Button type="button" onClick={() => {
+                      if (newIndustry.trim()) {
+                        setKnowledgeData(prev => ({
+                          ...prev,
+                          audience: {
+                            ...prev.audience!,
+                            icp: {
+                              ...prev.audience!.icp,
+                              firmographics: {
+                                ...prev.audience!.icp.firmographics,
+                                industry: [...(prev.audience!.icp.firmographics.industry || []), newIndustry.trim()]
+                              }
+                            }
+                          }
+                        }));
+                        setNewIndustry("");
+                      }
+                    }}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(knowledgeData.audience?.icp?.firmographics?.industry || []).map((ind, index) => (
+                      <Badge key={index} variant="outline" className="pr-1">
+                        {ind}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-1 ml-1"
+                          onClick={() => setKnowledgeData(prev => ({
+                            ...prev,
+                            audience: {
+                              ...prev.audience!,
+                              icp: {
+                                ...prev.audience!.icp,
+                                firmographics: {
+                                  ...prev.audience!.icp.firmographics,
+                                  industry: prev.audience!.icp.firmographics.industry?.filter((_, i) => i !== index) || []
+                                }
+                              }
+                            }
+                          }))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Cargos-alvo</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ex: CEO, CMO, Gerente de Marketing..."
+                      value={newJobTitle}
+                      onChange={(e) => setNewJobTitle(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && newJobTitle.trim()) {
+                          setKnowledgeData(prev => ({
+                            ...prev,
+                            audience: {
+                              ...prev.audience!,
+                              icp: {
+                                ...prev.audience!.icp,
+                                firmographics: {
+                                  ...prev.audience!.icp.firmographics,
+                                  jobTitles: [...(prev.audience!.icp.firmographics.jobTitles || []), newJobTitle.trim()]
+                                }
+                              }
+                            }
+                          }));
+                          setNewJobTitle("");
+                        }
+                      }}
+                    />
+                    <Button type="button" onClick={() => {
+                      if (newJobTitle.trim()) {
+                        setKnowledgeData(prev => ({
+                          ...prev,
+                          audience: {
+                            ...prev.audience!,
+                            icp: {
+                              ...prev.audience!.icp,
+                              firmographics: {
+                                ...prev.audience!.icp.firmographics,
+                                jobTitles: [...(prev.audience!.icp.firmographics.jobTitles || []), newJobTitle.trim()]
+                              }
+                            }
+                          }
+                        }));
+                        setNewJobTitle("");
+                      }
+                    }}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(knowledgeData.audience?.icp?.firmographics?.jobTitles || []).map((job, index) => (
+                      <Badge key={index} variant="outline" className="pr-1">
+                        {job}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-1 ml-1"
+                          onClick={() => setKnowledgeData(prev => ({
+                            ...prev,
+                            audience: {
+                              ...prev.audience!,
+                              icp: {
+                                ...prev.audience!.icp,
+                                firmographics: {
+                                  ...prev.audience!.icp.firmographics,
+                                  jobTitles: prev.audience!.icp.firmographics.jobTitles?.filter((_, i) => i !== index) || []
+                                }
+                              }
+                            }
+                          }))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Personas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Personas Detalhadas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 gap-4">
+                  <Input
+                    placeholder="Nome da Persona (Ex: Maria - CMO de Startup)"
+                    value={newPersona.name}
+                    onChange={(e) => setNewPersona(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Textarea
+                      placeholder="Dores (uma por linha)"
+                      value={newPersona.painPoints[0] || ""}
+                      onChange={(e) => setNewPersona(prev => ({ ...prev, painPoints: [e.target.value] }))}
+                      className="min-h-[80px]"
+                    />
+                    
+                    <Textarea
+                      placeholder="Objeções (uma por linha)"
+                      value={newPersona.objections[0] || ""}
+                      onChange={(e) => setNewPersona(prev => ({ ...prev, objections: [e.target.value] }))}
+                      className="min-h-[80px]"
+                    />
+                    
+                    <Textarea
+                      placeholder="Gatilhos de Compra (um por linha)"
+                      value={newPersona.buyingTriggers[0] || ""}
+                      onChange={(e) => setNewPersona(prev => ({ ...prev, buyingTriggers: [e.target.value] }))}
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                  
+                  <Button type="button" onClick={() => {
+                    if (newPersona.name.trim()) {
+                      setKnowledgeData(prev => ({
+                        ...prev,
+                        audience: {
+                          ...prev.audience!,
+                          personas: [...(prev.audience!.personas || []), {
+                            name: newPersona.name.trim(),
+                            demographics: newPersona.demographics,
+                            painPoints: newPersona.painPoints.filter(p => p.trim()),
+                            objections: newPersona.objections.filter(o => o.trim()),
+                            buyingTriggers: newPersona.buyingTriggers.filter(t => t.trim())
+                          }]
+                        }
+                      }));
+                      setNewPersona({
+                        name: "",
+                        demographics: {},
+                        painPoints: [""],
+                        objections: [""],
+                        buyingTriggers: [""]
+                      });
+                    }
+                  }} className="w-fit">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Persona
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {(knowledgeData.audience?.personas || []).map((persona, index) => (
+                    <div key={index} className="p-4 bg-accent/5 rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{persona.name}</h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setKnowledgeData(prev => ({
+                            ...prev,
+                            audience: {
+                              ...prev.audience!,
+                              personas: prev.audience!.personas.filter((_, i) => i !== index)
+                            }
+                          }))}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <strong>Dores:</strong>
+                          <ul className="list-disc list-inside text-muted-foreground">
+                            {persona.painPoints.map((pain, i) => (
+                              <li key={i}>{pain}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <strong>Objeções:</strong>
+                          <ul className="list-disc list-inside text-muted-foreground">
+                            {persona.objections.map((obj, i) => (
+                              <li key={i}>{obj}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <strong>Gatilhos:</strong>
+                          <ul className="list-disc list-inside text-muted-foreground">
+                            {persona.buyingTriggers.map((trigger, i) => (
+                              <li key={i}>{trigger}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Perguntas Frequentes */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Perguntas Frequentes</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Ex: Quanto custa implementar essa solução?"
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                    className="min-h-[60px]"
+                  />
+                  <Button type="button" onClick={() => {
+                    if (newQuestion.trim()) {
+                      setKnowledgeData(prev => ({
+                        ...prev,
+                        audience: {
+                          ...prev.audience!,
+                          frequentQuestions: [...(prev.audience!.frequentQuestions || []), newQuestion.trim()]
+                        }
+                      }));
+                      setNewQuestion("");
+                    }
+                  }}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {(knowledgeData.audience?.frequentQuestions || []).map((question, index) => (
+                    <div key={index} className="flex justify-between items-start p-3 bg-accent/5 rounded-lg">
+                      <p className="text-sm">{question}</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setKnowledgeData(prev => ({
+                          ...prev,
+                          audience: {
+                            ...prev.audience!,
+                            frequentQuestions: prev.audience!.frequentQuestions.filter((_, i) => i !== index)
+                          }
+                        }))}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Button 
+              onClick={() => saveData()}
+              disabled={!selectedCompany || knowledgeLoading}
+              className="w-full"
+            >
+              {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </div>
         </TabsContent>
 
-        {/* SEO & Semântica */}
-        <TabsContent value="seo" className="space-y-6">
+        {/* SEO */}
+        <TabsContent value="seo">
           <Card>
             <CardHeader>
               <CardTitle>SEO & Semântica</CardTitle>
@@ -864,7 +1396,7 @@ export default function Knowledge() {
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {knowledgeData.seo?.keywords?.map((keywordObj, index) => (
+                    {(knowledgeData.seo?.keywords || []).map((keywordObj, index) => (
                       <Badge key={index} variant="secondary" className="flex items-center gap-1">
                         {keywordObj.keyword}
                         <X 
@@ -923,7 +1455,7 @@ export default function Knowledge() {
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {knowledgeData.seo?.searchIntents?.map((intent, index) => (
+                    {(knowledgeData.seo?.searchIntents || []).map((intent, index) => (
                       <Badge key={index} variant="outline" className="flex items-center gap-1">
                         {intent}
                         <X 
@@ -945,62 +1477,170 @@ export default function Knowledge() {
                 </div>
               </div>
 
-              <div className="flex justify-end">
-                <Button 
-                  onClick={saveData} 
-                  className="flex items-center gap-2"
-                  disabled={!selectedCompanyId || knowledgeLoading}
-                >
-                  <Save className="h-4 w-4" />
-                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </div>
+              <Button 
+                onClick={() => saveData()}
+                disabled={!selectedCompany || knowledgeLoading}
+                className="w-full"
+              >
+                {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Formatos de Conteúdo */}
-        <TabsContent value="formatos" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Formatos Preferidos</CardTitle>
-              <CardDescription>
-                Configure os formatos de conteúdo que sua empresa mais utiliza
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <Label>Formatos Selecionados</Label>
-                
-                {knowledgeData.contentFormats?.preferredFormats?.length ? (
-                  <div className="space-y-3">
-                    {knowledgeData.contentFormats.preferredFormats.map((format, index) => {
-                      const formatIcons = {
-                        email: Mail,
-                        blog: FileText,
-                        social: Share2,
-                        video: Video,
-                        podcast: Mic,
-                        webinar: Monitor
-                      };
-                      
-                      const formatLabels = {
-                        email: 'E-mail Marketing',
-                        blog: 'Blog Posts',
-                        social: 'Social Media',
-                        video: 'Roteiro para Vídeos',
-                        podcast: 'Roteiro para Podcasts',
-                        webinar: 'Roteiro para Webinars'
-                      };
-                      
-                      const priorityLabels = {
-                        1: 'Alta',
-                        2: 'Média',
-                        3: 'Baixa'
-                      };
-                      
-                      const Icon = formatIcons[format.type as keyof typeof formatIcons] || FileText;
-                      
+        {/* Formatos */}
+        <TabsContent value="formatos">
+          <div className="space-y-8">
+            {/* Adicionar Formato */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Adicionar Formato de Conteúdo</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="formatType">Tipo de Conteúdo</Label>
+                    <Select value={selectedFormat.type} onValueChange={(value: any) => setSelectedFormat(prev => ({ 
+                      ...prev, 
+                      type: value,
+                      platforms: [] // Reset platforms when format changes
+                    }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(formatLabels).map(([key, label]) => {
+                          const Icon = formatIcons[key as keyof typeof formatIcons];
+                          return (
+                            <SelectItem key={key} value={key}>
+                              <div className="flex items-center gap-2">
+                                <Icon className="h-4 w-4" />
+                                {label}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="priority">Prioridade</Label>
+                    <Select value={selectedFormat.priority.toString()} onValueChange={(value) => setSelectedFormat(prev => ({ ...prev, priority: parseInt(value) }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Alta</SelectItem>
+                        <SelectItem value="2">Média</SelectItem>
+                        <SelectItem value="3">Baixa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="frequency">Frequência</Label>
+                    <Select value={selectedFormat.frequency} onValueChange={(value) => setSelectedFormat(prev => ({ ...prev, frequency: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {frequencyOptions.map(freq => (
+                          <SelectItem key={freq} value={freq}>{freq}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Plataformas */}
+                <div className="space-y-4">
+                  <Label>Plataformas/Canais</Label>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                    {platformsByFormat[selectedFormat.type].map(platform => (
+                      <div key={platform} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={platform}
+                          checked={selectedFormat.platforms?.includes(platform) || false}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              addPlatform(platform);
+                            } else {
+                              removePlatform(platform);
+                            }
+                          }}
+                        />
+                        <Label htmlFor={platform} className="text-sm">{platform}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Adicionar plataforma personalizada..."
+                      value={newPlatform}
+                      onChange={(e) => setNewPlatform(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          addPlatform(newPlatform);
+                          setNewPlatform("");
+                        }
+                      }}
+                    />
+                    <Button type="button" onClick={() => {
+                      addPlatform(newPlatform);
+                      setNewPlatform("");
+                    }}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedFormat.platforms || []).map(platform => (
+                      <Badge key={platform} variant="outline" className="pr-1">
+                        {platform}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-1 ml-1"
+                          onClick={() => removePlatform(platform)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <Button 
+                  type="button" 
+                  onClick={addFormat} 
+                  className="w-full"
+                  disabled={!selectedFormat.frequency || (knowledgeData.contentFormats?.preferredFormats?.some(f => f.type === selectedFormat.type) || false)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Formato
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Formatos Selecionados */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Formatos Selecionados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(knowledgeData.contentFormats?.preferredFormats?.length || 0) === 0 ? (
+                  <div className="text-center p-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>Nenhum formato selecionado ainda</p>
+                    <p className="text-xs mt-2">Adicione pelo menos um formato acima</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {(knowledgeData.contentFormats?.preferredFormats || []).map((format, index) => {
+                      const Icon = formatIcons[format.type];
                       return (
                         <div key={index} className="flex items-center justify-between p-4 bg-accent/5 rounded-lg">
                           <div className="flex items-center gap-4">
@@ -1008,7 +1648,7 @@ export default function Knowledge() {
                               <Icon className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                              <h4 className="font-medium">{formatLabels[format.type as keyof typeof formatLabels]}</h4>
+                              <h4 className="font-medium">{formatLabels[format.type]}</h4>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant={format.priority === 1 ? "default" : format.priority === 2 ? "secondary" : "outline"}>
                                   Prioridade {priorityLabels[format.priority as keyof typeof priorityLabels]}
@@ -1019,7 +1659,7 @@ export default function Knowledge() {
                               </div>
                               {format.platforms && format.platforms.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
-                                  {format.platforms.map((platform: string) => (
+                                  {format.platforms.map(platform => (
                                     <Badge key={platform} variant="outline" className="text-xs">
                                       {platform}
                                     </Badge>
@@ -1031,44 +1671,26 @@ export default function Knowledge() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              const newFormats = knowledgeData.contentFormats?.preferredFormats?.filter((_, i) => i !== index) || [];
-                              setKnowledgeData(prev => ({
-                                ...prev,
-                                contentFormats: {
-                                  ...prev.contentFormats,
-                                  preferredFormats: newFormats
-                                }
-                              }));
-                            }}
+                            onClick={() => removeFormat(index)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <X className="h-4 w-4" />
                           </Button>
                         </div>
                       );
                     })}
                   </div>
-                ) : (
-                  <div className="text-center p-8 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Nenhum formato configurado</p>
-                    <p className="text-xs mt-2">Complete o onboarding para definir seus formatos preferidos</p>
-                  </div>
                 )}
-              </div>
+              </CardContent>
+            </Card>
 
-              <div className="flex justify-end">
-                <Button 
-                  onClick={saveData} 
-                  className="flex items-center gap-2"
-                  disabled={!selectedCompanyId || knowledgeLoading}
-                >
-                  <Save className="h-4 w-4" />
-                  {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <Button 
+              onClick={() => saveData()}
+              disabled={!selectedCompany || knowledgeLoading}
+              className="w-full"
+            >
+              {knowledgeLoading ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
