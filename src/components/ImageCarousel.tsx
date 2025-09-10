@@ -127,20 +127,20 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
       </div>
 
       {/* Main Carousel Frame */}
-      <div className="relative w-full max-w-lg mx-auto">
-        <div className="overflow-hidden rounded-lg w-full bg-muted/10">
+      <div className="relative w-full">
+        <div className="overflow-hidden rounded-lg w-full">
           <div 
             className="flex transition-transform duration-300 ease-in-out w-full"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
             {finalImages.map((image, index) => (
-              <div key={index} className="w-full flex-shrink-0 space-y-3 p-2">
+              <div key={index} className="w-full flex-shrink-0 space-y-3">
                 {/* Caption */}
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-2 px-2">
                   <Textarea
                     value={captions[index] || `Legenda do slide ${index + 1}`}
                     readOnly
-                    className="text-sm flex-1 min-h-[60px]"
+                    className="text-sm flex-1"
                     rows={2}
                   />
                   <Button
@@ -153,28 +153,26 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
                 </div>
                 
                 {/* Image */}
-                <div className="flex justify-center bg-background rounded-lg p-4">
+                <div className="px-2 flex justify-center">
                   <img 
                     src={image} 
                     alt={`Slide ${index + 1}`} 
-                    className="w-full max-w-sm h-64 sm:h-80 object-cover rounded-lg shadow-md border" 
-                    onError={(e) => {
-                      console.error('Erro ao carregar imagem:', image);
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
+                    className="w-96 h-96 object-cover rounded-lg shadow-lg" 
                   />
                 </div>
                 
                 {/* Download Button */}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full"
-                  onClick={() => downloadImage(image, index)}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Baixar Imagem {index + 1}
-                </Button>
+                <div className="px-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => downloadImage(image, index)}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar Imagem {index + 1}
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -186,7 +184,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-background/90 backdrop-blur-sm z-20 shadow-md"
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm z-10"
               onClick={prevSlide}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -194,7 +192,7 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-background/90 backdrop-blur-sm z-20 shadow-md"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm z-10"
               onClick={nextSlide}
             >
               <ChevronRight className="h-4 w-4" />
@@ -204,22 +202,19 @@ export function ImageCarousel({ images, captions = [], title }: ImageCarouselPro
       </div>
 
       {/* Thumbnail Navigation */}
-      <div className="flex gap-2 justify-center overflow-x-auto pb-2 px-2 max-w-lg mx-auto">
+      <div className="flex gap-2 overflow-x-auto pb-2 px-2">
         {finalImages.map((image, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
-            className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded border-2 transition-all duration-200 hover:scale-105 ${
-              index === currentIndex ? 'border-primary ring-2 ring-primary/20' : 'border-muted hover:border-primary/50'
+            className={`flex-shrink-0 w-16 h-16 rounded border-2 transition-colors ${
+              index === currentIndex ? 'border-primary' : 'border-muted'
             }`}
           >
             <img
               src={image}
               alt={`Miniatura ${index + 1}`}
               className="w-full h-full object-cover rounded"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.opacity = '0.3';
-              }}
             />
           </button>
         ))}
