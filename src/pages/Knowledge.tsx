@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
+  import { 
   Building, 
   Target, 
   Users, 
@@ -18,7 +18,8 @@ import {
   X, 
   Plus,
   Save,
-  Trash2
+  Trash2,
+  Edit
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -93,6 +94,7 @@ export default function Knowledge() {
   const [newIndustry, setNewIndustry] = useState("");
   const [newJobTitle, setNewJobTitle] = useState("");
   const [newQuestion, setNewQuestion] = useState("");
+  const [newPlatform, setNewPlatform] = useState("");
   const [newPersona, setNewPersona] = useState({
     name: "",
     demographics: {},
@@ -271,6 +273,8 @@ export default function Knowledge() {
     platforms: [] as string[]
   });
 
+  const [editingFormatIndex, setEditingFormatIndex] = useState<number | null>(null);
+
   const addFormat = () => {
     if (!selectedFormat.frequency || !selectedFormat.type) {
       toast({
@@ -281,35 +285,67 @@ export default function Knowledge() {
       return;
     }
     
-    // Verificar se o formato já existe
-    const exists = knowledgeData.contentFormats?.preferredFormats?.some(
-      format => format.type === selectedFormat.type && format.frequency === selectedFormat.frequency
-    );
-    
-    if (exists) {
+    if (editingFormatIndex !== null) {
+      // Editando formato existente
+      setKnowledgeData(prev => ({
+        ...prev,
+        contentFormats: {
+          ...prev.contentFormats,
+          preferredFormats: prev.contentFormats?.preferredFormats?.map((format, index) => 
+            index === editingFormatIndex 
+              ? {
+                  type: selectedFormat.type as "email" | "blog" | "social" | "video" | "podcast" | "webinar",
+                  priority: selectedFormat.priority,
+                  frequency: selectedFormat.frequency,
+                  platforms: selectedFormat.platforms
+                }
+              : format
+          ) || []
+        }
+      }));
+      
+      setEditingFormatIndex(null);
       toast({
-        title: "Formato já existe",
-        description: "Este formato com essa frequência já foi adicionado.",
-        variant: "destructive"
+        title: "Sucesso",
+        description: "Formato de conteúdo atualizado com sucesso!"
       });
-      return;
-    }
-    
-    setKnowledgeData(prev => ({
-      ...prev,
-      contentFormats: {
-        ...prev.contentFormats,
-        preferredFormats: [
-          ...(prev.contentFormats?.preferredFormats || []),
-          {
-            type: selectedFormat.type as "email" | "blog" | "social" | "video" | "podcast" | "webinar",
-            priority: selectedFormat.priority,
-            frequency: selectedFormat.frequency,
-            platforms: selectedFormat.platforms
-          }
-        ]
+    } else {
+      // Adicionando novo formato
+      // Verificar se o formato já existe
+      const exists = knowledgeData.contentFormats?.preferredFormats?.some(
+        format => format.type === selectedFormat.type && format.frequency === selectedFormat.frequency
+      );
+      
+      if (exists) {
+        toast({
+          title: "Formato já existe",
+          description: "Este formato com essa frequência já foi adicionado.",
+          variant: "destructive"
+        });
+        return;
       }
-    }));
+      
+      setKnowledgeData(prev => ({
+        ...prev,
+        contentFormats: {
+          ...prev.contentFormats,
+          preferredFormats: [
+            ...(prev.contentFormats?.preferredFormats || []),
+            {
+              type: selectedFormat.type as "email" | "blog" | "social" | "video" | "podcast" | "webinar",
+              priority: selectedFormat.priority,
+              frequency: selectedFormat.frequency,
+              platforms: selectedFormat.platforms
+            }
+          ]
+        }
+      }));
+      
+      toast({
+        title: "Sucesso",
+        description: "Formato de conteúdo adicionado com sucesso!"
+      });
+    }
     
     setSelectedFormat({
       type: 'email',
@@ -317,10 +353,28 @@ export default function Knowledge() {
       frequency: '',
       platforms: []
     });
-    
-    toast({
-      title: "Sucesso",
-      description: "Formato de conteúdo adicionado com sucesso!"
+  };
+
+  const editFormat = (index: number) => {
+    const format = knowledgeData.contentFormats?.preferredFormats?.[index];
+    if (format) {
+      setSelectedFormat({
+        type: format.type,
+        priority: format.priority,
+        frequency: format.frequency,
+        platforms: format.platforms || []
+      });
+      setEditingFormatIndex(index);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingFormatIndex(null);
+    setSelectedFormat({
+      type: 'email',
+      priority: 1,
+      frequency: '',
+      platforms: []
     });
   };
 
