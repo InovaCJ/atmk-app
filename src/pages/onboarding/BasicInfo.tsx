@@ -86,10 +86,18 @@ export function BasicInfo({ onNext, onSkip, initialData = {} }: BasicInfoProps) 
       });
 
       if (error) {
-        if (error.message.includes('already registered')) {
+        console.error('Signup error:', error);
+        
+        if (error.message.includes('already registered') || error.message.includes('User already registered')) {
           toast({
             title: "Email já cadastrado",
             description: "Este email já possui uma conta. Tente fazer login.",
+            variant: "destructive"
+          });
+        } else if (error.message.includes('Signups not allowed')) {
+          toast({
+            title: "Cadastro desabilitado",
+            description: "O cadastro está temporariamente desabilitado. Entre em contato com o suporte.",
             variant: "destructive"
           });
         } else {
@@ -102,14 +110,18 @@ export function BasicInfo({ onNext, onSkip, initialData = {} }: BasicInfoProps) 
         return;
       }
 
+      console.log('Signup success:', data);
+
       if (data.user) {
         toast({
           title: "Conta criada com sucesso!",
           description: "Vamos configurar seu perfil e empresa.",
         });
         
-        // Continue to next step immediately
-        onNext(formData);
+        // Wait a moment for auth state to update, then continue
+        setTimeout(() => {
+          onNext(formData);
+        }, 500);
       }
     } catch (error: any) {
       toast({
