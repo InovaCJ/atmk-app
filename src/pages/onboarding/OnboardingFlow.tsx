@@ -58,14 +58,18 @@ export function OnboardingFlow() {
 
   const finalizeOnboarding = async () => {
     try {
+      console.log('Finalizing onboarding with data:', onboardingData);
+      console.log('Current companies:', companies);
+      
       let currentCompany = companies.length > 0 ? companies[0] : null;
 
       // Se não existe empresa, criar uma automaticamente
-      if (!currentCompany && onboardingData.basicInfo?.companyName) {
-        console.log('Creating company automatically with name:', onboardingData.basicInfo.companyName);
+      const companyName = onboardingData.basicInfo?.companyName?.trim();
+      if (!currentCompany && companyName) {
+        console.log('Creating company automatically with name:', companyName);
         
         currentCompany = await createCompany({
-          name: onboardingData.basicInfo.companyName,
+          name: companyName,
           description: null,
           website: null,
           industry: null,
@@ -77,6 +81,7 @@ export function OnboardingFlow() {
         });
 
         if (!currentCompany) {
+          console.error('Failed to create company');
           toast({
             title: "Erro",
             description: "Não foi possível criar a empresa. Tente novamente.",
@@ -85,6 +90,7 @@ export function OnboardingFlow() {
           return;
         }
 
+        console.log('Company created successfully:', currentCompany);
         toast({
           title: "Empresa criada!",
           description: `Empresa "${currentCompany.name}" foi criada automaticamente.`,
@@ -92,9 +98,12 @@ export function OnboardingFlow() {
       }
 
       if (!currentCompany) {
+        console.error('No company available and could not create one. Company name:', companyName);
         toast({
           title: "Erro",
-          description: "Nenhuma empresa encontrada e não foi possível criar uma automaticamente.",
+          description: !companyName 
+            ? "Nome da empresa não informado. Volte à primeira etapa e preencha o nome da empresa."
+            : "Nenhuma empresa encontrada e não foi possível criar uma automaticamente.",
           variant: "destructive"
         });
         return;
