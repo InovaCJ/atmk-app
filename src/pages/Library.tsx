@@ -122,6 +122,7 @@ export default function Library() {
       createdAt: new Date("2024-12-01"),
       content: "O marketing digital se tornou essencial para o sucesso de qualquer negócio nos dias atuais. Neste artigo completo, vamos abordar os pilares fundamentais para criar uma estratégia que realmente funciona.\n\n## 1. Definindo seus objetivos\n\nAntes de qualquer ação, é crucial estabelecer metas claras e mensuráveis. Seja aumentar vendas, gerar leads ou fortalecer a marca, seus objetivos devem ser específicos.\n\n## 2. Conhecendo sua audiência\n\nUma pesquisa profunda sobre seu público-alvo é a base de toda estratégia bem-sucedida. Entenda suas dores, desejos e comportamentos.\n\n## 3. Escolhendo os canais certos\n\nNem toda plataforma será adequada para seu negócio. Foque onde sua audiência realmente está presente.\n\n## 4. Criando conteúdo relevante\n\nO conteúdo é o coração do marketing digital. Produza materiais que eduquem, entretenham e engajem seu público.\n\n## 5. Mensurando resultados\n\nSem análise de dados, você está navegando às cegas. Acompanhe métricas relevantes e ajuste sua estratégia conforme necessário.",
       slug: "estrategia-marketing-digital-eficaz",
+      metaDescription: "Aprenda a criar uma estratégia de marketing digital eficaz com este guia completo. Descubra as melhores práticas para aumentar vendas e fortalecer sua marca online.",
       tags: ["marketing digital", "estratégia", "negócios"],
       readTime: "8 min",
       images: ["/placeholder.svg"],
@@ -491,6 +492,20 @@ export default function Library() {
                         variant="outline"
                         size="icon"
                         onClick={() => handleCopy(selectedContent.slug || "", "Slug")}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium">Meta Description</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input value={selectedContent.metaDescription || ""} readOnly />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleCopy(selectedContent.metaDescription || "", "Meta Description")}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
