@@ -691,6 +691,38 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Alerta de Confirmação de Email */}
+              <div className="border rounded-lg p-4 bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <div className="flex-1 space-y-2">
+                    <h4 className="font-medium text-amber-900 dark:text-amber-100">
+                      Confirme seu email para manter sua conta segura
+                    </h4>
+                    <p className="text-sm text-amber-700 dark:text-amber-200">
+                      Para garantir a segurança da sua conta, confirme seu email clicando no link enviado para seu email. 
+                      Isso permitirá que você recupere sua senha e receba notificações importantes.
+                    </p>
+                    <div className="pt-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-200 dark:hover:bg-amber-950/40"
+                        onClick={() => {
+                          toast({
+                            title: "Verificação de email",
+                            description: "Verifique sua caixa de entrada e clique no link de confirmação.",
+                          });
+                        }}
+                      >
+                        <Mail className="h-4 w-4 mr-2" />
+                        Como confirmar email
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <h4 className="font-medium">Sair da Conta</h4>
