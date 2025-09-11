@@ -205,12 +205,18 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
       setIsGenerating(true);
       
       try {
-        // Call the generation function
-        await onConfirm({
+        // Import and call the generation function directly
+        const { generateContentWithAI } = await import('@/utils/contentGeneration');
+        const generatedContent = await generateContentWithAI({
           opportunityId: selectedOpportunity || 'onboarding-generated',
           contentType: selectedContentType,
           companyId: selectedCompanyState
         });
+        
+        // Content generation completed successfully
+        console.log('Content generated successfully:', generatedContent);
+        handleGenerationComplete();
+        
       } catch (error) {
         console.error('Error generating content:', error);
         setIsGenerating(false);
@@ -222,6 +228,10 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
     setIsGenerating(false);
     resetModal();
     onOpenChange(false);
+    // Navigate to library after closing modal
+    setTimeout(() => {
+      navigate('/library');
+    }, 100);
   };
 
   const canProceed = () => {
@@ -265,7 +275,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
         {isGenerating ? (
           <LoadingScreen 
             onComplete={handleGenerationComplete}
-            estimatedTime={30}
+            estimatedTime={5}
           />
         ) : (
           <>

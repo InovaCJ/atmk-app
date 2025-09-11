@@ -360,24 +360,8 @@ export default function Library() {
   };
 
   const handleGenerationConfirm = async (config: any) => {
-    try {
-      const { generateContentWithAI } = await import('@/utils/contentGeneration');
-      const generatedContent = await generateContentWithAI(config);
-      
-      // Set the generated content and show it in a modal
-      if (generatedContent) {
-        setGeneratedContent(generatedContent);
-        setSelectedContent(generatedContent);
-        
-        // Aguarda um pouco para o toast aparecer antes de abrir o modal
-        setTimeout(() => {
-          setIsSheetOpen(true);
-        }, 2000);
-      }
-      
-    } catch (error) {
-      console.error('Error in content generation:', error);
-    }
+    // This is now handled directly in the modal
+    // The modal will close and redirect to library after generation
   };
 
   const handleRating = (contentId: number, newRating: number) => {
