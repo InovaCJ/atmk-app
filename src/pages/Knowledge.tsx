@@ -465,15 +465,56 @@ export default function Knowledge() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="differentials">Diferenciais (USPs)</Label>
+                  <Label htmlFor="differentials">Diferenciais</Label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Adicionar diferencial..."
+                      placeholder="Ex: Entrega em 24h, Suporte 24/7, Preço mais baixo (use vírgula para separar)"
                       value={newDifferential}
-                      onChange={(e) => setNewDifferential(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addItem('differentials', 'brandIdentity', newDifferential, setNewDifferential)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.includes(',')) {
+                          const items = value.split(',').map(i => i.trim()).filter(i => i);
+                          items.forEach(item => {
+                            if (item) {
+                              setKnowledgeData(prev => ({
+                                ...prev,
+                                brandIdentity: {
+                                  ...prev.brandIdentity!,
+                                  differentials: [...(prev.brandIdentity?.differentials || []), item]
+                                }
+                              }));
+                            }
+                          });
+                          setNewDifferential("");
+                        } else {
+                          setNewDifferential(value);
+                        }
+                      }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && newDifferential.trim()) {
+                          setKnowledgeData(prev => ({
+                            ...prev,
+                            brandIdentity: {
+                              ...prev.brandIdentity!,
+                              differentials: [...(prev.brandIdentity?.differentials || []), newDifferential.trim()]
+                            }
+                          }));
+                          setNewDifferential("");
+                        }
+                      }}
                     />
-                    <Button type="button" onClick={() => addItem('differentials', 'brandIdentity', newDifferential, setNewDifferential)}>
+                    <Button type="button" onClick={() => {
+                      if (newDifferential.trim()) {
+                        setKnowledgeData(prev => ({
+                          ...prev,
+                          brandIdentity: {
+                            ...prev.brandIdentity!,
+                            differentials: [...(prev.brandIdentity?.differentials || []), newDifferential.trim()]
+                          }
+                        }));
+                        setNewDifferential("");
+                      }
+                    }}>
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -592,29 +633,51 @@ export default function Knowledge() {
                       <Input
                         placeholder="Ex: inovação, qualidade, confiança (use vírgula para separar)"
                         value={newWordToUse}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value.includes(',')) {
-                            const words = value.split(',').map(w => w.trim()).filter(w => w);
-                            words.forEach(word => {
-                              if (word) {
-                                setKnowledgeData(prev => ({
-                                  ...prev,
-                                  brandIdentity: {
-                                    ...prev.brandIdentity!,
-                                    wordsToUse: [...(prev.brandIdentity?.wordsToUse || []), word]
-                                  }
-                                }));
-                              }
-                            });
-                            setNewWordToUse("");
-                          } else {
-                            setNewWordToUse(value);
-                          }
-                        }}
-                        onKeyPress={(e) => e.key === 'Enter' && addItem('wordsToUse', 'brandIdentity', newWordToUse, setNewWordToUse)}
+                       onChange={(e) => {
+                         const value = e.target.value;
+                         if (value.includes(',')) {
+                           const words = value.split(',').map(w => w.trim()).filter(w => w);
+                           words.forEach(word => {
+                             if (word) {
+                               setKnowledgeData(prev => ({
+                                 ...prev,
+                                 brandIdentity: {
+                                   ...prev.brandIdentity!,
+                                   wordsToUse: [...(prev.brandIdentity?.wordsToUse || []), word]
+                                 }
+                               }));
+                             }
+                           });
+                           setNewWordToUse("");
+                         } else {
+                           setNewWordToUse(value);
+                         }
+                       }}
+                       onKeyPress={(e) => {
+                         if (e.key === 'Enter' && newWordToUse.trim()) {
+                           setKnowledgeData(prev => ({
+                             ...prev,
+                             brandIdentity: {
+                               ...prev.brandIdentity!,
+                               wordsToUse: [...(prev.brandIdentity?.wordsToUse || []), newWordToUse.trim()]
+                             }
+                           }));
+                           setNewWordToUse("");
+                         }
+                       }}
                       />
-                      <Button type="button" onClick={() => addItem('wordsToUse', 'brandIdentity', newWordToUse, setNewWordToUse)}>
+                     <Button type="button" onClick={() => {
+                       if (newWordToUse.trim()) {
+                         setKnowledgeData(prev => ({
+                           ...prev,
+                           brandIdentity: {
+                             ...prev.brandIdentity!,
+                             wordsToUse: [...(prev.brandIdentity?.wordsToUse || []), newWordToUse.trim()]
+                           }
+                         }));
+                         setNewWordToUse("");
+                       }
+                     }}>
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
@@ -661,9 +724,31 @@ export default function Knowledge() {
                             setNewWordToBan(value);
                           }
                         }}
-                        onKeyPress={(e) => e.key === 'Enter' && addItem('wordsToBan', 'brandIdentity', newWordToBan, setNewWordToBan)}
+                         onKeyPress={(e) => {
+                           if (e.key === 'Enter' && newWordToBan.trim()) {
+                             setKnowledgeData(prev => ({
+                               ...prev,
+                               brandIdentity: {
+                                 ...prev.brandIdentity!,
+                                 wordsToBan: [...(prev.brandIdentity?.wordsToBan || []), newWordToBan.trim()]
+                               }
+                             }));
+                             setNewWordToBan("");
+                           }
+                         }}
                       />
-                      <Button type="button" onClick={() => addItem('wordsToBan', 'brandIdentity', newWordToBan, setNewWordToBan)}>
+                     <Button type="button" onClick={() => {
+                       if (newWordToBan.trim()) {
+                         setKnowledgeData(prev => ({
+                           ...prev,
+                           brandIdentity: {
+                             ...prev.brandIdentity!,
+                             wordsToBan: [...(prev.brandIdentity?.wordsToBan || []), newWordToBan.trim()]
+                           }
+                         }));
+                         setNewWordToBan("");
+                       }
+                     }}>
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
