@@ -364,20 +364,10 @@ export default function Library() {
       setIsGenerationModalOpen(false);
       setIsGenerating(true);
       
-      // Show loading toast
-      toast({
-        title: "Gerando conteúdo...",
-        description: "Nossa IA está criando seu conteúdo personalizado. Isso pode levar alguns segundos.",
-      });
-
       const { generateContentWithAI } = await import('@/utils/contentGeneration');
       await generateContentWithAI(config);
       
       setIsGenerating(false);
-      toast({
-        title: "Conteúdo gerado com sucesso!",
-        description: "Seus conteúdos estão prontos na biblioteca.",
-      });
       
     } catch (error) {
       console.error('Error generating content:', error);

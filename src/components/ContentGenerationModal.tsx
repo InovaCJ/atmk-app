@@ -198,13 +198,15 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
   const handleConfirm = async () => {
     if (selectedOpportunity && selectedContentType && selectedCompanyState) {
       try {
-        // Call the actual generation function instead of just logging
+        // Close the modal first, then trigger generation
+        handleClose();
+        
+        // Call the actual generation function
         await onConfirm({
           opportunityId: selectedOpportunity || 'onboarding-generated',
           contentType: selectedContentType,
           companyId: selectedCompanyState
         });
-        handleClose();
       } catch (error) {
         console.error('Error generating content:', error);
       }
