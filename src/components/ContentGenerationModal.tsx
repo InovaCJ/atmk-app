@@ -135,7 +135,10 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
   const initialStep = isFreePlan ? 2 : (preselectedOpportunity ? 2 : 1);
   
   const [step, setStep] = useState(initialStep);
-  const [selectedOpportunity, setSelectedOpportunity] = useState(preselectedOpportunity || "");
+  // For free plans, set a default opportunity since they can't select one
+  const [selectedOpportunity, setSelectedOpportunity] = useState(
+    preselectedOpportunity || (isFreePlan ? "onboarding-generated" : "")
+  );
   const [selectedContentType, setSelectedContentType] = useState("");
   const [selectedCompanyState, setSelectedCompanyState] = useState(selectedCompanyId || "");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -144,7 +147,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
 
   const resetModal = () => {
     setStep(initialStep);
-    setSelectedOpportunity(preselectedOpportunity || "");
+    setSelectedOpportunity(preselectedOpportunity || (isFreePlan ? "onboarding-generated" : ""));
     setSelectedContentType("");
     setSelectedCompanyState(selectedCompanyId || "");
     setIsGenerating(false);
