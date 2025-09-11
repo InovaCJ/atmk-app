@@ -82,9 +82,10 @@ export default function Dashboard() {
     },
     {
       title: "Próximas Publicações",
-      value: canGenerateContent ? "0" : "-",
-      change: "0",
-      icon: Calendar
+      value: canGenerateContent ? "4" : "-",
+      change: "+100%",
+      icon: Calendar,
+      onClick: () => navigate('/library')
     }
   ];
 
@@ -192,7 +193,13 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
-          <Card key={index} className="bg-gradient-to-br from-card to-card/50 border shadow-card">
+          <Card 
+            key={index} 
+            className={`bg-gradient-to-br from-card to-card/50 border shadow-card ${
+              stat.onClick ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''
+            }`}
+            onClick={stat.onClick}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
