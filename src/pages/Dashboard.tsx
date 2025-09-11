@@ -98,14 +98,7 @@ export default function Dashboard() {
       return;
     }
 
-    // Check if user is on free plan - this feature is PRO only
-    const currentPlan = selectedCompany?.plan_type || 'free';
-    if (currentPlan === 'free') {
-      setIsModalOpen(true); // Open upgrade modal instead
-      return;
-    }
-    
-    // Open generation modal with preselected opportunity (PRO/Business only)
+    // Open generation modal with preselected opportunity for all users
     setSelectedOpportunityId(opportunityId.toString());
     setIsModalOpen(true);
   };
@@ -254,20 +247,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Conditional rendering based on plan type */}
-      {selectedCompany?.plan_type === 'free' ? (
-        <PlanModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
-        />
-      ) : (
-        <ContentGenerationModal
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          onConfirm={handleGenerationConfirm}
-          preselectedOpportunity={selectedOpportunityId}
-        />
-      )}
+      {/* Content Generation Modal - Available for all users */}
+      <ContentGenerationModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onConfirm={handleGenerationConfirm}
+        preselectedOpportunity={selectedOpportunityId}
+      />
 
       <FloatingKnowledgeButton />
     </div>
