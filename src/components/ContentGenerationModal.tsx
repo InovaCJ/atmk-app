@@ -130,14 +130,13 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
   const { getKnowledgeItemByType } = useKnowledgeBase(selectedCompanyId || undefined);
   const navigate = useNavigate();
   
-  // Check if user is on free plan to skip opportunities step
-  const isFreePlan = selectedCompany?.plan_type === 'free';
-  const initialStep = isFreePlan ? 2 : (preselectedOpportunity ? 2 : 1);
+  // Allow all users to select opportunities - no restrictions
+  const initialStep = preselectedOpportunity ? 2 : 1;
   
   const [step, setStep] = useState(initialStep);
-  // For free plans, set a default opportunity since they can't select one
+  // Set preselected opportunity if provided, otherwise empty
   const [selectedOpportunity, setSelectedOpportunity] = useState(
-    preselectedOpportunity || (isFreePlan ? "onboarding-generated" : "")
+    preselectedOpportunity || ""
   );
   const [selectedContentType, setSelectedContentType] = useState("");
   const [selectedCompanyState, setSelectedCompanyState] = useState(selectedCompanyId || "");
@@ -147,7 +146,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
 
   const resetModal = () => {
     setStep(initialStep);
-    setSelectedOpportunity(preselectedOpportunity || (isFreePlan ? "onboarding-generated" : ""));
+    setSelectedOpportunity(preselectedOpportunity || "");
     setSelectedContentType("");
     setSelectedCompanyState(selectedCompanyId || "");
     setIsGenerating(false);
