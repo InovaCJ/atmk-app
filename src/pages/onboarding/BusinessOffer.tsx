@@ -78,7 +78,21 @@ export function BusinessOffer({ onNext, onBack, onSkip, initialData = {} }: Busi
   };
 
   const handleNext = () => {
-    onNext(formData);
+    // Auto-save any pending items before proceeding
+    if (newProduct.name.trim()) {
+      addProduct();
+    }
+    if (newService.name.trim()) {
+      addService();
+    }
+    if (newRoadmapItem.trim()) {
+      addRoadmapItem();
+    }
+    
+    // Use a small delay to ensure state updates are complete
+    setTimeout(() => {
+      onNext(formData);
+    }, 100);
   };
 
   const isFormValid = Boolean(formData.sector && formData.market);
@@ -166,6 +180,7 @@ export function BusinessOffer({ onNext, onBack, onSkip, initialData = {} }: Busi
                   placeholder="Ex: Sistema de Gestão"
                   value={newProduct.name}
                   onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                  onKeyPress={(e) => e.key === 'Enter' && addProduct()}
                 />
               </div>
               
@@ -176,6 +191,7 @@ export function BusinessOffer({ onNext, onBack, onSkip, initialData = {} }: Busi
                   placeholder="Ex: Dashboard, Relatórios, API"
                   value={newProduct.features[0] || ""}
                   onChange={(e) => setNewProduct(prev => ({ ...prev, features: [e.target.value] }))}
+                  onKeyPress={(e) => e.key === 'Enter' && addProduct()}
                 />
               </div>
 
@@ -187,6 +203,7 @@ export function BusinessOffer({ onNext, onBack, onSkip, initialData = {} }: Busi
                     placeholder="Ex: R$ 99-499/mês"
                     value={newProduct.priceRange}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, priceRange: e.target.value }))}
+                    onKeyPress={(e) => e.key === 'Enter' && addProduct()}
                   />
                   <Button type="button" onClick={addProduct}>
                     <Plus className="h-4 w-4" />
@@ -231,6 +248,7 @@ export function BusinessOffer({ onNext, onBack, onSkip, initialData = {} }: Busi
                   placeholder="Ex: Consultoria Estratégica"
                   value={newService.name}
                   onChange={(e) => setNewService(prev => ({ ...prev, name: e.target.value }))}
+                  onKeyPress={(e) => e.key === 'Enter' && addService()}
                 />
               </div>
               
@@ -241,6 +259,7 @@ export function BusinessOffer({ onNext, onBack, onSkip, initialData = {} }: Busi
                   placeholder="Ex: Análise e planejamento estratégico"
                   value={newService.description}
                   onChange={(e) => setNewService(prev => ({ ...prev, description: e.target.value }))}
+                  onKeyPress={(e) => e.key === 'Enter' && addService()}
                 />
               </div>
 
@@ -252,6 +271,7 @@ export function BusinessOffer({ onNext, onBack, onSkip, initialData = {} }: Busi
                     placeholder="Ex: R$ 5.000-15.000"
                     value={newService.priceRange}
                     onChange={(e) => setNewService(prev => ({ ...prev, priceRange: e.target.value }))}
+                    onKeyPress={(e) => e.key === 'Enter' && addService()}
                   />
                   <Button type="button" onClick={addService}>
                     <Plus className="h-4 w-4" />
