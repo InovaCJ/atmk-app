@@ -499,7 +499,7 @@ export default function Library() {
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {content.createdAt.toLocaleDateString()}
+                            {content.createdAt ? new Date(content.createdAt).toLocaleDateString() : 'Data não disponível'}
                           </span>
                           {content.readTime && (
                             <span>{content.readTime}</span>
@@ -560,7 +560,7 @@ export default function Library() {
                 </Badge>
                 <Badge variant="outline">
                   <Calendar className="h-3 w-3 mr-1" />
-                  {selectedContent.createdAt.toLocaleDateString()}
+                  {selectedContent.createdAt ? new Date(selectedContent.createdAt).toLocaleDateString() : 'Data não disponível'}
                 </Badge>
                 <Badge className={getStatusColor(selectedContent.status)}>
                   {getStatusLabel(selectedContent.status)}
