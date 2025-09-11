@@ -63,28 +63,16 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: "Conteúdos Gerados",
-      value: canGenerateContent ? "0" : "-",
-      change: "0%",
-      icon: FileText
-    },
-    {
       title: "Oportunidades geradas",
       value: "12",
       change: "+8.2%",
       icon: TrendingUp
     },
     {
-      title: "Taxa de Engajamento",
-      value: canGenerateContent ? "0%" : "-",
-      change: "0%",
-      icon: Share2
-    },
-    {
-      title: "Próximas Publicações",
+      title: "Conteúdos Gerados",
       value: canGenerateContent ? "4" : "-",
       change: "+100%",
-      icon: Calendar,
+      icon: FileText,
       onClick: () => navigate('/library')
     }
   ];
