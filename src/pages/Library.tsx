@@ -131,7 +131,7 @@ export default function Library() {
   const [contentFeedbacks, setContentFeedbacks] = useState<{[key: number]: {rating: number, feedback: string}}>({});
   const [isGenerationModalOpen, setIsGenerationModalOpen] = useState(false);
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState<any>(null);
   
   const navigate = useNavigate();
   const { selectedCompany, selectedCompanyId } = useCompanyContext();
@@ -361,17 +361,18 @@ export default function Library() {
 
   const handleGenerationConfirm = async (config: any) => {
     try {
-      setIsGenerationModalOpen(false);
-      setIsGenerating(true);
-      
       const { generateContentWithAI } = await import('@/utils/contentGeneration');
-      await generateContentWithAI(config);
+      const generatedContent = await generateContentWithAI(config);
       
-      setIsGenerating(false);
+      // Set the generated content and show it in a modal
+      if (generatedContent) {
+        setGeneratedContent(generatedContent);
+        setSelectedContent(generatedContent);
+        setIsSheetOpen(true);
+      }
       
     } catch (error) {
-      console.error('Error generating content:', error);
-      setIsGenerating(false);
+      console.error('Error in content generation:', error);
     }
   };
 
@@ -418,14 +419,6 @@ export default function Library() {
   const getCurrentFeedback = (contentId: number) => {
     return contentFeedbacks[contentId]?.feedback || "";
   };
-
-  const handleGenerationComplete = () => {
-    setIsGenerating(false);
-  };
-
-  if (isGenerating) {
-    return <LoadingScreen onComplete={handleGenerationComplete} />;
-  }
 
   return (
     <div className="p-6 space-y-6">
@@ -838,16 +831,6 @@ export default function Library() {
           onOpenChange={setIsGenerationModalOpen}
           onConfirm={handleGenerationConfirm}
         />
-        
-        {/* Loading Screen Modal */}
-        {isGenerating && (
-          <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm">
-            <LoadingScreen 
-              onComplete={() => setIsGenerating(false)}
-              estimatedTime={30}
-            />
-          </div>
-        )}
       </div>
     );
   }
