@@ -437,28 +437,6 @@ export default function Knowledge() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Debug Info - Temporário */}
-        {process.env.NODE_ENV === 'development' && (
-          <Card className="mt-4 bg-yellow-50 border-yellow-200">
-            <CardContent className="p-4">
-              <div className="text-sm">
-                <p><strong>Debug Info:</strong></p>
-                <p>Company ID: {selectedCompanyId}</p>
-                <p>Loading: {knowledgeLoading ? 'Yes' : 'No'}</p>
-                <p>Knowledge Item exists: {getKnowledgeItemByType('onboarding_data') ? 'Yes' : 'No'}</p>
-                <p>Value Proposition: {knowledgeData.brandIdentity?.valueProposition || 'Empty'}</p>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={loadKnowledgeData}
-                  className="mt-2"
-                >
-                  Recarregar Dados
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Identidade */}
         <TabsContent value="identidade">
