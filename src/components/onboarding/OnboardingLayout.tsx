@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface OnboardingLayoutProps {
   children: ReactNode;
@@ -49,6 +50,14 @@ export function OnboardingLayout({
           <p className="text-muted-foreground">
             Configure sua base de conhecimento para gerar conteúdos estratégicos
           </p>
+          
+          {/* Alert sobre importância do preenchimento */}
+          <Alert className="mt-4 max-w-2xl mx-auto bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-800">
+            <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <AlertDescription className="text-orange-800 dark:text-orange-300">
+              <strong>Dica importante:</strong> O preenchimento completo dos campos do onboarding melhora significativamente a qualidade dos conteúdos gerados e identifica mais oportunidades estratégicas para o seu negócio.
+            </AlertDescription>
+          </Alert>
         </div>
 
         {/* Progress */}
