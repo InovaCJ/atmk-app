@@ -31,6 +31,45 @@ export function SEOSemantics({ onNext, onBack, onSkip, initialData = {} }: SEOSe
   });
   const [newSearchIntent, setNewSearchIntent] = useState("");
 
+  const handleKeywordInput = (value: string) => {
+    if (value.includes(',')) {
+      const keywords = value.split(',').map(k => k.trim()).filter(k => k);
+      keywords.forEach(keyword => {
+        if (keyword) {
+          setFormData(prev => ({
+            ...prev,
+            keywords: [...prev.keywords, {
+              keyword: keyword,
+              searchVolume: 0,
+              difficulty: 1,
+              intent: 'informational' as const
+            }]
+          }));
+        }
+      });
+      setNewKeyword(prev => ({ ...prev, keyword: "" }));
+    } else {
+      setNewKeyword(prev => ({ ...prev, keyword: value }));
+    }
+  };
+
+  const handleSearchIntentInput = (value: string) => {
+    if (value.includes(',')) {
+      const intents = value.split(',').map(i => i.trim()).filter(i => i);
+      intents.forEach(intent => {
+        if (intent) {
+          setFormData(prev => ({
+            ...prev,
+            searchIntents: [...prev.searchIntents, intent]
+          }));
+        }
+      });
+      setNewSearchIntent("");
+    } else {
+      setNewSearchIntent(value);
+    }
+  };
+
   const addKeyword = () => {
     if (newKeyword.keyword.trim()) {
       setFormData(prev => ({
@@ -120,9 +159,9 @@ export function SEOSemantics({ onNext, onBack, onSkip, initialData = {} }: SEOSe
           <CardContent className="space-y-6">
             <div className="flex gap-2">
               <Input
-                placeholder="Ex: marketing digital, gestão de vendas..."
+                placeholder="Ex: marketing digital, gestão de vendas (use vírgula para separar)"
                 value={newKeyword.keyword}
-                onChange={(e) => setNewKeyword(prev => ({ ...prev, keyword: e.target.value }))}
+                onChange={(e) => handleKeywordInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
                 className="flex-1"
               />
@@ -160,9 +199,10 @@ export function SEOSemantics({ onNext, onBack, onSkip, initialData = {} }: SEOSe
           <CardContent className="space-y-6">
             <div className="flex gap-2">
               <Textarea
-                placeholder="Ex: como aumentar vendas online com marketing digital"
+                placeholder="Ex: como aumentar vendas online, melhor estratégia de marketing (use vírgula para separar)"
                 value={newSearchIntent}
-                onChange={(e) => setNewSearchIntent(e.target.value)}
+                onChange={(e) => handleSearchIntentInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addSearchIntent()}
                 className="min-h-[80px]"
               />
               <Button type="button" onClick={addSearchIntent}>

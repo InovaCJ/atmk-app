@@ -44,6 +44,23 @@ export function BrandIdentity({ onNext, onBack, onSkip, initialData = {} }: Bran
     }
   };
 
+  const handleWordInput = (field: keyof BrandIdentityData, value: string, setter: (value: string) => void) => {
+    if (value.includes(',')) {
+      const words = value.split(',').map(w => w.trim()).filter(w => w);
+      words.forEach(word => {
+        if (word && Array.isArray(formData[field])) {
+          setFormData(prev => ({
+            ...prev,
+            [field]: [...(prev[field] as string[]), word]
+          }));
+        }
+      });
+      setter("");
+    } else {
+      setter(value);
+    }
+  };
+
   const removeItem = (field: keyof BrandIdentityData, index: number) => {
     if (Array.isArray(formData[field])) {
       setFormData(prev => ({
@@ -200,9 +217,9 @@ export function BrandIdentity({ onNext, onBack, onSkip, initialData = {} }: Bran
                 <Label>Palavras que Usamos</Label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Adicionar palavra..."
+                    placeholder="Ex: inovação, qualidade, confiança (use vírgula para separar)"
                     value={newWordToUse}
-                    onChange={(e) => setNewWordToUse(e.target.value)}
+                    onChange={(e) => handleWordInput('wordsToUse', e.target.value, setNewWordToUse)}
                     onKeyPress={(e) => e.key === 'Enter' && addItem('wordsToUse', newWordToUse, setNewWordToUse)}
                   />
                   <Button type="button" onClick={() => addItem('wordsToUse', newWordToUse, setNewWordToUse)}>
@@ -230,9 +247,9 @@ export function BrandIdentity({ onNext, onBack, onSkip, initialData = {} }: Bran
                 <Label>Palavras Banidas</Label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Adicionar palavra banida..."
+                    placeholder="Ex: barato, problemático, ruim (use vírgula para separar)"
                     value={newWordToBan}
-                    onChange={(e) => setNewWordToBan(e.target.value)}
+                    onChange={(e) => handleWordInput('wordsToBan', e.target.value, setNewWordToBan)}
                     onKeyPress={(e) => e.key === 'Enter' && addItem('wordsToBan', newWordToBan, setNewWordToBan)}
                   />
                   <Button type="button" onClick={() => addItem('wordsToBan', newWordToBan, setNewWordToBan)}>

@@ -590,9 +590,28 @@ export default function Knowledge() {
                     <Label>Palavras que Usamos</Label>
                     <div className="flex gap-2">
                       <Input
-                        placeholder="Adicionar palavra..."
+                        placeholder="Ex: inovação, qualidade, confiança (use vírgula para separar)"
                         value={newWordToUse}
-                        onChange={(e) => setNewWordToUse(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value.includes(',')) {
+                            const words = value.split(',').map(w => w.trim()).filter(w => w);
+                            words.forEach(word => {
+                              if (word) {
+                                setKnowledgeData(prev => ({
+                                  ...prev,
+                                  brandIdentity: {
+                                    ...prev.brandIdentity!,
+                                    wordsToUse: [...(prev.brandIdentity?.wordsToUse || []), word]
+                                  }
+                                }));
+                              }
+                            });
+                            setNewWordToUse("");
+                          } else {
+                            setNewWordToUse(value);
+                          }
+                        }}
                         onKeyPress={(e) => e.key === 'Enter' && addItem('wordsToUse', 'brandIdentity', newWordToUse, setNewWordToUse)}
                       />
                       <Button type="button" onClick={() => addItem('wordsToUse', 'brandIdentity', newWordToUse, setNewWordToUse)}>
@@ -620,9 +639,28 @@ export default function Knowledge() {
                     <Label>Palavras Banidas</Label>
                     <div className="flex gap-2">
                       <Input
-                        placeholder="Adicionar palavra banida..."
+                        placeholder="Ex: barato, problemático, ruim (use vírgula para separar)"
                         value={newWordToBan}
-                        onChange={(e) => setNewWordToBan(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value.includes(',')) {
+                            const words = value.split(',').map(w => w.trim()).filter(w => w);
+                            words.forEach(word => {
+                              if (word) {
+                                setKnowledgeData(prev => ({
+                                  ...prev,
+                                  brandIdentity: {
+                                    ...prev.brandIdentity!,
+                                    wordsToBan: [...(prev.brandIdentity?.wordsToBan || []), word]
+                                  }
+                                }));
+                              }
+                            });
+                            setNewWordToBan("");
+                          } else {
+                            setNewWordToBan(value);
+                          }
+                        }}
                         onKeyPress={(e) => e.key === 'Enter' && addItem('wordsToBan', 'brandIdentity', newWordToBan, setNewWordToBan)}
                       />
                       <Button type="button" onClick={() => addItem('wordsToBan', 'brandIdentity', newWordToBan, setNewWordToBan)}>
@@ -1479,9 +1517,29 @@ export default function Knowledge() {
                   <Label>Palavras-chave</Label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Digite uma palavra-chave"
+                      placeholder="Digite palavras-chave (use vírgula para separar)"
                       value={newKeyword}
-                      onChange={(e) => setNewKeyword(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.includes(',')) {
+                          const keywords = value.split(',').map(k => k.trim()).filter(k => k);
+                          keywords.forEach(keyword => {
+                            if (keyword) {
+                              const currentKeywords = knowledgeData.seo?.keywords || [];
+                              setKnowledgeData(prev => ({
+                                ...prev,
+                                seo: {
+                                  ...prev.seo!,
+                                  keywords: [...currentKeywords, { keyword: keyword, searchVolume: 0, difficulty: 0, intent: 'informational' as const }]
+                                }
+                              }));
+                            }
+                          });
+                          setNewKeyword("");
+                        } else {
+                          setNewKeyword(value);
+                        }
+                      }}
                       onKeyPress={(e) => {
                         if (e.key === 'Enter' && newKeyword.trim()) {
                           const currentKeywords = knowledgeData.seo?.keywords || [];
@@ -1538,9 +1596,29 @@ export default function Knowledge() {
                   <Label>Intenções de Busca</Label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Digite uma intenção de busca"
+                      placeholder="Digite intenções de busca (use vírgula para separar)"
                       value={newSearchIntent}
-                      onChange={(e) => setNewSearchIntent(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.includes(',')) {
+                          const intents = value.split(',').map(i => i.trim()).filter(i => i);
+                          intents.forEach(intent => {
+                            if (intent) {
+                              const currentIntents = knowledgeData.seo?.searchIntents || [];
+                              setKnowledgeData(prev => ({
+                                ...prev,
+                                seo: {
+                                  ...prev.seo!,
+                                  searchIntents: [...currentIntents, intent]
+                                }
+                              }));
+                            }
+                          });
+                          setNewSearchIntent("");
+                        } else {
+                          setNewSearchIntent(value);
+                        }
+                      }}
                       onKeyPress={(e) => {
                         if (e.key === 'Enter' && newSearchIntent.trim()) {
                           const currentIntents = knowledgeData.seo?.searchIntents || [];
