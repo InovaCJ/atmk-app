@@ -524,7 +524,7 @@ export default function Library() {
 
       {/* Sheet lateral do conteúdo selecionado */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="w-[70vw] max-w-none h-full overflow-y-auto">
+        <SheetContent side="right" className="w-[70vw] sm:max-w-[70vw] max-w-none h-full overflow-y-auto">
           <SheetHeader className="space-y-3 pb-4 border-b">
             <SheetTitle className="flex items-center gap-3 text-xl">
               {selectedContent && getTypeIcon(selectedContent.type)}
