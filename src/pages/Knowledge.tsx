@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -168,14 +168,14 @@ export default function Knowledge() {
     if (selectedCompanyId) {
       loadKnowledgeData();
     }
-  }, [selectedCompanyId, getKnowledgeItemByType]);
+  }, [selectedCompanyId]); // Removendo getKnowledgeItemByType da dependência
 
   // Debug effect para monitorar mudanças no knowledgeData
   useEffect(() => {
     console.log('Knowledge data changed:', knowledgeData);
   }, [knowledgeData]);
 
-  const loadKnowledgeData = () => {
+  const loadKnowledgeData = useCallback(() => {
     if (!selectedCompanyId) {
       console.log('No selectedCompanyId, cannot load data');
       return;
@@ -307,7 +307,7 @@ export default function Knowledge() {
     } else {
       console.log('No knowledge data found, keeping current state or using defaults');
     }
-  };
+  }, [selectedCompanyId, getKnowledgeItemByType]);
 
   const saveData = async () => {
     if (!selectedCompanyId) {
