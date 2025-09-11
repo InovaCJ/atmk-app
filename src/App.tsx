@@ -7,7 +7,7 @@ import { Layout } from "./components/Layout";
 import { AuthProvider } from "./contexts/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
-import Generate from "./pages/Generate";
+// Generate page removed - functionality moved to Library
 import Knowledge from "./pages/Knowledge";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
@@ -39,7 +39,7 @@ const App = () => (
             }>
               <Route index element={<Dashboard />} />
               <Route path="library" element={<Library />} />
-              <Route path="generate" element={<Generate />} />
+              {/* Generate route removed - functionality moved to Library */}
               <Route path="knowledge" element={<Knowledge />} />
               <Route path="settings" element={<Settings />} />
             </Route>

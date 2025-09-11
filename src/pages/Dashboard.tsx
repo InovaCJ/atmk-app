@@ -15,6 +15,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { PlanModal } from "@/components/PlanModal";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { toast } from "@/hooks/use-toast";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +24,7 @@ import { useCompanyContext } from "@/contexts/CompanyContext";
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | undefined>();
+  const [isGenerating, setIsGenerating] = useState(false);
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const navigate = useNavigate();
   
@@ -120,12 +122,37 @@ export default function Dashboard() {
 
   const handleGenerationConfirm = async (config: any) => {
     try {
-      // Navigate to generate page to show loading screen
-      window.location.href = `/generate?config=${encodeURIComponent(JSON.stringify(config))}`;
+      setIsModalOpen(false);
+      setIsGenerating(true);
+      
+      toast({
+        title: "Gerando conteúdo...",
+        description: "Nossa IA está criando seu conteúdo personalizado. Isso pode levar alguns segundos.",
+      });
+
+      const { generateContentWithAI } = await import('@/utils/contentGeneration');
+      await generateContentWithAI(config);
+      
+      setIsGenerating(false);
+      toast({
+        title: "Conteúdo gerado com sucesso!",
+        description: "Seus conteúdos estão prontos na biblioteca.",
+      });
+      navigate('/library');
     } catch (error) {
       console.error('Error generating content:', error);
+      setIsGenerating(false);
     }
   };
+
+  const handleGenerationComplete = () => {
+    setIsGenerating(false);
+    navigate('/library');
+  };
+
+  if (isGenerating) {
+    return <LoadingScreen onComplete={handleGenerationComplete} />;
+  }
 
   return (
     <div className="p-6 space-y-6">

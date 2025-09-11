@@ -37,12 +37,7 @@ export function Layout() {
           description: 'Seus conteúdos organizados e prontos para usar',
           hasFilter: false
         };
-      case '/generate':
-        return {
-          title: 'Geração de IA',
-          description: 'Crie conteúdos personalizados com inteligência artificial',
-          hasFilter: false
-        };
+      // Generate route removed - functionality moved to Library
       case '/knowledge':
         return {
           title: 'Base de Conhecimento',

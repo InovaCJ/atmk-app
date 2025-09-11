@@ -28,7 +28,7 @@ import { UserProfileDropdown } from "./UserProfileDropdown";
 const mainItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Biblioteca", url: "/library", icon: BookOpen },
-  { title: "Geração de IA", url: "/generate", icon: Brain },
+  // Geração removida - funcionalidade movida para biblioteca
 ];
 
 const managementItems = [

@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { PlanModal } from "@/components/PlanModal";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 import { useCompanyContext } from "@/contexts/CompanyContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -130,6 +131,7 @@ export default function Library() {
   const [contentFeedbacks, setContentFeedbacks] = useState<{[key: number]: {rating: number, feedback: string}}>({});
   const [isGenerationModalOpen, setIsGenerationModalOpen] = useState(false);
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const navigate = useNavigate();
   const { selectedCompany, selectedCompanyId } = useCompanyContext();
@@ -360,6 +362,7 @@ export default function Library() {
   const handleGenerationConfirm = async (config: any) => {
     try {
       setIsGenerationModalOpen(false);
+      setIsGenerating(true);
       
       // Show loading toast
       toast({
@@ -370,11 +373,15 @@ export default function Library() {
       const { generateContentWithAI } = await import('@/utils/contentGeneration');
       await generateContentWithAI(config);
       
-      // Content generation utility already shows success toast
-      // No need to navigate - we're already in the library
+      setIsGenerating(false);
+      toast({
+        title: "Conteúdo gerado com sucesso!",
+        description: "Seus conteúdos estão prontos na biblioteca.",
+      });
       
     } catch (error) {
       console.error('Error generating content:', error);
+      setIsGenerating(false);
     }
   };
 
@@ -421,6 +428,14 @@ export default function Library() {
   const getCurrentFeedback = (contentId: number) => {
     return contentFeedbacks[contentId]?.feedback || "";
   };
+
+  const handleGenerationComplete = () => {
+    setIsGenerating(false);
+  };
+
+  if (isGenerating) {
+    return <LoadingScreen onComplete={handleGenerationComplete} />;
+  }
 
   return (
     <div className="p-6 space-y-6">
