@@ -292,35 +292,116 @@ export default function Knowledge() {
     }));
   };
 
-  const addFormat = () => {
+  const addFormat = async () => {
     if (selectedFormat.frequency && !knowledgeData.contentFormats?.preferredFormats?.some(f => f.type === selectedFormat.type)) {
-      setKnowledgeData(prev => ({
-        ...prev,
+      const newKnowledgeData = {
+        ...knowledgeData,
         contentFormats: {
-          ...prev.contentFormats!,
-          preferredFormats: [...(prev.contentFormats?.preferredFormats || []), {
+          ...knowledgeData.contentFormats!,
+          preferredFormats: [...(knowledgeData.contentFormats?.preferredFormats || []), {
             ...selectedFormat,
             platforms: selectedFormat.platforms && selectedFormat.platforms.length > 0 ? selectedFormat.platforms : undefined
           }]
         }
-      }));
+      };
+
+      setKnowledgeData(newKnowledgeData);
+      
+      // Reset selected format
       setSelectedFormat({
         type: 'blog',
         priority: 1,
         frequency: "",
         platforms: []
       });
+
+      // Auto-save the new format
+      if (!selectedCompanyId) {
+        toast({
+          title: "Erro",
+          description: "Selecione uma empresa primeiro.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      try {
+        const companyName = selectedCompany?.name || 'Empresa';
+        const existingItem = getKnowledgeItemByType('onboarding_data');
+        
+        await createOrUpdateKnowledgeItem(
+          `Base de Conhecimento - ${companyName}`,
+          newKnowledgeData,
+          'onboarding_data',
+          ['onboarding', 'brand', 'business', 'audience', 'seo'],
+          existingItem?.id
+        );
+
+        toast({
+          title: "Sucesso",
+          description: "Formato adicionado e salvo com sucesso!",
+        });
+        
+        // Reload data to ensure consistency
+        setTimeout(() => {
+          loadKnowledgeData();
+        }, 300);
+      } catch (error) {
+        console.error('Error saving format:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao salvar formato.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
-  const removeFormat = (index: number) => {
-    setKnowledgeData(prev => ({
-      ...prev,
+  const removeFormat = async (index: number) => {
+    const newKnowledgeData = {
+      ...knowledgeData,
       contentFormats: {
-        ...prev.contentFormats!,
-        preferredFormats: prev.contentFormats?.preferredFormats?.filter((_, i) => i !== index) || []
+        ...knowledgeData.contentFormats!,
+        preferredFormats: knowledgeData.contentFormats?.preferredFormats?.filter((_, i) => i !== index) || []
       }
-    }));
+    };
+
+    setKnowledgeData(newKnowledgeData);
+
+    // Auto-save the removal
+    if (!selectedCompanyId) {
+      toast({
+        title: "Erro",
+        description: "Selecione uma empresa primeiro.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const companyName = selectedCompany?.name || 'Empresa';
+      const existingItem = getKnowledgeItemByType('onboarding_data');
+      
+      await createOrUpdateKnowledgeItem(
+        `Base de Conhecimento - ${companyName}`,
+        newKnowledgeData,
+        'onboarding_data',
+        ['onboarding', 'brand', 'business', 'audience', 'seo'],
+        existingItem?.id
+      );
+
+      toast({
+        title: "Sucesso",
+        description: "Formato removido com sucesso!",
+      });
+    } catch (error) {
+      console.error('Error removing format:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao remover formato.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
