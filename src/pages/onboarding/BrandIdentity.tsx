@@ -93,10 +93,10 @@ export function BrandIdentity({ onNext, onBack, onSkip, initialData = {} }: Bran
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="differentials">Diferenciais (USPs)</Label>
+              <Label htmlFor="differentials">Diferenciais</Label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Adicionar diferencial..."
+                  placeholder="Ex: Entrega em 24h, Suporte 24/7, Preço mais baixo..."
                   value={newDifferential}
                   onChange={(e) => setNewDifferential(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addItem('differentials', newDifferential, setNewDifferential)}
