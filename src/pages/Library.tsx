@@ -478,9 +478,6 @@ export default function Library() {
                         <div className="flex items-center gap-2 mb-2">
                           {getTypeIcon(content.type)}
                           <Badge variant="outline">{getTypeLabel(content.type)}</Badge>
-                          <Badge className={getStatusColor(content.status)}>
-                            {getStatusLabel(content.status)}
-                          </Badge>
                         </div>
                         <h3 className="font-semibold mb-1">{content.title}</h3>
                         <p className="text-sm text-muted-foreground mb-2">{content.description}</p>
@@ -549,9 +546,6 @@ export default function Library() {
                 <Badge variant="outline">
                   <Calendar className="h-3 w-3 mr-1" />
                   {selectedContent.createdAt ? new Date(selectedContent.createdAt).toLocaleDateString() : 'Data não disponível'}
-                </Badge>
-                <Badge className={getStatusColor(selectedContent.status)}>
-                  {getStatusLabel(selectedContent.status)}
                 </Badge>
                 {selectedContent.tags?.map((tag: string, index: number) => (
                   <Badge key={index} variant="secondary">{tag}</Badge>
