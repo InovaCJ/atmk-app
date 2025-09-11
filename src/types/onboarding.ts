@@ -82,8 +82,13 @@ export interface ContentFormatsData {
   }>;
 }
 
+export interface CompanyDescriptionData {
+  description: string;
+}
+
 export interface OnboardingData {
   basicInfo?: BasicInfoData;
+  companyDescription?: CompanyDescriptionData;
   brandIdentity?: BrandIdentityData;
   business?: BusinessData;
   audience?: AudienceData;

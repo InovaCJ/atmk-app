@@ -1,13 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BasicInfo } from "./BasicInfo";
-import { BrandIdentity } from "./BrandIdentity";
-import { BusinessOffer } from "./BusinessOffer";
-import { AudiencePersonas } from "./AudiencePersonas";
-import { SEOSemantics } from "./SEOSemantics";
-import { ContentFormats } from "./ContentFormats";
+import { CompanyDescription } from "./CompanyDescription";
 import { toast } from "@/hooks/use-toast";
-import { OnboardingData } from "@/types/onboarding";
+import { OnboardingData, CompanyDescriptionData } from "@/types/onboarding";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useKnowledgeBase } from "@/hooks/useKnowledgeBase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,7 +19,7 @@ export function OnboardingFlow() {
   const { saveOnboardingDataForCompany } = useKnowledgeBase();
 
   const handleStepNext = async (stepData: any, step: number) => {
-    const stepKeys = ['basicInfo', 'brandIdentity', 'business', 'audience', 'seo', 'contentFormats'];
+    const stepKeys = ['basicInfo', 'companyDescription'];
     const stepKey = stepKeys[step - 1];
     
     setOnboardingData(prev => ({
@@ -32,7 +28,7 @@ export function OnboardingFlow() {
       completedSteps: [...prev.completedSteps, step].filter((v, i, a) => a.indexOf(v) === i)
     }));
     
-    if (step < 6) {
+    if (step < 2) {
       setCurrentStep(step + 1);
       toast({
         title: "Etapa concluída!",
@@ -51,7 +47,7 @@ export function OnboardingFlow() {
   };
 
   const handleSkip = () => {
-    if (currentStep < 6) {
+    if (currentStep < 2) {
       setCurrentStep(currentStep + 1);
     } else {
       navigate("/");
@@ -165,7 +161,7 @@ export function OnboardingFlow() {
       
       // Aguardar um pouco antes de navegar para mostrar o toast
       setTimeout(() => {
-        navigate("/generate");
+        navigate("/");
       }, 1500);
     } catch (error) {
       console.error('Error in finalizeOnboarding:', error);
@@ -177,7 +173,7 @@ export function OnboardingFlow() {
       
       // Em caso de erro, ainda navegar para não deixar o usuário preso
       setTimeout(() => {
-        navigate("/generate");
+        navigate("/");
       }, 2000);
     }
   };
@@ -194,47 +190,10 @@ export function OnboardingFlow() {
       );
     case 2:
       return (
-        <BrandIdentity
+        <CompanyDescription
           onNext={(data) => handleStepNext(data, 2)}
           onBack={handleStepBack}
-          onSkip={handleSkip}
-          initialData={onboardingData.brandIdentity}
-        />
-      );
-    case 3:
-      return (
-        <BusinessOffer
-          onNext={(data) => handleStepNext(data, 3)}
-          onBack={handleStepBack}
-          onSkip={handleSkip}
-          initialData={onboardingData.business}
-        />
-      );
-    case 4:
-      return (
-        <AudiencePersonas
-          onNext={(data) => handleStepNext(data, 4)}
-          onBack={handleStepBack}
-          onSkip={handleSkip}
-          initialData={onboardingData.audience}
-        />
-      );
-    case 5:
-      return (
-        <SEOSemantics
-          onNext={(data) => handleStepNext(data, 5)}
-          onBack={handleStepBack}
-          onSkip={handleSkip}
-          initialData={onboardingData.seo}
-        />
-      );
-    case 6:
-      return (
-        <ContentFormats
-          onNext={(data) => handleStepNext(data, 6)}
-          onBack={handleStepBack}
-          onSkip={handleSkip}
-          initialData={onboardingData.contentFormats}
+          initialData={onboardingData.companyDescription}
         />
       );
     default:

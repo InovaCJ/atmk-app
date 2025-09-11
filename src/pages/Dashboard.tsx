@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { PlanModal } from "@/components/PlanModal";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { FloatingKnowledgeButton } from "@/components/FloatingKnowledgeButton";
 import { toast } from "@/hooks/use-toast";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 import { useNavigate } from "react-router-dom";
@@ -267,6 +268,8 @@ export default function Dashboard() {
           preselectedOpportunity={selectedOpportunityId}
         />
       )}
+
+      <FloatingKnowledgeButton />
     </div>
   );
 }
