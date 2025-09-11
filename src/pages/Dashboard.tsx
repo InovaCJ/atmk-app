@@ -69,7 +69,7 @@ export default function Dashboard() {
       icon: FileText
     },
     {
-      title: "Oportunidades Ativas",
+      title: "Oportunidades geradas",
       value: "12",
       change: "+8.2%",
       icon: TrendingUp
