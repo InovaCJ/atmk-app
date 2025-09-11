@@ -202,11 +202,15 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
 
   const handleConfirm = async () => {
     if (selectedOpportunity && selectedContentType && selectedCompanyState) {
+      console.log('Starting content generation...');
       setIsGenerating(true);
       
       try {
         // Import and call the generation function directly
+        console.log('Importing generation function...');
         const { generateContentWithAI } = await import('@/utils/contentGeneration');
+        
+        console.log('Calling generateContentWithAI...');
         const generatedContent = await generateContentWithAI({
           opportunityId: selectedOpportunity || 'onboarding-generated',
           contentType: selectedContentType,
@@ -221,6 +225,8 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
         console.error('Error generating content:', error);
         setIsGenerating(false);
       }
+    } else {
+      console.log('Missing required fields:', { selectedOpportunity, selectedContentType, selectedCompanyState });
     }
   };
 
