@@ -27,66 +27,67 @@ interface PlanModalProps {
 const plans = [
   {
     id: "free",
-    name: "Free",
+    name: "Gratuito",
     price: "Gratuito",
-    description: "Teste gratuito para começar",
+    description: "Teste gratuito para começar — Gratuito",
     icon: Star,
     color: "text-gray-500",
     bgColor: "bg-gray-50",
     features: [
-      "10 conteúdos como teste gratuito",
+      "10 conteúdos grátis",
       "1 usuário",
       "1 empresa",
-      "Suporte por email",
-      "Templates básicos"
+      "Suporte via e-mail"
     ],
     limitations: [
-      "Após 10 conteúdos, gerador é travado",
+      "Após 10 conteúdos, o gerador é travado",
       "Oportunidades são travadas",
-      "Sem acesso a templates premium"
+      "Sem acesso a carrossel com imagens"
     ]
   },
   {
     id: "pro",
     name: "Pro",
-    price: "R$ 29,90",
+    price: "R$ 97",
     period: "/mês",
-    description: "Para profissionais",
+    description: "Para profissionais — R$ 97/mês",
     icon: Zap,
     color: "text-primary",
     bgColor: "bg-primary/5",
     popular: true,
     features: [
-      "100 conteúdos por mês",
+      "Tudo do grátis +",
+      "50 conteúdos por mês",
       "1 usuário",
       "1 empresa",
-      "Suporte prioritário",
-      "Templates premium",
-      "Análises avançadas"
+      "Suporte por WhatsApp",
+      "Gerador de imagens",
+      "Gerador a partir de Oportunidades"
     ],
     limitations: []
   },
   {
     id: "business",
     name: "Business",
-    price: "R$ 29,90",
-    period: "/mês + complementos",
-    description: "Totalmente personalizado",
+    price: "R$ 97",
+    period: "/mês + personalização",
+    description: "Totalmente personalizado — R$ 97/mês + personalização",
     icon: Crown,
     color: "text-yellow-600",
     bgColor: "bg-yellow-50",
     features: [
-      "Conteúdos personalizados",
-      "Usuários personalizados",
-      "Empresas personalizadas",
-      "Suporte premium",
-      "API de acesso",
+      "Tudo do Pro +",
+      "50 conteúdos/mês incluídos",
+      "Conteúdos adicionais a R$ 0,50 cada/mês",
+      "R$ 15/mês por usuário adicional", 
+      "R$ 25/mês por empresa adicional",
+      "Suporte personalizado",
       "Integrações customizadas"
     ],
     addons: [
-      "+ R$ 20/mês para cada 100 conteúdos adicionais",
-      "+ R$ 10/mês por usuário editor adicional",
-      "+ R$ 15/mês por empresa adicional"
+      "+ R$ 0,50/mês por conteúdo adicional",
+      "+ R$ 15/mês por usuário adicional",
+      "+ R$ 25/mês por empresa adicional"
     ],
     limitations: []
   }
@@ -99,10 +100,10 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
   const [additionalCompanies, setAdditionalCompanies] = useState(0);
 
   const calculateBusinessPrice = () => {
-    const basePrice = 29.90;
-    const contentPrice = (additionalContent * 20) / 100; // R$20 por cada 100 conteúdos
-    const userPrice = additionalUsers * 10;
-    const companyPrice = additionalCompanies * 15;
+    const basePrice = 97.00;
+    const contentPrice = additionalContent * 0.50; // R$0.50 por conteúdo adicional
+    const userPrice = additionalUsers * 15;
+    const companyPrice = additionalCompanies * 25;
     return basePrice + contentPrice + userPrice + companyPrice;
   };
 
@@ -195,14 +196,14 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
                     </div>
 
                     {plan.id === "business" && (
-                      <div className="space-y-4">
+                        <div className="space-y-4">
                         <h4 className="font-semibold text-primary">Personalize seu plano:</h4>
                         
                         {/* Conteúdos Adicionais */}
                         <div className="space-y-2">
                           <Label className="text-sm flex items-center gap-2">
                             <FileText className="h-3 w-3" />
-                            Conteúdos adicionais (por 100)
+                            Conteúdos adicionais (por conteúdo)
                           </Label>
                           <div className="flex items-center gap-3">
                             <Button
@@ -228,7 +229,7 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
                               <Plus className="h-3 w-3" />
                             </Button>
                           </div>
-                          <p className="text-xs text-muted-foreground">+ R$ {(additionalContent * 20).toFixed(2)}/mês</p>
+                          <p className="text-xs text-muted-foreground">+ R$ {(additionalContent * 0.50).toFixed(2)}/mês</p>
                         </div>
 
                         {/* Usuários Adicionais */}
@@ -261,7 +262,7 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
                               <Plus className="h-3 w-3" />
                             </Button>
                           </div>
-                          <p className="text-xs text-muted-foreground">+ R$ {(additionalUsers * 10).toFixed(2)}/mês</p>
+                          <p className="text-xs text-muted-foreground">+ R$ {(additionalUsers * 15).toFixed(2)}/mês</p>
                         </div>
 
                         {/* Empresas Adicionais */}
@@ -294,7 +295,7 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
                               <Plus className="h-3 w-3" />
                             </Button>
                           </div>
-                          <p className="text-xs text-muted-foreground">+ R$ {(additionalCompanies * 15).toFixed(2)}/mês</p>
+                          <p className="text-xs text-muted-foreground">+ R$ {(additionalCompanies * 25).toFixed(2)}/mês</p>
                         </div>
                       </div>
                     )}
@@ -333,7 +334,9 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
                       variant={plan.popular ? "default" : "outline"}
                       disabled={plan.id === "free"}
                     >
-                      {plan.id === "free" ? "Plano Atual" : `Escolher ${plan.name}`}
+                      {plan.id === "free" ? "Plano Atual" : 
+                       plan.id === "pro" ? "Escolher Pro" : 
+                       "Escolher Business"}
                     </Button>
                   </CardContent>
                 </Card>
