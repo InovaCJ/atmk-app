@@ -848,6 +848,16 @@ export default function Library() {
           onOpenChange={setIsGenerationModalOpen}
           onConfirm={handleGenerationConfirm}
         />
+        
+        {/* Loading Screen Modal */}
+        {isGenerating && (
+          <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm">
+            <LoadingScreen 
+              onComplete={() => setIsGenerating(false)}
+              estimatedTime={30}
+            />
+          </div>
+        )}
       </div>
     );
   }
