@@ -187,7 +187,58 @@ export default function Knowledge() {
     
     if (knowledgeItem && knowledgeItem.metadata) {
       console.log('Loading knowledge data from metadata:', knowledgeItem.metadata);
-      setKnowledgeData(knowledgeItem.metadata);
+      // Merge with default structure instead of replacing
+      setKnowledgeData(prev => ({
+        brandIdentity: {
+          valueProposition: "",
+          differentials: [],
+          personalityScales: {
+            formalInformal: 3,
+            technicalAccessible: 3,
+            seriousFun: 3
+          },
+          wordsToUse: [],
+          wordsToBan: []
+        },
+        business: {
+          sector: "",
+          market: "",
+          maturity: "growing",
+          regulatoryStatus: "",
+          products: [],
+          services: [],
+          roadmap: []
+        },
+        audience: {
+          icp: {
+            demographics: {
+              ageRange: "",
+              gender: "",
+              income: "",
+              education: "",
+              location: []
+            },
+            firmographics: {
+              companySize: "",
+              industry: [],
+              jobTitles: [],
+              regions: [],
+              languages: []
+            }
+          },
+          personas: [],
+          frequentQuestions: []
+        },
+        seo: {
+          keywords: [],
+          searchIntents: []
+        },
+        contentFormats: {
+          preferredFormats: []
+        },
+        completedSteps: [],
+        ...knowledgeItem.metadata
+      }));
     } else if (knowledgeItem && knowledgeItem.content) {
       // Fallback para content se metadata não existir
       try {
@@ -198,7 +249,58 @@ export default function Knowledge() {
           parsedData = knowledgeItem.content;
         }
         console.log('Loading knowledge data from content:', parsedData);
-        setKnowledgeData(parsedData);
+        // Merge with default structure
+        setKnowledgeData(prev => ({
+          brandIdentity: {
+            valueProposition: "",
+            differentials: [],
+            personalityScales: {
+              formalInformal: 3,
+              technicalAccessible: 3,
+              seriousFun: 3
+            },
+            wordsToUse: [],
+            wordsToBan: []
+          },
+          business: {
+            sector: "",
+            market: "",
+            maturity: "growing",
+            regulatoryStatus: "",
+            products: [],
+            services: [],
+            roadmap: []
+          },
+          audience: {
+            icp: {
+              demographics: {
+                ageRange: "",
+                gender: "",
+                income: "",
+                education: "",
+                location: []
+              },
+              firmographics: {
+                companySize: "",
+                industry: [],
+                jobTitles: [],
+                regions: [],
+                languages: []
+              }
+            },
+            personas: [],
+            frequentQuestions: []
+          },
+          seo: {
+            keywords: [],
+            searchIntents: []
+          },
+          contentFormats: {
+            preferredFormats: []
+          },
+          completedSteps: [],
+          ...parsedData
+        }));
       } catch (error) {
         console.error('Error parsing knowledge content:', error);
       }
