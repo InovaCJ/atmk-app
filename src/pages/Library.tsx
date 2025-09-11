@@ -368,7 +368,11 @@ export default function Library() {
       if (generatedContent) {
         setGeneratedContent(generatedContent);
         setSelectedContent(generatedContent);
-        setIsSheetOpen(true);
+        
+        // Aguarda um pouco para o toast aparecer antes de abrir o modal
+        setTimeout(() => {
+          setIsSheetOpen(true);
+        }, 2000);
       }
       
     } catch (error) {
