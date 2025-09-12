@@ -170,10 +170,20 @@ export default function Knowledge() {
     }
   }, [selectedCompanyId]); // Removendo getKnowledgeItemByType da dependência
 
-  // Debug effect para monitorar mudanças no knowledgeData
+  // Auto-save effect - salva automaticamente quando os dados mudam
   useEffect(() => {
     console.log('Knowledge data changed:', knowledgeData);
-  }, [knowledgeData]);
+    
+    // Só faz auto-save se já carregou dados iniciais e tem uma empresa selecionada
+    if (selectedCompanyId && !knowledgeLoading) {
+      // Debounce para evitar muitas chamadas
+      const timeoutId = setTimeout(() => {
+        autoSaveData();
+      }, 1000); // Salva 1 segundo após a última mudança
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [knowledgeData, selectedCompanyId, knowledgeLoading]);
 
   const loadKnowledgeData = useCallback(() => {
     if (!selectedCompanyId) {
@@ -309,17 +319,13 @@ export default function Knowledge() {
     }
   }, [selectedCompanyId, getKnowledgeItemByType]);
 
-  const saveData = async () => {
+  // Auto-save silencioso (sem toast de sucesso)
+  const autoSaveData = async () => {
     if (!selectedCompanyId) {
-      toast({
-        title: "Erro",
-        description: "Selecione uma empresa primeiro.",
-        variant: "destructive"
-      });
       return;
     }
 
-    console.log('Saving knowledge data:', knowledgeData);
+    console.log('Auto-saving knowledge data:', knowledgeData);
 
     const companyName = selectedCompany?.name || 'Empresa';
     const existingItem = getKnowledgeItemByType('onboarding_data');
@@ -332,6 +338,42 @@ export default function Knowledge() {
         ['onboarding', 'brand', 'business', 'audience', 'seo'],
         existingItem?.id
       );
+      
+      console.log('Knowledge data auto-saved successfully');
+    } catch (error) {
+      console.error('Error auto-saving knowledge data:', error);
+    }
+  };
+
+  // Função de salvamento manual (com toast de sucesso)
+  const saveData = async () => {
+    if (!selectedCompanyId) {
+      toast({
+        title: "Erro",
+        description: "Selecione uma empresa primeiro.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log('Manually saving knowledge data:', knowledgeData);
+
+    const companyName = selectedCompany?.name || 'Empresa';
+    const existingItem = getKnowledgeItemByType('onboarding_data');
+    
+    try {
+      await createOrUpdateKnowledgeItem(
+        `Base de Conhecimento - ${companyName}`,
+        knowledgeData,
+        'onboarding_data',
+        ['onboarding', 'brand', 'business', 'audience', 'seo'],
+        existingItem?.id
+      );
+      
+      toast({
+        title: "Sucesso",
+        description: "Base de conhecimento salva com sucesso!",
+      });
       
       // Recarregar os dados para garantir que estão atualizados
       setTimeout(() => {
@@ -417,45 +459,10 @@ export default function Knowledge() {
         platforms: []
       });
 
-      // Auto-save the new format
-      if (!selectedCompanyId) {
-        toast({
-          title: "Erro",
-          description: "Selecione uma empresa primeiro.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      try {
-        const companyName = selectedCompany?.name || 'Empresa';
-        const existingItem = getKnowledgeItemByType('onboarding_data');
-        
-        await createOrUpdateKnowledgeItem(
-          `Base de Conhecimento - ${companyName}`,
-          newKnowledgeData,
-          'onboarding_data',
-          ['onboarding', 'brand', 'business', 'audience', 'seo'],
-          existingItem?.id
-        );
-
-        toast({
-          title: "Sucesso",
-          description: "Formato adicionado e salvo com sucesso!",
-        });
-        
-        // Reload data to ensure consistency
-        setTimeout(() => {
-          loadKnowledgeData();
-        }, 300);
-      } catch (error) {
-        console.error('Error saving format:', error);
-        toast({
-          title: "Erro",
-          description: "Erro ao salvar formato.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Sucesso",
+        description: "Formato adicionado com sucesso!",
+      });
     }
   };
 
@@ -470,40 +477,10 @@ export default function Knowledge() {
 
     setKnowledgeData(newKnowledgeData);
 
-    // Auto-save the removal
-    if (!selectedCompanyId) {
-      toast({
-        title: "Erro",
-        description: "Selecione uma empresa primeiro.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const companyName = selectedCompany?.name || 'Empresa';
-      const existingItem = getKnowledgeItemByType('onboarding_data');
-      
-      await createOrUpdateKnowledgeItem(
-        `Base de Conhecimento - ${companyName}`,
-        newKnowledgeData,
-        'onboarding_data',
-        ['onboarding', 'brand', 'business', 'audience', 'seo'],
-        existingItem?.id
-      );
-
-      toast({
-        title: "Sucesso",
-        description: "Formato removido com sucesso!",
-      });
-    } catch (error) {
-      console.error('Error removing format:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao remover formato.",
-        variant: "destructive"
-      });
-    }
+    toast({
+      title: "Sucesso",
+      description: "Formato removido com sucesso!",
+    });
   };
 
   return (
