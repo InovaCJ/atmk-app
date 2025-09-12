@@ -185,6 +185,29 @@ export default function Knowledge() {
     }
   }, [knowledgeData, selectedCompanyId, knowledgeLoading]);
 
+  // Helper function to deep merge objects, preserving existing values
+  const deepMerge = (target: any, source: any): any => {
+    if (!source || typeof source !== 'object') return target;
+    if (!target || typeof target !== 'object') return source;
+    
+    const result = { ...target };
+    
+    for (const key in source) {
+      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        // Skip corrupted metadata objects
+        if (source[key]._type === 'MaxDepthReached') {
+          continue;
+        }
+        result[key] = deepMerge(target[key] || {}, source[key]);
+      } else if (source[key] !== undefined && source[key] !== null && source[key] !== "" && !(Array.isArray(source[key]) && source[key].length === 0)) {
+        // Only override if the source value is not empty (including empty arrays)
+        result[key] = source[key];
+      }
+    }
+    
+    return result;
+  };
+
   const loadKnowledgeData = useCallback(() => {
     if (!selectedCompanyId) {
       console.log('No selectedCompanyId, cannot load data');
@@ -197,8 +220,9 @@ export default function Knowledge() {
     
     if (knowledgeItem && knowledgeItem.metadata) {
       console.log('Loading knowledge data from metadata:', knowledgeItem.metadata);
-      // Merge with default structure instead of replacing
-      setKnowledgeData(prev => ({
+      
+      // Create default structure
+      const defaultStructure = {
         brandIdentity: {
           valueProposition: "",
           differentials: [],
@@ -246,9 +270,13 @@ export default function Knowledge() {
         contentFormats: {
           preferredFormats: []
         },
-        completedSteps: [],
-        ...knowledgeItem.metadata
-      }));
+        completedSteps: []
+      };
+      
+      // Deep merge saved data with defaults, preserving filled values
+      const mergedData = deepMerge(defaultStructure, knowledgeItem.metadata);
+      console.log('Merged data result:', mergedData);
+      setKnowledgeData(mergedData);
     } else if (knowledgeItem && knowledgeItem.content) {
       // Fallback para content se metadata não existir
       try {
@@ -259,8 +287,9 @@ export default function Knowledge() {
           parsedData = knowledgeItem.content;
         }
         console.log('Loading knowledge data from content:', parsedData);
-        // Merge with default structure
-        setKnowledgeData(prev => ({
+        
+        // Create default structure (same as above)
+        const defaultStructure = {
           brandIdentity: {
             valueProposition: "",
             differentials: [],
@@ -308,9 +337,12 @@ export default function Knowledge() {
           contentFormats: {
             preferredFormats: []
           },
-          completedSteps: [],
-          ...parsedData
-        }));
+          completedSteps: []
+        };
+        
+        // Deep merge saved data with defaults, preserving filled values
+        const mergedData = deepMerge(defaultStructure, parsedData);
+        setKnowledgeData(mergedData);
       } catch (error) {
         console.error('Error parsing knowledge content:', error);
       }
