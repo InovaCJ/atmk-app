@@ -185,24 +185,25 @@ export default function Knowledge() {
     }
   }, [knowledgeData, selectedCompanyId, knowledgeLoading]);
 
-  // Helper function to deep merge objects, preserving existing values
-  const deepMerge = (target: any, source: any): any => {
-    if (!source || typeof source !== 'object') return target;
-    if (!target || typeof target !== 'object') return source;
+  // Helper function to deep merge objects, preserving existing non-empty values
+  const deepMerge = (defaults: any, saved: any): any => {
+    if (!saved || typeof saved !== 'object') return defaults;
+    if (!defaults || typeof defaults !== 'object') return saved;
     
-    const result = { ...target };
+    const result = { ...defaults };
     
-    for (const key in source) {
-      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+    for (const key in saved) {
+      if (saved[key] && typeof saved[key] === 'object' && !Array.isArray(saved[key])) {
         // Skip corrupted metadata objects
-        if (source[key]._type === 'MaxDepthReached') {
+        if (saved[key]._type === 'MaxDepthReached') {
           continue;
         }
-        result[key] = deepMerge(target[key] || {}, source[key]);
-      } else if (source[key] !== undefined && source[key] !== null && source[key] !== "" && !(Array.isArray(source[key]) && source[key].length === 0)) {
-        // Only override if the source value is not empty (including empty arrays)
-        result[key] = source[key];
+        result[key] = deepMerge(defaults[key] || {}, saved[key]);
+      } else if (saved[key] !== undefined && saved[key] !== null && saved[key] !== "" && !(Array.isArray(saved[key]) && saved[key].length === 0)) {
+        // Only use saved value if it's not empty (prioritize saved data over defaults)
+        result[key] = saved[key];
       }
+      // If saved value is empty, keep the default value (don't overwrite with empty)
     }
     
     return result;
@@ -273,7 +274,7 @@ export default function Knowledge() {
         completedSteps: []
       };
       
-      // Deep merge saved data with defaults, preserving filled values
+      // Deep merge defaults with saved data, preserving filled values from saved data
       const mergedData = deepMerge(defaultStructure, knowledgeItem.metadata);
       console.log('Merged data result:', mergedData);
       setKnowledgeData(mergedData);
@@ -340,7 +341,7 @@ export default function Knowledge() {
           completedSteps: []
         };
         
-        // Deep merge saved data with defaults, preserving filled values
+        // Deep merge defaults with saved data, preserving filled values from saved data
         const mergedData = deepMerge(defaultStructure, parsedData);
         setKnowledgeData(mergedData);
       } catch (error) {
@@ -407,10 +408,9 @@ export default function Knowledge() {
         description: "Base de conhecimento salva com sucesso!",
       });
       
-      // Recarregar os dados para garantir que estão atualizados
-      setTimeout(() => {
-        loadKnowledgeData();
-      }, 500);
+      // Aguardar um pouco para garantir que o banco foi atualizado, mas não recarregar automaticamente
+      // para evitar sobrescrever dados que o usuário acabou de editar
+      console.log('Dados salvos com sucesso, mantendo estado atual');
     } catch (error) {
       console.error('Error saving knowledge data:', error);
       toast({
