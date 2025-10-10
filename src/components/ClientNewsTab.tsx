@@ -21,6 +21,8 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useClientContext } from '@/contexts/ClientContext';
+import { useNewsSources } from '@/hooks/useNewsSources';
+import { toast } from 'sonner';
 
 interface ClientNewsTabProps {
   clientId: string;
@@ -44,34 +46,13 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [newsSources, setNewsSources] = useState<NewsSource[]>([
-    {
-      id: '1',
-      name: 'TechCrunch Brasil',
-      type: 'rss',
-      url: 'https://techcrunch.com/feed/',
-      schedule: '0 */6 * * *',
-      enabled: true,
-      last_run: '2024-01-15T10:00:00Z',
-      created_at: '2024-01-10T10:00:00Z'
-    },
-    {
-      id: '2',
-      name: 'Folha de S.Paulo - Tecnologia',
-      type: 'rss',
-      url: 'https://feeds.folha.uol.com.br/tec/rss091.xml',
-      schedule: '0 */4 * * *',
-      enabled: false,
-      last_run: '2024-01-14T16:00:00Z',
-      created_at: '2024-01-08T10:00:00Z'
-    }
-  ]);
   const [newSource, setNewSource] = useState({
     name: '',
     url: '',
     description: ''
   });
   const { canEditClient } = useClientContext();
+  const { newsSources, loading, addNewsSource, updateNewsSource, deleteNewsSource } = useNewsSources(clientId);
 
   const filteredSources = newsSources.filter(source =>
     source.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -107,42 +88,20 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
   const handleAddSource = async () => {
     setIsSaving(true);
     try {
-      // Criar nova fonte com valores padrão
-      const newSourceData: NewsSource = {
-        id: Date.now().toString(),
+      await addNewsSource({
         name: newSource.name,
-        type: 'rss', // Padrão para RSS
+        type: 'rss',
         url: newSource.url,
-        schedule: '0 */6 * * *', // Padrão: a cada 6 horas
-        enabled: true, // Ativar automaticamente
-        last_run: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        description: newSource.description
-      };
-
-      // Adicionar à lista de fontes
-      setNewsSources(prev => [...prev, newSourceData]);
-
-      // TODO: Implementar salvamento no banco de dados
-      console.log('Adicionando nova fonte:', newSourceData);
-      
-      // Simular ativação do serviço RSS
-      console.log('🚀 Ativando serviço de construção de feed RSS para:', newSourceData.name);
-      console.log('📡 URL do feed:', newSourceData.url);
-      console.log('⏰ Agendamento:', newSourceData.schedule);
-      console.log('✅ Fonte adicionada com sucesso!');
-      
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulação
-      
-      // Reset form
-      setNewSource({
-        name: '',
-        url: '',
-        description: ''
+        schedule: '0 */6 * * *',
+        enabled: true
       });
+      
+      toast.success('Fonte de notícias adicionada com sucesso!');
+      setNewSource({ name: '', url: '', description: '' });
       setIsAddModalOpen(false);
     } catch (error) {
       console.error('Erro ao adicionar fonte:', error);
+      toast.error('Erro ao adicionar fonte de notícias. Tente novamente.');
     } finally {
       setIsSaving(false);
     }
@@ -257,23 +216,35 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
       </div>
 
       {/* News Sources List */}
-      {filteredSources.length === 0 ? (
+      {loading ? (
         <div className="text-center py-12">
-          <Rss className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
-            {searchTerm ? 'Nenhuma fonte encontrada' : 'Nenhuma fonte configurada'}
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando fontes de notícias...</p>
+        </div>
+      ) : filteredSources.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Rss className="h-8 w-8 text-white" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">
+            {searchTerm ? 'Nenhuma fonte encontrada' : 'Configure suas fontes de notícias'}
           </h3>
-          <p className="text-muted-foreground mb-4">
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             {searchTerm 
-              ? 'Tente ajustar os termos de busca'
-              : 'Configure fontes de notícias para coleta automática'
+              ? 'Tente ajustar os termos de busca para encontrar a fonte desejada.'
+              : 'Adicione fontes de notícias confiáveis e relevantes para sugerir temas de conteúdos personalizados para sua empresa.'
             }
           </p>
           {!searchTerm && canEditClient(clientId) && (
-            <Button onClick={() => setIsAddModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Configurar Primeira Fonte
-            </Button>
+            <div className="space-y-3">
+              <Button onClick={() => setIsAddModalOpen(true)} size="lg">
+                <Plus className="h-5 w-5 mr-2" />
+                Adicionar Primeira Fonte
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Recomendamos: RSS feeds de sites confiáveis do seu setor
+              </p>
+            </div>
           )}
         </div>
       ) : (
