@@ -18,7 +18,13 @@ import { useClientInvites } from '@/hooks/useClientInvites';
 import { toast } from 'sonner';
 
 const createMemberSchema = z.object({
-  email: z.string().email('E-mail inválido'),
+  email: z.string()
+    .min(1, 'E-mail é obrigatório')
+    .email('E-mail inválido')
+    .refine((email) => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }, 'Formato de e-mail inválido'),
   role: z.enum(['client_admin', 'editor', 'viewer']),
 });
 
@@ -50,8 +56,20 @@ export function CreateMemberModal({ isOpen, onClose, clientId, onInviteSent }: C
 
   const onSubmit = async (data: CreateMemberFormData) => {
     try {
+      console.log('📧 Enviando convite:', data);
       setIsSubmitting(true);
-      await sendInvite(data);
+      
+      // Validar email manualmente
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(data.email)) {
+        toast.error('E-mail inválido. Verifique o formato.');
+        return;
+      }
+      
+      await sendInvite({
+        email: data.email,
+        role: data.role
+      });
       toast.success('Convite enviado com sucesso!');
       reset();
       onClose();
@@ -60,7 +78,7 @@ export function CreateMemberModal({ isOpen, onClose, clientId, onInviteSent }: C
         onInviteSent();
       }
     } catch (error) {
-      console.error('Error sending invite:', error);
+      console.error('❌ Error sending invite:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro ao enviar convite';
       toast.error(errorMessage);
     } finally {
@@ -106,7 +124,7 @@ export function CreateMemberModal({ isOpen, onClose, clientId, onInviteSent }: C
 
           <div className="space-y-2">
             <Label htmlFor="role" className="text-left">Função</Label>
-            <Select onValueChange={(value) => setValue('role', value as any)}>
+            <Select onValueChange={(value) => setValue('role', value as 'client_admin' | 'editor' | 'viewer')}>
               <SelectTrigger className="text-left">
                 <SelectValue placeholder="Selecione a função" />
               </SelectTrigger>
