@@ -101,7 +101,7 @@ export const ClientProvider: React.FC<ClientProviderProps> = ({ children }) => {
 
   const selectedClient = clients.find(c => c.id === selectedClientId) || null;
 
-  const canManageClients = userPermissions?.isOwner || false;
+  const canManageClients = !!user; // Qualquer usuário autenticado pode criar clientes
 
   const canManageClient = (clientId: string): boolean => {
     if (!userPermissions) return false;
