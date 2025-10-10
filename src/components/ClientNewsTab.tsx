@@ -312,9 +312,6 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
                   <p className="text-sm text-muted-foreground">
                     <strong>URL:</strong> {source.url}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Agendamento:</strong> {source.schedule}
-                  </p>
                 </div>
               </CardContent>
             </Card>
