@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Key, MoreHorizontal, Trash2, Edit, ExternalLink, Settings, Clock, DollarSign, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Search, Key, MoreHorizontal, Trash2, Edit, ExternalLink, Settings, Clock, DollarSign, CheckCircle, XCircle, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -492,6 +492,28 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
                 <span className="text-lg font-bold text-green-600">R$ {(totalCost / 100).toFixed(2)}</span>
               </div>
             </div>
+            
+            {/* Botão de Salvar */}
+            {canEditClient(clientId) && (
+              <div className="flex justify-end pt-4 border-t">
+                <Button 
+                  onClick={async () => {
+                    try {
+                      await updateSearchTerms(searchTerms);
+                      await updateSearchFrequencies(searchFrequencies);
+                      toast.success('Configurações salvas com sucesso!');
+                    } catch (error) {
+                      console.error('Erro ao salvar:', error);
+                      toast.error('Erro ao salvar configurações. Tente novamente.');
+                    }
+                  }}
+                  className="min-w-[120px]"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Configurações
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -155,14 +155,48 @@ export function useSearchIntegrations(clientId: string) {
     }
   };
 
-  const updateSearchTerms = (terms: SearchTerm[]) => {
+  const updateSearchTerms = async (terms: SearchTerm[]) => {
     setSearchTerms(terms);
-    // TODO: Implementar salvamento no banco
+    
+    if (!clientId || !user) return;
+    
+    try {
+      // Salvar termos de busca no banco
+      const { error } = await supabase
+        .from('client_settings')
+        .upsert({
+          client_id: clientId,
+          search_terms: terms,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'client_id' });
+
+      if (error) throw error;
+      console.log('✅ Termos de busca salvos:', terms);
+    } catch (err) {
+      console.error('❌ Erro ao salvar termos de busca:', err);
+    }
   };
 
-  const updateSearchFrequencies = (frequencies: SearchFrequency[]) => {
+  const updateSearchFrequencies = async (frequencies: SearchFrequency[]) => {
     setSearchFrequencies(frequencies);
-    // TODO: Implementar salvamento no banco
+    
+    if (!clientId || !user) return;
+    
+    try {
+      // Salvar frequências no banco
+      const { error } = await supabase
+        .from('client_settings')
+        .upsert({
+          client_id: clientId,
+          search_frequencies: frequencies,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'client_id' });
+
+      if (error) throw error;
+      console.log('✅ Frequências de busca salvas:', frequencies);
+    } catch (err) {
+      console.error('❌ Erro ao salvar frequências de busca:', err);
+    }
   };
 
   useEffect(() => {
