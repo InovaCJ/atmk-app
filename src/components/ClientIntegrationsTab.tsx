@@ -22,6 +22,8 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useClientContext } from '@/contexts/ClientContext';
+import { useSearchIntegrations } from '@/hooks/useSearchIntegrations';
+import { toast } from 'sonner';
 
 interface ClientIntegrationsTabProps {
   clientId: string;
@@ -58,53 +60,28 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const { canEditClient } = useClientContext();
+  const { 
+    integrations, 
+    searchTerms, 
+    searchFrequencies, 
+    loading, 
+    addIntegration, 
+    updateIntegration, 
+    deleteIntegration,
+    updateSearchTerms,
+    updateSearchFrequencies 
+  } = useSearchIntegrations(clientId);
 
-  // Estado para termos de busca (máximo 5)
-  const [searchTerms, setSearchTerms] = useState<SearchTerm[]>([
-    { id: '1', term: 'inteligência artificial', enabled: true },
-    { id: '2', term: 'machine learning', enabled: true },
-    { id: '3', term: '', enabled: false },
-    { id: '4', term: '', enabled: false },
-    { id: '5', term: '', enabled: false }
-  ]);
-
-  // Estado para frequências de busca
-  const [searchFrequencies, setSearchFrequencies] = useState<SearchFrequency[]>([
-    { id: '1', frequency: 'daily', enabled: true, cost: 1500 }, // R$ 50 x 30 dias
-    { id: '2', frequency: 'weekly', enabled: false, cost: 100 }, // R$ 25 x 4 semanas
-    { id: '3', frequency: 'monthly', enabled: false, cost: 10 }  // R$ 10 x 1 mês
-  ]);
-
-  // Estado para serviços externos
-  const [externalServices, setExternalServices] = useState<ExternalService[]>([
-    {
-      id: '1',
-      name: 'Google Search API',
-      provider: 'serpapi',
-      enabled: true,
-      dailyQuota: 100,
-      usageToday: 23,
-      createdAt: '2024-01-10T10:00:00Z'
-    },
-    {
-      id: '2',
-      name: 'Tavily Search',
-      provider: 'tavily',
-      enabled: false,
-      dailyQuota: 50,
-      usageToday: 0,
-      createdAt: '2024-01-12T10:00:00Z'
-    },
-    {
-      id: '3',
-      name: 'Apify',
-      provider: 'apify',
-      enabled: false,
-      dailyQuota: 50,
-      usageToday: 0,
-      createdAt: '2024-01-12T10:00:00Z'
-    }
-  ]);
+  // Converter integrações para o formato esperado pelo componente
+  const externalServices: ExternalService[] = integrations.map(integration => ({
+    id: integration.id,
+    name: `${integration.provider.charAt(0).toUpperCase() + integration.provider.slice(1)} Search API`,
+    provider: integration.provider,
+    enabled: integration.enabled,
+    dailyQuota: integration.daily_quota,
+    usageToday: 0, // TODO: Implementar tracking de uso
+    createdAt: integration.created_at
+  }));
 
   const [newService, setNewService] = useState({
     name: '',
@@ -260,20 +237,27 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
   };
 
   const handleUpdateSearchTerm = (id: string, term: string) => {
-    setSearchTerms(prev => prev.map(st => 
+    const updatedTerms = searchTerms.map(st => 
       st.id === id ? { ...st, term, enabled: term.trim() !== '' } : st
-    ));
+    );
+    updateSearchTerms(updatedTerms);
   };
 
   const handleToggleFrequency = (id: string) => {
-    setSearchFrequencies(prev => prev.map(sf => 
+    const updatedFrequencies = searchFrequencies.map(sf => 
       sf.id === id ? { ...sf, enabled: !sf.enabled } : sf
-    ));
+    );
+    updateSearchFrequencies(updatedFrequencies);
   };
 
-  const handleRemoveService = (serviceId: string) => {
-    setExternalServices(prev => prev.filter(service => service.id !== serviceId));
-    console.log('🗑️ Serviço removido:', serviceId);
+  const handleRemoveService = async (serviceId: string) => {
+    try {
+      await deleteIntegration(serviceId);
+      toast.success('Serviço removido com sucesso!');
+    } catch (error) {
+      console.error('Erro ao remover serviço:', error);
+      toast.error('Erro ao remover serviço. Tente novamente.');
+    }
   };
 
   const handleEditService = (serviceId: string) => {
@@ -295,22 +279,12 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
     
     setIsSaving(true);
     try {
-      setExternalServices(prev => prev.map(service => 
-        service.id === editingServiceId 
-          ? { 
-              ...service, 
-              apiKey: serviceConfig.apiKey,
-              enabled: serviceConfig.enabled
-            }
-          : service
-      ));
+      await updateIntegration(editingServiceId, {
+        api_key_ref: serviceConfig.apiKey,
+        enabled: serviceConfig.enabled
+      });
 
-      console.log('✅ Configurações do serviço salvas:', editingServiceId);
-      console.log('🔑 API Key:', serviceConfig.apiKey);
-      console.log('🔍 Frases de busca:', serviceConfig.searchPhrases);
-      console.log('⏰ Frequência:', serviceConfig.frequency);
-      
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulação
+      toast.success('Configurações salvas com sucesso!');
       
       // Reset form
       setServiceConfig({
@@ -323,6 +297,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
       setIsConfigServiceModalOpen(false);
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
+      toast.error('Erro ao salvar configurações. Tente novamente.');
     } finally {
       setIsSaving(false);
     }
@@ -533,23 +508,35 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
           </div>
 
           {/* Services List */}
-          {filteredServices.length === 0 ? (
-            <div className="text-center py-8">
-              <ExternalLink className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
-                {searchTerm ? 'Nenhum serviço encontrado' : 'Nenhum serviço configurado'}
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Carregando integrações...</p>
+            </div>
+          ) : filteredServices.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">
+                {searchTerm ? 'Nenhum serviço encontrado' : 'Configure o Buscador de Temas'}
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 {searchTerm 
-                  ? 'Tente ajustar os termos de busca'
-                  : 'Configure serviços externos para expandir suas capacidades de busca'
+                  ? 'Tente ajustar os termos de busca para encontrar o serviço desejado.'
+                  : 'Configure serviços de busca externos para encontrar temas relevantes automaticamente na internet e sugerir conteúdos personalizados.'
                 }
               </p>
               {!searchTerm && canEditClient(clientId) && (
-                <Button onClick={() => setIsAddServiceModalOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Configurar Primeiro Serviço
-                </Button>
+                <div className="space-y-3">
+                  <Button onClick={() => setIsAddServiceModalOpen(true)} size="lg">
+                    <Plus className="h-5 w-5 mr-2" />
+                    Configurar Primeiro Serviço
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    Recomendamos: SerpAPI, Tavily ou Bing Search API
+                  </p>
+                </div>
               )}
             </div>
           ) : (
