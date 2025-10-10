@@ -10,6 +10,8 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useClientContext } from '@/contexts/ClientContext';
+import { useClientSettings } from '@/hooks/useClientSettings';
+import { toast } from 'sonner';
 
 interface ClientKnowledgeBaseTabProps {
   clientId: string;
@@ -92,10 +94,11 @@ interface KnowledgeBaseData {
 
 export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps) {
   const { canEditClient } = useClientContext();
+  const { knowledgeData, loading, saveKnowledgeData } = useClientSettings(clientId);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [knowledgeData, setKnowledgeData] = useState<KnowledgeBaseData>({
+  const [localKnowledgeData, setLocalKnowledgeData] = useState<KnowledgeBaseData>({
     positioning: {
       valueProposition: '',
       differentiators: [''],
@@ -138,9 +141,16 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
     },
   });
 
+  // Sincronizar dados locais com dados do hook
+  useEffect(() => {
+    if (knowledgeData) {
+      setLocalKnowledgeData(knowledgeData);
+    }
+  }, [knowledgeData]);
+
   // Funções de gerenciamento de dados
   const updatePositioning = (field: string, value: string | string[] | { formalVsInformal: number; technicalVsAccessible: number; seriousVsHumorous: number; }) => {
-    setKnowledgeData(prev => ({
+    setLocalKnowledgeData(prev => ({
       ...prev,
       positioning: {
         ...prev.positioning,
@@ -150,7 +160,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
   };
 
   const updateBusiness = (field: string, value: string | Array<{ name: string; features: string[]; priceRange: string; } | { name: string; description: string; priceRange: string; }>) => {
-    setKnowledgeData(prev => ({
+    setLocalKnowledgeData(prev => ({
       ...prev,
       business: {
         ...prev.business,
@@ -160,7 +170,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
   };
 
   const updateAudience = (field: string, value: { ageRange: string; gender: string; income: string; education: string; location: string; } | { companySize: string; industries: string[]; targetRoles: string[]; } | Array<{ name: string; pains: string[]; objections: string[]; purchaseTriggers: string[]; } | { question: string; answer: string; }>) => {
-    setKnowledgeData(prev => ({
+    setLocalKnowledgeData(prev => ({
       ...prev,
       audience: {
         ...prev.audience,
@@ -170,7 +180,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
   };
 
   const updateSeo = (field: string, value: string[]) => {
-    setKnowledgeData(prev => ({
+    setLocalKnowledgeData(prev => ({
       ...prev,
       seo: {
         ...prev.seo,
@@ -180,7 +190,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
   };
 
   const addArrayItem = (path: string[], newItem: string | { name: string; features: string[]; priceRange: string; } | { name: string; description: string; priceRange: string; } | { name: string; pains: string[]; objections: string[]; purchaseTriggers: string[]; } | { question: string; answer: string; }) => {
-    setKnowledgeData(prev => {
+    setLocalKnowledgeData(prev => {
       const newData = { ...prev };
       let current: Record<string, unknown> = newData;
       
@@ -194,7 +204,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
   };
 
   const removeArrayItem = (path: string[], index: number) => {
-    setKnowledgeData(prev => {
+    setLocalKnowledgeData(prev => {
       const newData = { ...prev };
       let current: Record<string, unknown> = newData;
       
@@ -224,12 +234,12 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // TODO: Implementar salvamento no banco de dados
-      console.log('Salvando base de conhecimento:', knowledgeData);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulação
+      await saveKnowledgeData(localKnowledgeData);
+      toast.success('Base de conhecimento salva com sucesso!');
       setIsEditing(false);
     } catch (error) {
       console.error('Erro ao salvar:', error);
+      toast.error('Erro ao salvar base de conhecimento. Tente novamente.');
     } finally {
       setIsSaving(false);
     }
@@ -371,7 +381,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             {isEditing ? (
               <Textarea
                 id="value-proposition"
-                value={knowledgeData.positioning.valueProposition}
+                value={localKnowledgeData.positioning.valueProposition}
                 onChange={(e) => updatePositioning('valueProposition', e.target.value)}
                 placeholder="Descreva o valor único que sua empresa oferece..."
                 className="mt-1"
@@ -379,7 +389,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               />
             ) : (
               <p className="text-sm mt-1 text-muted-foreground">
-                {knowledgeData.positioning.valueProposition || 'Não informado'}
+                {localKnowledgeData.positioning.valueProposition || 'Não informado'}
               </p>
             )}
           </div>
@@ -389,12 +399,12 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <Label>Diferenciais (USPs)</Label>
             {isEditing ? (
               <div className="space-y-2 mt-1">
-                {knowledgeData.positioning.differentiators.map((diff, index) => (
+                {localKnowledgeData.positioning.differentiators.map((diff, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Input
                       value={diff}
                       onChange={(e) => {
-                        const newDiffs = [...knowledgeData.positioning.differentiators];
+                        const newDiffs = [...localKnowledgeData.positioning.differentiators];
                         newDiffs[index] = e.target.value;
                         updatePositioning('differentiators', newDiffs);
                       }}
@@ -420,9 +430,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1">
-                {knowledgeData.positioning.differentiators.filter(d => d.trim()).length > 0 ? (
+                {localKnowledgeData.positioning.differentiators.filter(d => d.trim()).length > 0 ? (
                   <ul className="text-sm text-muted-foreground list-disc list-inside">
-                    {knowledgeData.positioning.differentiators.filter(d => d.trim()).map((diff, index) => (
+                    {localKnowledgeData.positioning.differentiators.filter(d => d.trim()).map((diff, index) => (
                       <li key={index}>{diff}</li>
                     ))}
                   </ul>
@@ -444,9 +454,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                     <span>Informal</span>
                   </div>
                   <Slider
-                    value={[knowledgeData.positioning.personality.formalVsInformal]}
+                    value={[localKnowledgeData.positioning.personality.formalVsInformal]}
                     onValueChange={(value) => updatePositioning('personality', {
-                      ...knowledgeData.positioning.personality,
+                      ...localKnowledgeData.positioning.personality,
                       formalVsInformal: value[0]
                     })}
                     max={100}
@@ -460,9 +470,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                     <span>Acessível</span>
                   </div>
                   <Slider
-                    value={[knowledgeData.positioning.personality.technicalVsAccessible]}
+                    value={[localKnowledgeData.positioning.personality.technicalVsAccessible]}
                     onValueChange={(value) => updatePositioning('personality', {
-                      ...knowledgeData.positioning.personality,
+                      ...localKnowledgeData.positioning.personality,
                       technicalVsAccessible: value[0]
                     })}
                     max={100}
@@ -476,9 +486,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                     <span>Bem-humorado</span>
                   </div>
                   <Slider
-                    value={[knowledgeData.positioning.personality.seriousVsHumorous]}
+                    value={[localKnowledgeData.positioning.personality.seriousVsHumorous]}
                     onValueChange={(value) => updatePositioning('personality', {
-                      ...knowledgeData.positioning.personality,
+                      ...localKnowledgeData.positioning.personality,
                       seriousVsHumorous: value[0]
                     })}
                     max={100}
@@ -490,13 +500,13 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             ) : (
               <div className="mt-1 space-y-2">
                 <div className="text-sm text-muted-foreground">
-                  Formal ↔ Informal: {knowledgeData.positioning.personality.formalVsInformal}%
+                  Formal ↔ Informal: {localKnowledgeData.positioning.personality.formalVsInformal}%
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Técnico ↔ Acessível: {knowledgeData.positioning.personality.technicalVsAccessible}%
+                  Técnico ↔ Acessível: {localKnowledgeData.positioning.personality.technicalVsAccessible}%
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Sério ↔ Bem-humorado: {knowledgeData.positioning.personality.seriousVsHumorous}%
+                  Sério ↔ Bem-humorado: {localKnowledgeData.positioning.personality.seriousVsHumorous}%
                 </div>
               </div>
             )}
@@ -507,12 +517,12 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <Label>Palavras que Usamos (whitelist)</Label>
             {isEditing ? (
               <div className="space-y-2 mt-1">
-                {knowledgeData.positioning.wordsWeUse.map((word, index) => (
+                {localKnowledgeData.positioning.wordsWeUse.map((word, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Input
                       value={word}
                       onChange={(e) => {
-                        const newWords = [...knowledgeData.positioning.wordsWeUse];
+                        const newWords = [...localKnowledgeData.positioning.wordsWeUse];
                         newWords[index] = e.target.value;
                         updatePositioning('wordsWeUse', newWords);
                       }}
@@ -538,9 +548,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1">
-                {knowledgeData.positioning.wordsWeUse.filter(w => w.trim()).length > 0 ? (
+                {localKnowledgeData.positioning.wordsWeUse.filter(w => w.trim()).length > 0 ? (
                   <div className="flex flex-wrap gap-1">
-                    {knowledgeData.positioning.wordsWeUse.filter(w => w.trim()).map((word, index) => (
+                    {localKnowledgeData.positioning.wordsWeUse.filter(w => w.trim()).map((word, index) => (
                       <Badge key={index} variant="secondary">{word}</Badge>
                     ))}
                   </div>
@@ -556,12 +566,12 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <Label>Palavras Banidas (blacklist)</Label>
             {isEditing ? (
               <div className="space-y-2 mt-1">
-                {knowledgeData.positioning.bannedWords.map((word, index) => (
+                {localKnowledgeData.positioning.bannedWords.map((word, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Input
                       value={word}
                       onChange={(e) => {
-                        const newWords = [...knowledgeData.positioning.bannedWords];
+                        const newWords = [...localKnowledgeData.positioning.bannedWords];
                         newWords[index] = e.target.value;
                         updatePositioning('bannedWords', newWords);
                       }}
@@ -587,9 +597,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1">
-                {knowledgeData.positioning.bannedWords.filter(w => w.trim()).length > 0 ? (
+                {localKnowledgeData.positioning.bannedWords.filter(w => w.trim()).length > 0 ? (
                   <div className="flex flex-wrap gap-1">
-                    {knowledgeData.positioning.bannedWords.filter(w => w.trim()).map((word, index) => (
+                    {localKnowledgeData.positioning.bannedWords.filter(w => w.trim()).map((word, index) => (
                       <Badge key={index} variant="destructive">{word}</Badge>
                     ))}
                   </div>
@@ -634,10 +644,10 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 </div>
 
                 {/* Lista de arquivos */}
-                {knowledgeData.positioning.exampleFiles.length > 0 && (
+                {localKnowledgeData.positioning.exampleFiles.length > 0 && (
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium">Arquivos Anexados:</h4>
-                    {knowledgeData.positioning.exampleFiles.map((file) => (
+                    {localKnowledgeData.positioning.exampleFiles.map((file) => (
                       <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center gap-3">
                           <span className="text-lg">{getFileIcon(file.type)}</span>
@@ -681,9 +691,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1">
-                {knowledgeData.positioning.exampleFiles.length > 0 ? (
+                {localKnowledgeData.positioning.exampleFiles.length > 0 ? (
                   <div className="space-y-2">
-                    {knowledgeData.positioning.exampleFiles.map((file) => (
+                    {localKnowledgeData.positioning.exampleFiles.map((file) => (
                       <div key={file.id} className="flex items-center gap-3 p-3 border rounded-lg">
                         <span className="text-lg">{getFileIcon(file.type)}</span>
                         <div className="flex-1">
@@ -738,7 +748,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <div>
               <Label htmlFor="sector">Setor</Label>
               {isEditing ? (
-                <Select value={knowledgeData.business.sector} onValueChange={(value) => updateBusiness('sector', value)}>
+                <Select value={localKnowledgeData.business.sector} onValueChange={(value) => updateBusiness('sector', value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Selecione o setor" />
                   </SelectTrigger>
@@ -755,7 +765,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 </Select>
               ) : (
                 <p className="text-sm mt-1 text-muted-foreground">
-                  {knowledgeData.business.sector || 'Não informado'}
+                  {localKnowledgeData.business.sector || 'Não informado'}
                 </p>
               )}
             </div>
@@ -764,7 +774,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <div>
               <Label htmlFor="market">Mercado</Label>
               {isEditing ? (
-                <Select value={knowledgeData.business.market} onValueChange={(value) => updateBusiness('market', value)}>
+                <Select value={localKnowledgeData.business.market} onValueChange={(value) => updateBusiness('market', value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Selecione o mercado" />
                   </SelectTrigger>
@@ -781,7 +791,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 </Select>
               ) : (
                 <p className="text-sm mt-1 text-muted-foreground">
-                  {knowledgeData.business.market || 'Não informado'}
+                  {localKnowledgeData.business.market || 'Não informado'}
                 </p>
               )}
             </div>
@@ -790,7 +800,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <div>
               <Label htmlFor="category-maturity">Maturidade da Categoria</Label>
               {isEditing ? (
-                <Select value={knowledgeData.business.categoryMaturity} onValueChange={(value) => updateBusiness('categoryMaturity', value)}>
+                <Select value={localKnowledgeData.business.categoryMaturity} onValueChange={(value) => updateBusiness('categoryMaturity', value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Selecione a maturidade" />
                   </SelectTrigger>
@@ -803,7 +813,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 </Select>
               ) : (
                 <p className="text-sm mt-1 text-muted-foreground">
-                  {knowledgeData.business.categoryMaturity || 'Não informado'}
+                  {localKnowledgeData.business.categoryMaturity || 'Não informado'}
                 </p>
               )}
             </div>
@@ -812,7 +822,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <div>
               <Label htmlFor="regulatory-status">Status Regulatório</Label>
               {isEditing ? (
-                <Select value={knowledgeData.business.regulatoryStatus} onValueChange={(value) => updateBusiness('regulatoryStatus', value)}>
+                <Select value={localKnowledgeData.business.regulatoryStatus} onValueChange={(value) => updateBusiness('regulatoryStatus', value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
@@ -826,7 +836,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 </Select>
               ) : (
                 <p className="text-sm mt-1 text-muted-foreground">
-                  {knowledgeData.business.regulatoryStatus || 'Não informado'}
+                  {localKnowledgeData.business.regulatoryStatus || 'Não informado'}
                 </p>
               )}
             </div>
@@ -839,7 +849,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <Label>Portfólio de Produtos</Label>
             {isEditing ? (
               <div className="space-y-4 mt-1">
-                {knowledgeData.business.products.map((product, index) => (
+                {localKnowledgeData.business.products.map((product, index) => (
                   <Card key={index} className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -923,8 +933,8 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1 space-y-2">
-                {knowledgeData.business.products.filter(p => p.name.trim()).length > 0 ? (
-                  knowledgeData.business.products.filter(p => p.name.trim()).map((product, index) => (
+                {localKnowledgeData.business.products.filter(p => p.name.trim()).length > 0 ? (
+                  localKnowledgeData.business.products.filter(p => p.name.trim()).map((product, index) => (
                     <div key={index} className="border rounded p-3">
                       <h4 className="font-medium">{product.name}</h4>
                       <p className="text-sm text-muted-foreground">Preço: {product.priceRange || 'Não informado'}</p>
@@ -954,7 +964,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <Label>Portfólio de Serviços</Label>
             {isEditing ? (
               <div className="space-y-4 mt-1">
-                {knowledgeData.business.services.map((service, index) => (
+                {localKnowledgeData.business.services.map((service, index) => (
                   <Card key={index} className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -1007,8 +1017,8 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1 space-y-2">
-                {knowledgeData.business.services.filter(s => s.name.trim()).length > 0 ? (
-                  knowledgeData.business.services.filter(s => s.name.trim()).map((service, index) => (
+                {localKnowledgeData.business.services.filter(s => s.name.trim()).length > 0 ? (
+                  localKnowledgeData.business.services.filter(s => s.name.trim()).map((service, index) => (
                     <div key={index} className="border rounded p-3">
                       <h4 className="font-medium">{service.name}</h4>
                       <p className="text-sm text-muted-foreground">Preço: {service.priceRange || 'Não informado'}</p>
@@ -1046,9 +1056,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 <div>
                   <Label>Faixa Etária</Label>
                   <Input
-                    value={knowledgeData.audience.demographicProfile.ageRange}
+                    value={localKnowledgeData.audience.demographicProfile.ageRange}
                     onChange={(e) => updateAudience('demographicProfile', {
-                      ...knowledgeData.audience.demographicProfile,
+                      ...localKnowledgeData.audience.demographicProfile,
                       ageRange: e.target.value
                     })}
                     placeholder="Ex: 25-45 anos"
@@ -1056,8 +1066,8 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 </div>
                 <div>
                   <Label>Gênero</Label>
-                  <Select value={knowledgeData.audience.demographicProfile.gender} onValueChange={(value) => updateAudience('demographicProfile', {
-                    ...knowledgeData.audience.demographicProfile,
+                  <Select value={localKnowledgeData.audience.demographicProfile.gender} onValueChange={(value) => updateAudience('demographicProfile', {
+                    ...localKnowledgeData.audience.demographicProfile,
                     gender: value
                   })}>
                     <SelectTrigger>
@@ -1074,9 +1084,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 <div>
                   <Label>Renda</Label>
                   <Input
-                    value={knowledgeData.audience.demographicProfile.income}
+                    value={localKnowledgeData.audience.demographicProfile.income}
                     onChange={(e) => updateAudience('demographicProfile', {
-                      ...knowledgeData.audience.demographicProfile,
+                      ...localKnowledgeData.audience.demographicProfile,
                       income: e.target.value
                     })}
                     placeholder="Ex: R$ 3.000-8.000"
@@ -1084,8 +1094,8 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 </div>
                 <div>
                   <Label>Escolaridade</Label>
-                  <Select value={knowledgeData.audience.demographicProfile.education} onValueChange={(value) => updateAudience('demographicProfile', {
-                    ...knowledgeData.audience.demographicProfile,
+                  <Select value={localKnowledgeData.audience.demographicProfile.education} onValueChange={(value) => updateAudience('demographicProfile', {
+                    ...localKnowledgeData.audience.demographicProfile,
                     education: value
                   })}>
                     <SelectTrigger>
@@ -1102,9 +1112,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 <div className="col-span-2">
                   <Label>Localização</Label>
                   <Input
-                    value={knowledgeData.audience.demographicProfile.location}
+                    value={localKnowledgeData.audience.demographicProfile.location}
                     onChange={(e) => updateAudience('demographicProfile', {
-                      ...knowledgeData.audience.demographicProfile,
+                      ...localKnowledgeData.audience.demographicProfile,
                       location: e.target.value
                     })}
                     placeholder="Ex: São Paulo, SP"
@@ -1113,11 +1123,11 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1 grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                <div>Faixa Etária: {knowledgeData.audience.demographicProfile.ageRange || 'Não informado'}</div>
-                <div>Gênero: {knowledgeData.audience.demographicProfile.gender || 'Não informado'}</div>
-                <div>Renda: {knowledgeData.audience.demographicProfile.income || 'Não informado'}</div>
-                <div>Escolaridade: {knowledgeData.audience.demographicProfile.education || 'Não informado'}</div>
-                <div className="col-span-2">Localização: {knowledgeData.audience.demographicProfile.location || 'Não informado'}</div>
+                <div>Faixa Etária: {localKnowledgeData.audience.demographicProfile.ageRange || 'Não informado'}</div>
+                <div>Gênero: {localKnowledgeData.audience.demographicProfile.gender || 'Não informado'}</div>
+                <div>Renda: {localKnowledgeData.audience.demographicProfile.income || 'Não informado'}</div>
+                <div>Escolaridade: {localKnowledgeData.audience.demographicProfile.education || 'Não informado'}</div>
+                <div className="col-span-2">Localização: {localKnowledgeData.audience.demographicProfile.location || 'Não informado'}</div>
               </div>
             )}
           </div>
@@ -1131,8 +1141,8 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               <div className="space-y-4 mt-1">
                 <div>
                   <Label>Tamanho da Empresa</Label>
-                  <Select value={knowledgeData.audience.firmographicProfile.companySize} onValueChange={(value) => updateAudience('firmographicProfile', {
-                    ...knowledgeData.audience.firmographicProfile,
+                  <Select value={localKnowledgeData.audience.firmographicProfile.companySize} onValueChange={(value) => updateAudience('firmographicProfile', {
+                    ...localKnowledgeData.audience.firmographicProfile,
                     companySize: value
                   })}>
                     <SelectTrigger>
@@ -1149,15 +1159,15 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 <div>
                   <Label>Setores/Indústrias</Label>
                   <div className="space-y-2">
-                    {knowledgeData.audience.firmographicProfile.industries.map((industry, index) => (
+                    {localKnowledgeData.audience.firmographicProfile.industries.map((industry, index) => (
                       <div key={index} className="flex items-center gap-2">
                         <Input
                           value={industry}
                           onChange={(e) => {
-                            const newIndustries = [...knowledgeData.audience.firmographicProfile.industries];
+                            const newIndustries = [...localKnowledgeData.audience.firmographicProfile.industries];
                             newIndustries[index] = e.target.value;
                             updateAudience('firmographicProfile', {
-                              ...knowledgeData.audience.firmographicProfile,
+                              ...localKnowledgeData.audience.firmographicProfile,
                               industries: newIndustries
                             });
                           }}
@@ -1185,15 +1195,15 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
                 <div>
                   <Label>Cargos-alvo</Label>
                   <div className="space-y-2">
-                    {knowledgeData.audience.firmographicProfile.targetRoles.map((role, index) => (
+                    {localKnowledgeData.audience.firmographicProfile.targetRoles.map((role, index) => (
                       <div key={index} className="flex items-center gap-2">
                         <Input
                           value={role}
                           onChange={(e) => {
-                            const newRoles = [...knowledgeData.audience.firmographicProfile.targetRoles];
+                            const newRoles = [...localKnowledgeData.audience.firmographicProfile.targetRoles];
                             newRoles[index] = e.target.value;
                             updateAudience('firmographicProfile', {
-                              ...knowledgeData.audience.firmographicProfile,
+                              ...localKnowledgeData.audience.firmographicProfile,
                               targetRoles: newRoles
                             });
                           }}
@@ -1221,9 +1231,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1 space-y-2 text-sm text-muted-foreground">
-                <div>Tamanho da Empresa: {knowledgeData.audience.firmographicProfile.companySize || 'Não informado'}</div>
-                <div>Setores: {knowledgeData.audience.firmographicProfile.industries.filter(i => i.trim()).join(', ') || 'Não informado'}</div>
-                <div>Cargos-alvo: {knowledgeData.audience.firmographicProfile.targetRoles.filter(r => r.trim()).join(', ') || 'Não informado'}</div>
+                <div>Tamanho da Empresa: {localKnowledgeData.audience.firmographicProfile.companySize || 'Não informado'}</div>
+                <div>Setores: {localKnowledgeData.audience.firmographicProfile.industries.filter(i => i.trim()).join(', ') || 'Não informado'}</div>
+                <div>Cargos-alvo: {localKnowledgeData.audience.firmographicProfile.targetRoles.filter(r => r.trim()).join(', ') || 'Não informado'}</div>
               </div>
             )}
           </div>
@@ -1235,7 +1245,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <Label>Personas Detalhadas</Label>
             {isEditing ? (
               <div className="space-y-4 mt-1">
-                {knowledgeData.audience.personas.map((persona, index) => (
+                {localKnowledgeData.audience.personas.map((persona, index) => (
                   <Card key={index} className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -1389,8 +1399,8 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1 space-y-2">
-                {knowledgeData.audience.personas.filter(p => p.name.trim()).length > 0 ? (
-                  knowledgeData.audience.personas.filter(p => p.name.trim()).map((persona, index) => (
+                {localKnowledgeData.audience.personas.filter(p => p.name.trim()).length > 0 ? (
+                  localKnowledgeData.audience.personas.filter(p => p.name.trim()).map((persona, index) => (
                     <div key={index} className="border rounded p-3">
                       <h4 className="font-medium">{persona.name}</h4>
                       {persona.pains.filter(p => p.trim()).length > 0 && (
@@ -1419,7 +1429,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <Label>Perguntas Frequentes (FAQs)</Label>
             {isEditing ? (
               <div className="space-y-4 mt-1">
-                {knowledgeData.audience.faqs.map((faq, index) => (
+                {localKnowledgeData.audience.faqs.map((faq, index) => (
                   <Card key={index} className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -1462,8 +1472,8 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1 space-y-2">
-                {knowledgeData.audience.faqs.filter(f => f.question.trim()).length > 0 ? (
-                  knowledgeData.audience.faqs.filter(f => f.question.trim()).map((faq, index) => (
+                {localKnowledgeData.audience.faqs.filter(f => f.question.trim()).length > 0 ? (
+                  localKnowledgeData.audience.faqs.filter(f => f.question.trim()).map((faq, index) => (
                     <div key={index} className="border rounded p-3">
                       <h4 className="font-medium">{faq.question}</h4>
                       <p className="text-sm text-muted-foreground mt-1">{faq.answer}</p>
@@ -1495,12 +1505,12 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <Label>Palavras-chave Principais</Label>
             {isEditing ? (
               <div className="space-y-2 mt-1">
-                {knowledgeData.seo.mainKeywords.map((keyword, index) => (
+                {localKnowledgeData.seo.mainKeywords.map((keyword, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Input
                       value={keyword}
                       onChange={(e) => {
-                        const newKeywords = [...knowledgeData.seo.mainKeywords];
+                        const newKeywords = [...localKnowledgeData.seo.mainKeywords];
                         newKeywords[index] = e.target.value;
                         updateSeo('mainKeywords', newKeywords);
                       }}
@@ -1526,9 +1536,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1">
-                {knowledgeData.seo.mainKeywords.filter(k => k.trim()).length > 0 ? (
+                {localKnowledgeData.seo.mainKeywords.filter(k => k.trim()).length > 0 ? (
                   <div className="flex flex-wrap gap-1">
-                    {knowledgeData.seo.mainKeywords.filter(k => k.trim()).map((keyword, index) => (
+                    {localKnowledgeData.seo.mainKeywords.filter(k => k.trim()).map((keyword, index) => (
                       <Badge key={index} variant="outline">{keyword}</Badge>
                     ))}
                   </div>
@@ -1544,12 +1554,12 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <Label>Intenções de Busca</Label>
             {isEditing ? (
               <div className="space-y-2 mt-1">
-                {knowledgeData.seo.searchIntents.map((intent, index) => (
+                {localKnowledgeData.seo.searchIntents.map((intent, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Input
                       value={intent}
                       onChange={(e) => {
-                        const newIntents = [...knowledgeData.seo.searchIntents];
+                        const newIntents = [...localKnowledgeData.seo.searchIntents];
                         newIntents[index] = e.target.value;
                         updateSeo('searchIntents', newIntents);
                       }}
@@ -1575,9 +1585,9 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               </div>
             ) : (
               <div className="mt-1">
-                {knowledgeData.seo.searchIntents.filter(i => i.trim()).length > 0 ? (
+                {localKnowledgeData.seo.searchIntents.filter(i => i.trim()).length > 0 ? (
                   <div className="flex flex-wrap gap-1">
-                    {knowledgeData.seo.searchIntents.filter(i => i.trim()).map((intent, index) => (
+                    {localKnowledgeData.seo.searchIntents.filter(i => i.trim()).map((intent, index) => (
                       <Badge key={index} variant="secondary">{intent}</Badge>
                     ))}
                   </div>
