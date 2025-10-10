@@ -10,7 +10,13 @@ import {
   Calendar,
   ChevronRight,
   Sparkles,
-  Settings
+  Settings,
+  Building2,
+  Info,
+  Rss,
+  Search,
+  CheckCircle,
+  ArrowRight
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
@@ -19,12 +25,14 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useClientContext } from "@/contexts/ClientContext";
+import { useClients } from "@/hooks/useClients";
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | undefined>();
   const [isGenerating, setIsGenerating] = useState(false);
   const { selectedClientId, selectedClient } = useClientContext();
+  const { clients, loading: clientsLoading } = useClients();
   const navigate = useNavigate();
   
 
@@ -94,6 +102,140 @@ export default function Dashboard() {
 
   if (isGenerating) {
     return <LoadingScreen onComplete={handleGenerationComplete} />;
+  }
+
+  // Componente de onboarding para novos usuários
+  const OnboardingSteps = () => (
+    <div className="space-y-6">
+      <div className="text-center space-y-4">
+        <div className="w-16 h-16 bg-gradient-to-r from-primary to-purple-600 rounded-full flex items-center justify-center mx-auto">
+          <Building2 className="h-8 w-8 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold">Bem-vindo ao ATMK!</h2>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          Para começar a gerar conteúdos personalizados, siga estes passos essenciais:
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Passo 1: Criar Empresa */}
+        <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-sm font-bold text-primary">1</span>
+              </div>
+              <CardTitle className="text-lg">Criar uma Empresa</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Configure sua primeira empresa para começar a gerar conteúdos personalizados.
+            </p>
+            <Button 
+              onClick={() => navigate('/clients')}
+              className="w-full"
+            >
+              <Building2 className="h-4 w-4 mr-2" />
+              Criar Empresa
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Passo 2: Informações da Empresa */}
+        <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-sm font-bold text-primary">2</span>
+              </div>
+              <CardTitle className="text-lg">Configurar Informações</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Adicione informações importantes como tom de voz, público-alvo e descrição da empresa.
+            </p>
+            <Button 
+              onClick={() => navigate('/clients')}
+              variant="outline"
+              className="w-full"
+              disabled
+            >
+              <Info className="h-4 w-4 mr-2" />
+              Configurar (Após criar empresa)
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Passo 3: Fontes de Notícias */}
+        <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-sm font-bold text-primary">3</span>
+              </div>
+              <CardTitle className="text-lg">Fontes de Notícias</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Configure fontes confiáveis para sugerir temas relevantes e atualizados.
+            </p>
+            <Button 
+              variant="outline"
+              className="w-full"
+              disabled
+            >
+              <Rss className="h-4 w-4 mr-2" />
+              Configurar (Em breve)
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Passo 4: Automação */}
+        <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-sm font-bold text-primary">4</span>
+              </div>
+              <CardTitle className="text-lg">Automação de Busca</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Configure a automação para buscar temas relevantes na internet automaticamente.
+            </p>
+            <Button 
+              variant="outline"
+              className="w-full"
+              disabled
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Configurar (Em breve)
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800">
+          <strong>Dica:</strong> Comece criando sua primeira empresa. Depois você poderá configurar todas as outras funcionalidades para gerar conteúdos personalizados e relevantes.
+        </AlertDescription>
+      </Alert>
+    </div>
+  );
+
+  // Se não há clientes e não está carregando, mostrar onboarding
+  if (!clientsLoading && clients.length === 0) {
+    return (
+      <div className="p-6">
+        <OnboardingSteps />
+      </div>
+    );
   }
 
   return (
