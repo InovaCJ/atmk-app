@@ -4,14 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { X, ChevronUp, ChevronDown, BookOpen, Target, Users, Search, FileText, Palette } from "lucide-react";
-import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
+import { useClientKnowledgeValidation } from "@/hooks/useClientKnowledgeValidation";
 import { useCompanyContext } from "@/contexts/CompanyContext";
 import { useNavigate } from "react-router-dom";
 
 export function FloatingKnowledgeButton() {
   const [isExpanded, setIsExpanded] = useState(false);
   const { selectedCompany: currentCompany } = useCompanyContext();
-  const { completionPercentage, missingFields, canGenerateContent } = useKnowledgeValidation(currentCompany?.id);
+  const { completionPercentage, missingFields, canGenerateContent } = useClientKnowledgeValidation(currentCompany?.id);
   const navigate = useNavigate();
 
   // Se já pode gerar conteúdo, não mostrar o botão

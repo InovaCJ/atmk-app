@@ -34,7 +34,7 @@ import { useNavigate } from "react-router-dom";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { PlanModal } from "@/components/PlanModal";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
+import { useClientKnowledgeValidation } from "@/hooks/useClientKnowledgeValidation";
 import { useClientContext } from "@/contexts/ClientContext";
 import { ContentFeedback } from "@/components/ContentFeedback";
 import { ImageCarousel } from "@/components/ImageCarousel";
@@ -54,7 +54,7 @@ const EmptyState = ({ type, title, description, icon }: {
   // Usar primeiro cliente para validação ou undefined se não houver
   const { clients } = useClientContext();
   const selectedClientId = clients.length > 0 ? clients[0].id : undefined;
-  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useKnowledgeValidation(selectedClientId);
+  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useClientKnowledgeValidation(selectedClientId);
   const { canGenerateContent: canGeneratePlan, remainingContent } = usePlanLimits();
   
   const canGenerate = canGenerateKnowledge && canGeneratePlan;
@@ -134,7 +134,7 @@ export default function Library() {
   
   const navigate = useNavigate();
   const { selectedClient, selectedClientId } = useClientContext();
-  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useKnowledgeValidation(selectedClientId || undefined);
+  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useClientKnowledgeValidation(selectedClientId || undefined);
   const { canGenerateContent: canGeneratePlan, remainingContent } = usePlanLimits();
   const { toast } = useToast();
   

@@ -26,7 +26,7 @@ import {
   AlertTriangle,
   Settings
 } from "lucide-react";
-import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
+import { useClientKnowledgeValidation } from "@/hooks/useClientKnowledgeValidation";
 import { useKnowledgeBase } from "@/hooks/useKnowledgeBase";
 import { useNavigate } from "react-router-dom";
 import { useClientContext } from "@/contexts/ClientContext";
@@ -140,7 +140,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
   const [selectedClientState, setSelectedClientState] = useState(selectedClientId || "");
   const [isGenerating, setIsGenerating] = useState(false);
   
-  const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedClientState);
+  const { canGenerateContent, completionPercentage, missingFields } = useClientKnowledgeValidation(selectedClientState);
 
   const resetModal = () => {
     setStep(initialStep);
