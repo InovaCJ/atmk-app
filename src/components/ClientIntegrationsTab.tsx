@@ -244,9 +244,20 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
   };
 
   const handleToggleFrequency = (id: string) => {
-    const updatedFrequencies = searchFrequencies.map(sf => 
-      sf.id === id ? { ...sf, enabled: !sf.enabled } : sf
-    );
+    const updatedFrequencies = searchFrequencies.map(sf => {
+      if (sf.id === id) {
+        // Se estiver desabilitando, apenas desabilita
+        if (sf.enabled) {
+          return { ...sf, enabled: false };
+        } else {
+          // Se estiver habilitando, desabilita todas as outras e habilita esta
+          return { ...sf, enabled: true };
+        }
+      } else {
+        // Desabilita todas as outras quando uma é habilitada
+        return { ...sf, enabled: false };
+      }
+    });
     updateSearchFrequencies(updatedFrequencies);
   };
 
