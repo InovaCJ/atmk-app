@@ -49,6 +49,14 @@ export function Layout() {
           hasFilter: false
         };
       default:
+        // Verificar se é uma rota de detalhes do cliente
+        if (location.pathname.startsWith('/clients/') && location.pathname !== '/clients') {
+          return {
+            title: 'Detalhe do Cliente',
+            description: 'Configure e gerencie as informações do cliente',
+            hasFilter: false
+          };
+        }
         return {
           title: 'ATMK Content AI',
           description: '',
