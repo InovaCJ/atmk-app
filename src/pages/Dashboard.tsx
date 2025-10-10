@@ -61,7 +61,7 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: "Oportunidades geradas",
+      title: "Temas gerados",
       value: "12",
       change: "+8.2%",
       icon: TrendingUp
@@ -157,7 +157,7 @@ export default function Dashboard() {
       {/* Opportunities Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Oportunidades em Destaque</h2>
+          <h2 className="text-xl font-semibold">Temas em Destaque</h2>
         </div>
 
         <div className="grid gap-4">
