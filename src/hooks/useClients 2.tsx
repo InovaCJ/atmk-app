@@ -10,11 +10,7 @@ export function useClients() {
   const { user } = useAuth();
 
   const fetchClients = async () => {
-    if (!user) {
-      setClients([]);
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
 
     try {
       setLoading(true);
@@ -23,7 +19,6 @@ export function useClients() {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('created_by', user.id) // Apenas clientes do usuário atual
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -31,7 +26,6 @@ export function useClients() {
     } catch (err) {
       console.error('Error fetching clients:', err);
       setError(err instanceof Error ? err.message : 'Erro ao carregar clientes');
-      setClients([]); // Em caso de erro, retorna array vazio
     } finally {
       setLoading(false);
     }

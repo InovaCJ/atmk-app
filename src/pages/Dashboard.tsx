@@ -28,48 +28,20 @@ export default function Dashboard() {
   const navigate = useNavigate();
   
 
-  // Mock data para trends/oportunidades de conteúdo
-  const opportunities = [
-    {
-      id: 1,
-      title: "Black Friday 2024: Estratégias de Marketing Digital",
-      source: "Google Trends",
-      trend: "+245%",
-      type: "trending",
-      channels: ["blog", "social", "email"],
-      description: "Aumento significativo nas buscas por estratégias de Black Friday"
-    },
-    {
-      id: 2,
-      title: "Inteligência Artificial no E-commerce",
-      source: "Google News",
-      trend: "+189%",
-      type: "news",
-      channels: ["blog", "social"],
-      description: "Discussões sobre IA transformando o varejo online"
-    },
-    {
-      id: 3,
-      title: "Marketing de Conteúdo 2025",
-      source: "Trends BR",
-      trend: "+156%",
-      type: "trending",
-      channels: ["blog", "email"],
-      description: "Tendências emergentes para o próximo ano"
-    }
-  ];
+  // Dados vazios para novos usuários - serão carregados do Supabase quando implementado
+  const opportunities: any[] = [];
 
   const stats = [
     {
-      title: "Temas gerados",
-      value: "12",
-      change: "+8.2%",
+      title: "Clientes",
+      value: selectedClient ? "1" : "0",
+      change: selectedClient ? "+100%" : "0%",
       icon: TrendingUp
     },
     {
       title: "Conteúdos Gerados",
-      value: "4",
-      change: "+100%",
+      value: "0",
+      change: "0%",
       icon: FileText,
       onClick: () => navigate('/library')
     }
