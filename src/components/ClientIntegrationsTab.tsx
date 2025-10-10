@@ -194,11 +194,11 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
   const getFrequencyCost = (frequency: string) => {
     switch (frequency) {
       case 'daily':
-        return 1500; // R$ 50 x 30 dias = R$ 1.500/mês
+        return 1000; // R$ 10 por mês
       case 'weekly':
-        return 100;  // R$ 25 x 4 semanas = R$ 100/mês
+        return 500;  // R$ 5 por mês
       case 'monthly':
-        return 10;   // R$ 10 x 1 mês = R$ 10/mês
+        return 0;    // R$ 0 - Grátis
       default:
         return 0;
     }
@@ -450,7 +450,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="font-medium text-green-600">R$ {frequency.cost}</p>
+                      <p className="font-medium text-green-600">R$ {(frequency.cost / 100).toFixed(2)}</p>
                       <p className="text-xs text-muted-foreground">por mês</p>
                     </div>
                     <Button
@@ -478,7 +478,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
             <div className="mt-4 p-3 bg-muted rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Custo Total Mensal:</span>
-                <span className="text-lg font-bold text-green-600">R$ {totalCost}</span>
+                <span className="text-lg font-bold text-green-600">R$ {(totalCost / 100).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -659,7 +659,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              R$ {totalCost}
+              R$ {(totalCost / 100).toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">Estimativa mensal</p>
           </CardContent>

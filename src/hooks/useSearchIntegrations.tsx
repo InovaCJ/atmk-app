@@ -66,9 +66,9 @@ export function useSearchIntegrations(clientId: string) {
       ]);
 
       setSearchFrequencies([
-        { id: '1', frequency: 'daily', enabled: true, cost: 1500 },
-        { id: '2', frequency: 'weekly', enabled: false, cost: 100 },
-        { id: '3', frequency: 'monthly', enabled: false, cost: 10 }
+        { id: '1', frequency: 'daily', enabled: true, cost: 1000 }, // R$ 10 por mês
+        { id: '2', frequency: 'weekly', enabled: false, cost: 500 }, // R$ 5 por mês
+        { id: '3', frequency: 'monthly', enabled: false, cost: 0 }   // R$ 0 - Grátis
       ]);
 
     } catch (err) {
