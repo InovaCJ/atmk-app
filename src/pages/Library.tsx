@@ -106,7 +106,7 @@ const EmptyState = ({ type, title, description, icon }: {
           disabled={!canGenerate}
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          {companies.length > 0 && companies[0].plan_type === 'free' 
+          {clients.length > 0 && clients[0].plan === 'free' 
             ? `Gerar Conteúdo (${remainingContent} restantes)`
             : 'Gerar Primeiro Conteúdo'
           }
