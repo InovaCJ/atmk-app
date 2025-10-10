@@ -8,7 +8,6 @@ extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-enabled = true
 port = 54322
 shadow_port = 54320
 major_version = 15
@@ -29,18 +28,14 @@ enabled = true
 file_size_limit = "50MiB"
 
 [auth]
-enabled = true
 site_url = "http://127.0.0.1:3000"
 additional_redirect_urls = ["https://127.0.0.1:3000"]
 jwt_expiry = 3600
 enable_signup = true
-email_confirm_timeout = 1200
 
 [auth.email]
 enable_signup = true
-double_confirm = true
 enable_confirmations = true
-secure_nonce = true
 
 [auth.sms]
 enable_signup = true

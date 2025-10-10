@@ -3,7 +3,6 @@ export interface BasicInfoData {
   email: string;
   password: string;
   phone: string;
-  companyName: string;
 }
 
 export interface BrandIdentityData {

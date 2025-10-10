@@ -10,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
-import { CompanyProvider } from "@/contexts/CompanyContext";
 
 export function Layout() {
   const location = useLocation();
@@ -37,11 +36,10 @@ export function Layout() {
           description: 'Seus conteúdos organizados e prontos para usar',
           hasFilter: false
         };
-      // Generate route removed - functionality moved to Library
-      case '/knowledge':
+      case '/clients':
         return {
-          title: 'Base de Conhecimento',
-          description: 'Gerencie suas informações de negócio e identidade',
+          title: 'Clientes',
+          description: 'Gerencie seus clientes e suas configurações',
           hasFilter: false
         };
       case '/settings':
@@ -62,52 +60,50 @@ export function Layout() {
   const pageInfo = getPageInfo();
 
   return (
-    <CompanyProvider>
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-background">
-          <AppSidebar />
-          <main className="flex-1">
-            <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-20 items-center justify-between px-4 lg:px-6">
-                <div className="flex items-center gap-4">
-                  <SidebarTrigger />
-                  <div>
-                    <h1 className="text-lg font-semibold">{pageInfo.title}</h1>
-                    {pageInfo.description && (
-                      <p className="text-sm text-muted-foreground">{pageInfo.description}</p>
-                    )}
-                  </div>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AppSidebar />
+        <main className="flex-1">
+          <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex h-20 items-center justify-between px-4 lg:px-6">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger />
+                <div>
+                  <h1 className="text-lg font-semibold">{pageInfo.title}</h1>
+                  {pageInfo.description && (
+                    <p className="text-sm text-muted-foreground">{pageInfo.description}</p>
+                  )}
                 </div>
-                {pageInfo.hasFilter && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Últimos {selectedPeriod}
-                        <ChevronDown className="h-4 w-4 ml-2" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                      {periodOptions.map((period) => (
-                        <DropdownMenuItem
-                          key={period}
-                          onClick={() => setSelectedPeriod(period)}
-                          className="cursor-pointer"
-                        >
-                          Últimos {period}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
               </div>
-            </header>
-            <div className="flex-1">
-              <Outlet />
+              {pageInfo.hasFilter && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Últimos {selectedPeriod}
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    {periodOptions.map((period) => (
+                      <DropdownMenuItem
+                        key={period}
+                        onClick={() => setSelectedPeriod(period)}
+                        className="cursor-pointer"
+                      >
+                        Últimos {period}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
-          </main>
-        </div>
-      </SidebarProvider>
-    </CompanyProvider>
+          </header>
+          <div className="flex-1">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 }

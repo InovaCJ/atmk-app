@@ -35,8 +35,7 @@ import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { PlanModal } from "@/components/PlanModal";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
-import { useCompanyContext } from "@/contexts/CompanyContext";
-import { useCompanies } from "@/hooks/useCompanies";
+import { useClientContext } from "@/contexts/ClientContext";
 import { ContentFeedback } from "@/components/ContentFeedback";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
@@ -49,13 +48,13 @@ const EmptyState = ({ type, title, description, icon }: {
   icon: React.ReactNode;
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { companies } = useCompanies();
   const navigate = useNavigate();
   const { toast: toastFunc } = useToast();
   
-  // Usar primeira empresa para validação ou undefined se não houver
-  const selectedCompanyId = companies.length > 0 ? companies[0].id : undefined;
-  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useKnowledgeValidation(selectedCompanyId);
+  // Usar primeiro cliente para validação ou undefined se não houver
+  const { clients } = useClientContext();
+  const selectedClientId = clients.length > 0 ? clients[0].id : undefined;
+  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useKnowledgeValidation(selectedClientId);
   const { canGenerateContent: canGeneratePlan, remainingContent } = usePlanLimits();
   
   const canGenerate = canGenerateKnowledge && canGeneratePlan;
@@ -134,8 +133,8 @@ export default function Library() {
   const [generatedContent, setGeneratedContent] = useState<any>(null);
   
   const navigate = useNavigate();
-  const { selectedCompany, selectedCompanyId } = useCompanyContext();
-  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useKnowledgeValidation(selectedCompanyId || undefined);
+  const { selectedClient, selectedClientId } = useClientContext();
+  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useKnowledgeValidation(selectedClientId || undefined);
   const { canGenerateContent: canGeneratePlan, remainingContent } = usePlanLimits();
   const { toast } = useToast();
   
@@ -439,7 +438,7 @@ export default function Library() {
           disabled={!canGenerate}
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          {selectedCompany?.plan_type === 'free' 
+          {selectedClient?.plan === 'free' 
             ? `Gerar Conteúdo (${remainingContent} restantes)`
             : 'Gerar Novo Conteúdo'
           }
@@ -796,7 +795,7 @@ export default function Library() {
         </Sheet>
 
         {/* Show plan modal for free users who hit limit, content modal otherwise */}
-        {!canGeneratePlan && selectedCompany?.plan_type === 'free' ? (
+        {!canGeneratePlan && selectedClient?.plan === 'free' ? (
           <PlanModal 
             isOpen={isPlanModalOpen}
             onClose={() => setIsPlanModalOpen(false)}

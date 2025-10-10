@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { 
-  Building2, 
-  ChevronDown, 
+  ChevronDown,
   LogOut, 
   Settings, 
-  User,
-  Check
+  User
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,14 +18,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
-import { useCompanies } from "@/hooks/useCompanies";
-import { useCompanyContext } from "@/contexts/CompanyContext";
 
 export function UserProfileDropdown() {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
-  const { companies } = useCompanies();
-  const { selectedCompanyId, setSelectedCompanyId, selectedCompany } = useCompanyContext();
   const [open, setOpen] = useState(false);
 
   const userName = profile?.full_name || user?.email?.split('@')[0] || 'Usuário';
@@ -51,9 +45,6 @@ export function UserProfileDropdown() {
             
             <div className="flex flex-col items-start text-left group-data-[collapsible=icon]:hidden">
               <p className="text-sm font-medium leading-none">{userName}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {selectedCompany?.name || 'Selecionar empresa'}
-              </p>
             </div>
           </div>
           
@@ -83,28 +74,6 @@ export function UserProfileDropdown() {
         </DropdownMenuLabel>
         
         <DropdownMenuSeparator />
-        
-        {companies.length > 0 && (
-          <>
-            <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-3">
-              EMPRESAS
-            </DropdownMenuLabel>
-            {companies.map((company) => (
-              <DropdownMenuItem 
-                key={company.id}
-                onClick={() => setSelectedCompanyId(company.id)}
-                className="flex items-center gap-2 px-3"
-              >
-                <Building2 className="h-4 w-4" />
-                <span className="flex-1">{company.name}</span>
-                {selectedCompanyId === company.id && (
-                  <Check className="h-4 w-4 text-primary" />
-                )}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-          </>
-        )}
         
         <DropdownMenuItem asChild>
           <NavLink to="/settings" className="flex items-center gap-2 px-3">

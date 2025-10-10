@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useCompanyContext } from '@/contexts/CompanyContext';
+import { useClientContext } from '@/contexts/ClientContext';
 import { supabase } from '@/integrations/supabase/client';
 
 export const usePlanLimits = () => {
-  const { selectedCompany } = useCompanyContext();
+  const { selectedClient } = useClientContext();
   const [generatedCount, setGeneratedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -14,11 +14,11 @@ export const usePlanLimits = () => {
     enterprise: Infinity
   };
 
-  const currentLimit = planLimits[selectedCompany?.plan_type as keyof typeof planLimits] || planLimits.free;
+  const currentLimit = planLimits[selectedClient?.plan as keyof typeof planLimits] || planLimits.free;
 
   useEffect(() => {
     const fetchGeneratedCount = async () => {
-      if (!selectedCompany?.id) {
+      if (!selectedClient?.id) {
         setIsLoading(false);
         return;
       }
@@ -27,7 +27,7 @@ export const usePlanLimits = () => {
         const { data, error } = await supabase
           .from('content_calendar')
           .select('id')
-          .eq('company_id', selectedCompany.id);
+          .eq('company_id', selectedClient.id);
 
         if (error) {
           console.error('Error fetching generated content count:', error);
@@ -44,17 +44,17 @@ export const usePlanLimits = () => {
     };
 
     fetchGeneratedCount();
-  }, [selectedCompany?.id]);
+  }, [selectedClient?.id]);
 
   const canGenerateContent = () => {
-    if (selectedCompany?.plan_type === 'premium' || selectedCompany?.plan_type === 'enterprise') {
+    if (selectedClient?.plan === 'pro' || selectedClient?.plan === 'business') {
       return true;
     }
     return generatedCount < currentLimit;
   };
 
   const getRemainingContent = () => {
-    if (selectedCompany?.plan_type === 'premium' || selectedCompany?.plan_type === 'enterprise') {
+    if (selectedClient?.plan === 'pro' || selectedClient?.plan === 'business') {
       return Infinity;
     }
     return Math.max(0, currentLimit - generatedCount);

@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           // User is logged out - only redirect if not on allowed public pages
           const currentPath = window.location.pathname;
-          const allowedPaths = ['/onboarding', '/auth'];
+          const allowedPaths = ['/auth'];
           
           if (!allowedPaths.includes(currentPath)) {
             navigate('/auth');
@@ -68,10 +68,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // If no session, allow staying on onboarding or redirect to auth
+        // If no session, redirect to auth
         if (!session) {
           const currentPath = window.location.pathname;
-          if (currentPath !== '/onboarding' && currentPath !== '/auth') {
+          if (currentPath !== '/auth') {
             navigate('/auth');
           }
         }

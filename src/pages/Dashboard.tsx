@@ -16,20 +16,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { PlanModal } from "@/components/PlanModal";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { FloatingKnowledgeButton } from "@/components/FloatingKnowledgeButton";
 import { toast } from "@/hooks/use-toast";
-import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 import { useNavigate } from "react-router-dom";
-import { useCompanyContext } from "@/contexts/CompanyContext";
+import { useClientContext } from "@/contexts/ClientContext";
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | undefined>();
   const [isGenerating, setIsGenerating] = useState(false);
-  const { selectedCompanyId, selectedCompany } = useCompanyContext();
+  const { selectedClientId, selectedClient } = useClientContext();
   const navigate = useNavigate();
   
-  const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedCompanyId || undefined);
 
   // Mock data para trends/oportunidades de conteúdo
   const opportunities = [
@@ -71,7 +68,7 @@ export default function Dashboard() {
     },
     {
       title: "Conteúdos Gerados",
-      value: canGenerateContent ? "4" : "-",
+      value: "4",
       change: "+100%",
       icon: FileText,
       onClick: () => navigate('/library')
@@ -88,16 +85,6 @@ export default function Dashboard() {
   };
 
   const handleGenerateContent = (opportunityId: number) => {
-    if (!canGenerateContent) {
-      toast({
-        title: "Base de conhecimento incompleta",
-        description: `Complete pelo menos 50% da sua base de conhecimento para gerar conteúdos. Atual: ${completionPercentage}%`,
-        variant: "destructive"
-      });
-      navigate("/knowledge");
-      return;
-    }
-
     // Open generation modal with preselected opportunity for all users
     setSelectedOpportunityId(opportunityId.toString());
     setIsModalOpen(true);
@@ -140,37 +127,6 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-6">
 
-      {/* Onboarding Alert */}
-      {!canGenerateContent && (
-        <Alert className="border-primary/20 bg-primary/5">
-          <Sparkles className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between w-full">
-            <div>
-              <p className="font-medium">Base de conhecimento incompleta ({completionPercentage}%)</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Complete pelo menos 50% para gerar conteúdos personalizados
-              </p>
-              {missingFields.length > 0 && (
-                <details className="mt-2">
-                  <summary className="text-sm cursor-pointer text-primary hover:underline">
-                    Ver campos faltantes ({missingFields.length})
-                  </summary>
-                  <ul className="text-xs text-muted-foreground mt-1 ml-4 list-disc">
-                    {missingFields.slice(0, 5).map((field, index) => (
-                      <li key={index}>{field}</li>
-                    ))}
-                    {missingFields.length > 5 && <li>+ {missingFields.length - 5} outros...</li>}
-                  </ul>
-                </details>
-              )}
-            </div>
-            <Button variant="default" size="sm" onClick={() => navigate("/knowledge")}>
-              <Settings className="h-4 w-4 mr-2" />
-              Completar Base
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -224,7 +180,6 @@ export default function Dashboard() {
                   <Button 
                     onClick={() => handleGenerateContent(opportunity.id)}
                     className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-                    disabled={!canGenerateContent}
                   >
                     <Sparkles className="h-4 w-4 mr-2" />
                     Gerar Conteúdo
@@ -255,7 +210,6 @@ export default function Dashboard() {
         preselectedOpportunity={selectedOpportunityId}
       />
 
-      <FloatingKnowledgeButton />
     </div>
   );
 }

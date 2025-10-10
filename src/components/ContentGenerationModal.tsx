@@ -26,11 +26,10 @@ import {
   AlertTriangle,
   Settings
 } from "lucide-react";
-import { useCompanies } from "@/hooks/useCompanies";
 import { useKnowledgeValidation } from "@/hooks/useKnowledgeValidation";
 import { useKnowledgeBase } from "@/hooks/useKnowledgeBase";
 import { useNavigate } from "react-router-dom";
-import { useCompanyContext } from "@/contexts/CompanyContext";
+import { useClientContext } from "@/contexts/ClientContext";
 
 interface ContentGenerationModalProps {
   open: boolean;
@@ -125,9 +124,8 @@ const contentFormats = [
 ];
 
 export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselectedOpportunity }: ContentGenerationModalProps) {
-  const { companies, loading } = useCompanies();
-  const { selectedCompanyId, selectedCompany } = useCompanyContext();
-  const { getKnowledgeItemByType } = useKnowledgeBase(selectedCompanyId || undefined);
+  const { clients, loading, selectedClientId, selectedClient } = useClientContext();
+  const { getKnowledgeItemByType } = useKnowledgeBase(selectedClientId || undefined);
   const navigate = useNavigate();
   
   // Allow all users to select opportunities - no restrictions
@@ -139,16 +137,16 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
     preselectedOpportunity || ""
   );
   const [selectedContentType, setSelectedContentType] = useState("");
-  const [selectedCompanyState, setSelectedCompanyState] = useState(selectedCompanyId || "");
+  const [selectedClientState, setSelectedClientState] = useState(selectedClientId || "");
   const [isGenerating, setIsGenerating] = useState(false);
   
-  const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedCompanyState);
+  const { canGenerateContent, completionPercentage, missingFields } = useKnowledgeValidation(selectedClientState);
 
   const resetModal = () => {
     setStep(initialStep);
     setSelectedOpportunity(preselectedOpportunity || "");
     setSelectedContentType("");
-    setSelectedCompanyState(selectedCompanyId || "");
+    setSelectedClientState(selectedClientId || "");
     setIsGenerating(false);
   };
 
@@ -203,7 +201,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
   };
 
   const handleConfirm = async () => {
-    if (selectedOpportunity && selectedContentType && selectedCompanyState) {
+    if (selectedOpportunity && selectedContentType && selectedClientState) {
       console.log('Starting content generation...');
       setIsGenerating(true);
       
@@ -216,7 +214,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
         const generatedContent = await generateContentWithAI({
           opportunityId: selectedOpportunity || 'onboarding-generated',
           contentType: selectedContentType,
-          companyId: selectedCompanyState
+          companyId: selectedClientState
         });
         
         // Content generation completed successfully
@@ -228,7 +226,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
         setIsGenerating(false);
       }
     } else {
-      console.log('Missing required fields:', { selectedOpportunity, selectedContentType, selectedCompanyState });
+      console.log('Missing required fields:', { selectedOpportunity, selectedContentType, selectedClientState });
     }
   };
 
@@ -246,7 +244,7 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
     switch (step) {
       case 1: return selectedOpportunity !== "";
       case 2: return selectedContentType !== "";
-      case 3: return selectedCompanyState !== "" && canGenerateContent;
+      case 3: return selectedClientState !== "" && canGenerateContent;
       default: return false;
     }
   };
@@ -408,26 +406,26 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
                 <div className="space-y-4">
                   <Label htmlFor="company-select">Empresa</Label>
                   <Select 
-                    value={selectedCompanyState} 
-                    onValueChange={setSelectedCompanyState}
+                    value={selectedClientState} 
+                    onValueChange={setSelectedClientState}
                     disabled={loading}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={loading ? "Carregando empresas..." : "Selecione uma empresa"} />
+                      <SelectValue placeholder={loading ? "Carregando clientes..." : "Selecione um cliente"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {companies.map((company) => (
-                        <SelectItem key={company.id} value={company.id}>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
                           <div className="flex items-center gap-2">
                             <Building className="h-4 w-4" />
-                            {company.name}
+                            {client.name}
                           </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   
-                  {selectedCompanyState && !canGenerateContent && (
+                  {selectedClientState && !canGenerateContent && (
                     <Alert className="border-amber-200 bg-amber-50">
                       <AlertTriangle className="h-4 w-4 text-amber-600" />
                       <AlertDescription className="text-amber-800">
@@ -466,11 +464,11 @@ export function ContentGenerationModal({ open, onOpenChange, onConfirm, preselec
                     </Alert>
                   )}
                   
-                  {selectedCompanyState && canGenerateContent && (
+                  {selectedClientState && canGenerateContent && (
                     <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                       <h4 className="font-medium mb-2 text-green-800">✓ Base de conhecimento válida ({completionPercentage}%)</h4>
                       <div className="text-sm text-green-700">
-                        {companies.find(c => c.id === selectedCompanyState)?.description || 
+                        {clients.find(c => c.id === selectedClientState)?.description || 
                          "A IA utilizará as informações de marca, público-alvo, produtos e estratégias desta empresa."}
                       </div>
                     </div>
