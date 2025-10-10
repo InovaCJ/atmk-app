@@ -64,6 +64,8 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
     integrations, 
     searchTerms, 
     searchFrequencies, 
+    setSearchTerms,
+    setSearchFrequencies,
     loading, 
     addIntegration, 
     updateIntegration, 
@@ -240,7 +242,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
     const updatedTerms = searchTerms.map(st => 
       st.id === id ? { ...st, term, enabled: term.trim() !== '' } : st
     );
-    updateSearchTerms(updatedTerms);
+    setSearchTerms(updatedTerms);
   };
 
   const handleToggleFrequency = (id: string) => {
@@ -258,7 +260,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
         return { ...sf, enabled: false };
       }
     });
-    updateSearchFrequencies(updatedFrequencies);
+    setSearchFrequencies(updatedFrequencies);
   };
 
   const handleRemoveService = async (serviceId: string) => {

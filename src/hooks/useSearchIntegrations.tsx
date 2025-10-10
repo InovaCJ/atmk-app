@@ -203,14 +203,16 @@ export function useSearchIntegrations(clientId: string) {
     fetchIntegrations();
   }, [clientId, user]);
 
-  return {
-    integrations,
-    searchTerms,
-    searchFrequencies,
-    loading,
-    error,
-    addIntegration,
-    updateIntegration,
+  return { 
+    integrations, 
+    searchTerms, 
+    searchFrequencies, 
+    setSearchTerms,
+    setSearchFrequencies,
+    loading, 
+    error, 
+    addIntegration, 
+    updateIntegration, 
     deleteIntegration,
     updateSearchTerms,
     updateSearchFrequencies,
