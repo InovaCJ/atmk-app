@@ -33,7 +33,7 @@ export function ClientMembersTab({ clientId }: ClientMembersTabProps) {
   const [activeTab, setActiveTab] = useState('members');
   
   const { members, loading, error, removeMember, updateMemberRole, transferOwnership } = useClientMembers(clientId);
-  const { invites, loading: invitesLoading, cancelInvite, resendInvite, sendInvite } = useClientInvites(clientId);
+  const { invites, loading: invitesLoading, cancelInvite, resendInvite } = useClientInvites(clientId);
   const { canEditClient } = useClientContext();
   const { user } = useAuth();
 
@@ -42,13 +42,6 @@ export function ClientMembersTab({ clientId }: ClientMembersTabProps) {
     member.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Debug: Log dos convites
-  React.useEffect(() => {
-    console.log('ClientMembersTab - Invites updated:', invites);
-    console.log('ClientMembersTab - Invites loading:', invitesLoading);
-    console.log('ClientMembersTab - Active tab:', activeTab);
-    console.log('ClientMembersTab - Invites length:', invites.length);
-  }, [invites, invitesLoading, activeTab]);
 
   const getRoleIcon = (role: string) => {
     switch (role) {
