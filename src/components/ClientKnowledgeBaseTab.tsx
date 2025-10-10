@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useClientContext } from '@/contexts/ClientContext';
-import { useClientSettings } from '@/hooks/useClientSettings';
+import { useClientSettings, KnowledgeBaseData } from '@/hooks/useClientSettings';
 import { toast } from 'sonner';
 
 interface ClientKnowledgeBaseTabProps {
@@ -26,71 +26,6 @@ interface ExampleFile {
   uploadedAt: string;
 }
 
-interface KnowledgeBaseData {
-  // 1. Posicionamento e Personalidade
-  positioning: {
-    valueProposition: string;
-    differentiators: string[];
-    personality: {
-      formalVsInformal: number; // 0-100
-      technicalVsAccessible: number; // 0-100
-      seriousVsHumorous: number; // 0-100
-    };
-    wordsWeUse: string[];
-    bannedWords: string[];
-    exampleFiles: ExampleFile[];
-  };
-  
-  // 2. Negócio e Oferta
-  business: {
-    sector: string;
-    market: string;
-    categoryMaturity: string;
-    regulatoryStatus: string;
-    products: Array<{
-      name: string;
-      features: string[];
-      priceRange: string;
-    }>;
-    services: Array<{
-      name: string;
-      description: string;
-      priceRange: string;
-    }>;
-  };
-  
-  // 3. Público, Personas e Jornada
-  audience: {
-    demographicProfile: {
-      ageRange: string;
-      gender: string;
-      income: string;
-      education: string;
-      location: string;
-    };
-    firmographicProfile: {
-      companySize: string;
-      industries: string[];
-      targetRoles: string[];
-    };
-    personas: Array<{
-      name: string;
-      pains: string[];
-      objections: string[];
-      purchaseTriggers: string[];
-    }>;
-    faqs: Array<{
-      question: string;
-      answer: string;
-    }>;
-  };
-  
-  // 4. SEO & Semântica
-  seo: {
-    mainKeywords: string[];
-    searchIntents: string[];
-  };
-}
 
 export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps) {
   const { canEditClient } = useClientContext();

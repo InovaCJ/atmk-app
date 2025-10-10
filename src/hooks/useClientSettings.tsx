@@ -164,8 +164,11 @@ export function useClientSettings(clientId: string) {
     }
 
     try {
+      console.log('💾 Salvando base de conhecimento:', { clientId, knowledgeData });
+      
       // Converter dados da base de conhecimento para JSON
       const promptDirectives = JSON.stringify(knowledgeData);
+      console.log('📝 JSON gerado:', promptDirectives);
 
       const { data, error } = await supabase
         .from('client_settings')
@@ -173,17 +176,23 @@ export function useClientSettings(clientId: string) {
           client_id: clientId,
           prompt_directives: promptDirectives,
           updated_at: new Date().toISOString()
+        }, { 
+          onConflict: 'client_id' 
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro do Supabase:', error);
+        throw error;
+      }
 
+      console.log('✅ Base de conhecimento salva com sucesso:', data);
       setSettings(data);
       setKnowledgeData(knowledgeData);
       return data;
     } catch (err) {
-      console.error('Error saving knowledge data:', err);
+      console.error('❌ Error saving knowledge data:', err);
       throw err;
     }
   };
