@@ -218,7 +218,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
   };
 
   const updateArrayItem = (path: string[], index: number, field: string, value: string | string[]) => {
-    setKnowledgeData(prev => {
+    setLocalKnowledgeData(prev => {
       const newData = { ...prev };
       let current: Record<string, unknown> = newData;
       
@@ -280,7 +280,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
         uploadedAt: new Date().toISOString(),
       };
 
-      setKnowledgeData(prev => ({
+      setLocalKnowledgeData(prev => ({
         ...prev,
         positioning: {
           ...prev.positioning,
@@ -305,7 +305,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
   };
 
   const removeExampleFile = (fileId: string) => {
-    setKnowledgeData(prev => ({
+    setLocalKnowledgeData(prev => ({
       ...prev,
       positioning: {
         ...prev.positioning,
