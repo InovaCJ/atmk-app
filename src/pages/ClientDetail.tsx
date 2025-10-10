@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useClientContext } from '@/contexts/ClientContext';
 import { useClients } from '@/hooks/useClients';
+import { toast } from 'sonner';
 import { useClientStatus } from '@/hooks/useClientStatus';
 import { ClientKnowledgeBaseTab } from '@/components/ClientKnowledgeBaseTab';
 import { ClientNewsTab } from '@/components/ClientNewsTab';
@@ -18,7 +20,7 @@ import { ClientMembersTab } from '@/components/ClientMembersTab';
 export default function ClientDetail() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const { clients, loading } = useClients();
+  const { clients, loading, updateClient, refetch } = useClients();
   const { canEditClient, canViewClient, selectedClientId } = useClientContext();
   const [activeTab, setActiveTab] = useState('overview');
   const [isSaving, setIsSaving] = useState(false);
@@ -46,10 +48,49 @@ export default function ClientDetail() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando cliente...</p>
+      <div className="p-6 space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-8 w-8" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-24" />
+        </div>
+
+        {/* Tabs Skeleton */}
+        <div className="space-y-4">
+          <div className="flex space-x-4">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+          
+          {/* Content Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-96" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -162,22 +203,42 @@ export default function ClientDetail() {
   };
 
   const handleSave = async () => {
+    if (!client) return;
+    
     setIsSaving(true);
     try {
-      // TODO: Implementar lógica de salvamento das configurações
-      console.log('Salvando configurações do cliente:', client?.id, editedClient);
-      // Aqui será implementada a lógica para salvar no banco de dados
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulação de delay
+      // Salvar no banco de dados
+      await updateClient(client.id, editedClient);
+      
+      // Recarregar dados para garantir sincronização
+      await refetch();
+      
+      toast.success('Configurações salvas com sucesso!');
       setIsEditing(false);
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
+      toast.error('Erro ao salvar configurações. Tente novamente.');
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 relative">
+      {/* Skeleton overlay durante salvamento */}
+      {isSaving && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card p-6 rounded-lg shadow-lg border">
+            <div className="flex items-center space-x-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              <div>
+                <p className="font-medium">Salvando configurações...</p>
+                <p className="text-sm text-muted-foreground">Aguarde enquanto salvamos suas alterações</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -235,8 +296,17 @@ export default function ClientDetail() {
               disabled={isSaving}
               size="sm"
             >
-              <Save className="h-4 w-4 mr-2" />
-              {isSaving ? 'Salvando...' : 'Salvar'}
+              {isSaving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar
+                </>
+              )}
             </Button>
           )}
         </div>
