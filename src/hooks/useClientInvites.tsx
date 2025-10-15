@@ -16,9 +16,14 @@ export function useClientInvites(clientId: string) {
       setLoading(true);
       setError(null);
 
-      // Por enquanto, usar estado local até a migração ser aplicada
-      console.log('Fetching invites - using local state for now');
-      setInvites([]);
+      const { data, error } = await supabase
+        .from('client_invites')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setInvites(data || []);
     } catch (err) {
       console.error('Error fetching client invites:', err);
       setError(err instanceof Error ? err.message : 'Erro ao carregar convites');
@@ -32,47 +37,21 @@ export function useClientInvites(clientId: string) {
     if (!user || !clientId) throw new Error('Dados insuficientes');
 
     try {
-      // Criar convite temporário no estado local
-      const tempInvite: ClientInvite = {
-        id: `temp_${Date.now()}`,
-        client_id: clientId,
-        email: inviteData.email,
-        role: inviteData.role,
-        invited_by: user.id,
-        status: 'pending',
-        token: '',
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        inviter: {
-          id: user.id,
-          email: user.email || 'usuario@exemplo.com',
-          full_name: user.user_metadata?.full_name || 'Usuário',
-          avatar_url: user.user_metadata?.avatar_url || null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        client: {
-          id: clientId,
-          name: 'Empresa',
-          slug: 'empresa',
-          created_by: user.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          status: 'active',
-          plan: 'pro'
-        }
-      };
+      const { data, error } = await supabase
+        .from('client_invites')
+        .insert({
+          client_id: clientId,
+          email: inviteData.email,
+          role: inviteData.role,
+          invited_by: user.id,
+          status: 'pending'
+        })
+        .select('*')
+        .single();
 
-      // Adicionar ao estado local
-      setInvites(prev => {
-        const newInvites = [tempInvite, ...prev];
-        console.log('useClientInvites - Adding invite:', tempInvite);
-        console.log('useClientInvites - New invites list:', newInvites);
-        return newInvites;
-      });
-      
-      return tempInvite;
+      if (error) throw error;
+      setInvites(prev => [data, ...prev]);
+      return data;
     } catch (err) {
       console.error('Error sending invite:', err);
       throw err;
@@ -81,7 +60,13 @@ export function useClientInvites(clientId: string) {
 
   const cancelInvite = async (inviteId: string) => {
     try {
-      // Remover do estado local
+      const { error } = await supabase
+        .from('client_invites')
+        .delete()
+        .eq('id', inviteId)
+        .eq('client_id', clientId);
+
+      if (error) throw error;
       setInvites(prev => prev.filter(invite => invite.id !== inviteId));
     } catch (err) {
       console.error('Error canceling invite:', err);
@@ -91,8 +76,20 @@ export function useClientInvites(clientId: string) {
 
   const resendInvite = async (inviteId: string) => {
     try {
-      // Por enquanto, apenas log
-      console.log('Resending invite:', inviteId);
+      // Atualiza expires_at e status para pending
+      const { data, error } = await supabase
+        .from('client_invites')
+        .update({
+          status: 'pending',
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        })
+        .eq('id', inviteId)
+        .eq('client_id', clientId)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      setInvites(prev => prev.map(i => i.id === inviteId ? data : i));
     } catch (err) {
       console.error('Error resending invite:', err);
       throw err;

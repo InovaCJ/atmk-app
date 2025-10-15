@@ -60,6 +60,18 @@ export interface ClientInvite {
   client?: Client;
 }
 
+export interface SearchTerm {
+  id: string;
+  term: string;
+  enabled: boolean;
+}
+
+export interface SearchFrequency {
+  id: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  enabled: boolean;
+}
+
 export interface ClientSettings {
   id: ID;
   client_id: ID;
@@ -68,6 +80,8 @@ export interface ClientSettings {
   prompt_directives?: string;
   locale?: string;
   duplication_of?: ID | null;
+  search_terms?: SearchTerm[];
+  search_frequencies?: SearchFrequency[];
   created_at: string;
   updated_at: string;
 }

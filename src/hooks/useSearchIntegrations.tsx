@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { SearchTerm, SearchFrequency } from '@/types/clients';
 
 interface SearchIntegration {
   id: string;
@@ -13,18 +15,7 @@ interface SearchIntegration {
   updated_at?: string;
 }
 
-interface SearchTerm {
-  id: string;
-  term: string;
-  enabled: boolean;
-}
-
-interface SearchFrequency {
-  id: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
-  enabled: boolean;
-  cost: number;
-}
+// Interfaces moved to types/clients.ts
 
 export function useSearchIntegrations(clientId: string) {
   const [integrations, setIntegrations] = useState<SearchIntegration[]>([]);
@@ -55,24 +46,56 @@ export function useSearchIntegrations(clientId: string) {
 
       setIntegrations(integrationsData || []);
 
-      // Por enquanto, usar dados padrão para termos e frequências
-      // TODO: Implementar tabelas específicas para esses dados
-      setSearchTerms([
+      // Buscar configurações de busca do cliente
+      let savedSearchTerms = [
         { id: '1', term: '', enabled: false },
         { id: '2', term: '', enabled: false },
         { id: '3', term: '', enabled: false },
         { id: '4', term: '', enabled: false },
         { id: '5', term: '', enabled: false }
-      ]);
+      ];
 
-      setSearchFrequencies([
-        { id: '1', frequency: 'daily', enabled: true, cost: 1000 }, // R$ 10 por mês
-        { id: '2', frequency: 'weekly', enabled: false, cost: 500 }, // R$ 5 por mês
-        { id: '3', frequency: 'monthly', enabled: false, cost: 0 }   // R$ 0 - Grátis
-      ]);
+      let savedSearchFrequencies = [
+        { id: '1', frequency: 'daily', enabled: true },
+        { id: '2', frequency: 'weekly', enabled: false },
+        { id: '3', frequency: 'monthly', enabled: false }
+      ];
+
+      try {
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('client_settings')
+          .select('search_terms, search_frequencies')
+          .eq('client_id', clientId)
+          .single();
+
+        if (settingsError && settingsError.code !== 'PGRST116') {
+          console.warn('Error fetching search settings:', settingsError);
+        } else if (settingsData) {
+          // Carregar configurações salvas se existirem
+          if (Array.isArray(settingsData.search_terms) && settingsData.search_terms.length > 0) {
+            savedSearchTerms = settingsData.search_terms;
+          }
+          // Se vier [], manter os defaults (5 slots) para não esconder os campos
+          if (Array.isArray(settingsData.search_frequencies) && settingsData.search_frequencies.length > 0) {
+            savedSearchFrequencies = settingsData.search_frequencies;
+          }
+        }
+      } catch (err) {
+        console.warn('Search settings fields may not exist yet:', err);
+        // Continuar com valores padrão se os campos não existirem
+      }
+
+      setSearchTerms(savedSearchTerms);
+      setSearchFrequencies(savedSearchFrequencies);
+
+      console.log('✅ Configurações de busca carregadas:', {
+        searchTerms: savedSearchTerms,
+        searchFrequencies: savedSearchFrequencies
+      });
 
     } catch (err) {
       console.error('Error fetching search integrations:', err);
+      toast.error('Erro ao carregar integrações de busca.');
       setError(err instanceof Error ? err.message : 'Erro ao carregar integrações');
       setIntegrations([]);
     } finally {
@@ -86,6 +109,7 @@ export function useSearchIntegrations(clientId: string) {
     }
 
     try {
+      console.log('🔐 addIntegration RLS context:', { clientId, userId: user.id, integration: { provider: integration.provider, hasKey: !!integration.api_key_ref } });
       const { data, error } = await supabase
         .from('search_integrations')
         .insert({
@@ -101,6 +125,7 @@ export function useSearchIntegrations(clientId: string) {
       return data;
     } catch (err) {
       console.error('Error adding search integration:', err);
+      toast.error('Erro ao adicionar integração de busca. Verifique a API Key e permissões.');
       throw err;
     }
   };
@@ -111,6 +136,7 @@ export function useSearchIntegrations(clientId: string) {
     }
 
     try {
+      console.log('🔐 updateIntegration RLS context:', { clientId, userId: user.id, id, updates: Object.keys(updates) });
       const { data, error } = await supabase
         .from('search_integrations')
         .update({
@@ -130,6 +156,7 @@ export function useSearchIntegrations(clientId: string) {
       return data;
     } catch (err) {
       console.error('Error updating search integration:', err);
+      toast.error('Erro ao atualizar integração de busca.');
       throw err;
     }
   };
@@ -140,6 +167,7 @@ export function useSearchIntegrations(clientId: string) {
     }
 
     try {
+      console.log('🔐 deleteIntegration RLS context:', { clientId, userId: user.id, id });
       const { error } = await supabase
         .from('search_integrations')
         .delete()
@@ -151,6 +179,7 @@ export function useSearchIntegrations(clientId: string) {
       setIntegrations(prev => prev.filter(integration => integration.id !== id));
     } catch (err) {
       console.error('Error deleting search integration:', err);
+      toast.error('Erro ao remover integração de busca.');
       throw err;
     }
   };
@@ -161,19 +190,47 @@ export function useSearchIntegrations(clientId: string) {
     if (!clientId || !user) return;
     
     try {
-      // Salvar termos de busca no banco
-      const { error } = await supabase
+      console.log('🔐 updateSearchTerms RLS context:', { clientId, userId: user.id, termsCount: terms.length });
+      // Primeiro, verificar se os campos existem na tabela
+      const { data: existingSettings } = await supabase
         .from('client_settings')
-        .upsert({
-          client_id: clientId,
-          search_terms: terms,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'client_id' });
+        .select('id')
+        .eq('client_id', clientId)
+        .single();
 
-      if (error) throw error;
+      if (!existingSettings) {
+        // Criar registro se não existir
+        const { error: createError } = await supabase
+          .from('client_settings')
+          .insert({
+            client_id: clientId,
+            tone_of_voice: 'Claro e objetivo',
+            style_guidelines: 'Evite jargões desnecessários',
+            locale: 'pt-BR',
+            search_terms: terms,
+            updated_at: new Date().toISOString()
+          });
+
+        if (createError) throw createError;
+      } else {
+        // Atualizar registro existente
+        const { error } = await supabase
+          .from('client_settings')
+          .update({
+            search_terms: terms,
+            updated_at: new Date().toISOString()
+          })
+          .eq('client_id', clientId);
+
+        if (error) throw error;
+      }
+      
       console.log('✅ Termos de busca salvos:', terms);
     } catch (err) {
       console.error('❌ Erro ao salvar termos de busca:', err);
+      toast.error('Erro ao salvar termos de busca. Verifique permissões e migrações.');
+      // Não re-throw para evitar quebrar a UI se os campos não existirem
+      console.warn('Continuando sem persistência - campos podem não existir na tabela');
     }
   };
 
@@ -183,19 +240,47 @@ export function useSearchIntegrations(clientId: string) {
     if (!clientId || !user) return;
     
     try {
-      // Salvar frequências no banco
-      const { error } = await supabase
+      console.log('🔐 updateSearchFrequencies RLS context:', { clientId, userId: user.id, enabled: frequencies.filter(f => f.enabled).map(f => f.frequency) });
+      // Primeiro, verificar se os campos existem na tabela
+      const { data: existingSettings } = await supabase
         .from('client_settings')
-        .upsert({
-          client_id: clientId,
-          search_frequencies: frequencies,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'client_id' });
+        .select('id')
+        .eq('client_id', clientId)
+        .single();
 
-      if (error) throw error;
+      if (!existingSettings) {
+        // Criar registro se não existir
+        const { error: createError } = await supabase
+          .from('client_settings')
+          .insert({
+            client_id: clientId,
+            tone_of_voice: 'Claro e objetivo',
+            style_guidelines: 'Evite jargões desnecessários',
+            locale: 'pt-BR',
+            search_frequencies: frequencies,
+            updated_at: new Date().toISOString()
+          });
+
+        if (createError) throw createError;
+      } else {
+        // Atualizar registro existente
+        const { error } = await supabase
+          .from('client_settings')
+          .update({
+            search_frequencies: frequencies,
+            updated_at: new Date().toISOString()
+          })
+          .eq('client_id', clientId);
+
+        if (error) throw error;
+      }
+      
       console.log('✅ Frequências de busca salvas:', frequencies);
     } catch (err) {
       console.error('❌ Erro ao salvar frequências de busca:', err);
+      toast.error('Erro ao salvar frequências de busca. Verifique permissões e migrações.');
+      // Não re-throw para evitar quebrar a UI se os campos não existirem
+      console.warn('Continuando sem persistência - campos podem não existir na tabela');
     }
   };
 

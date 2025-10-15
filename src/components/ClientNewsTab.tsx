@@ -90,7 +90,7 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
     try {
       await addNewsSource({
         name: newSource.name,
-        type: 'rss',
+        type: 'scraper',
         url: newSource.url,
         schedule: '0 */6 * * *',
         enabled: true
@@ -116,17 +116,26 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
     setIsAddModalOpen(false);
   };
 
-  const handleRemoveSource = (sourceId: string) => {
-    setNewsSources(prev => prev.filter(source => source.id !== sourceId));
-    console.log('🗑️ Fonte removida:', sourceId);
+  const handleRemoveSource = async (sourceId: string) => {
+    try {
+      await deleteNewsSource(sourceId);
+      toast.success('Fonte removida com sucesso!');
+    } catch (error) {
+      console.error('Erro ao remover fonte:', error);
+      toast.error('Erro ao remover fonte. Tente novamente.');
+    }
   };
 
-  const handleToggleSource = (sourceId: string) => {
-    setNewsSources(prev => prev.map(source => 
-      source.id === sourceId 
-        ? { ...source, enabled: !source.enabled }
-        : source
-    ));
+  const handleToggleSource = async (sourceId: string) => {
+    const source = newsSources.find(s => s.id === sourceId);
+    if (!source) return;
+    try {
+      await updateNewsSource(sourceId, { enabled: !source.enabled });
+      toast.success(source.enabled ? 'Fonte desativada' : 'Fonte ativada');
+    } catch (error) {
+      console.error('Erro ao alternar fonte:', error);
+      toast.error('Erro ao atualizar status da fonte.');
+    }
   };
 
   const handleEditSource = (sourceId: string) => {
@@ -144,34 +153,20 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
 
   const handleSaveEdit = async () => {
     if (!editingSourceId) return;
-    
     setIsSaving(true);
     try {
-      setNewsSources(prev => prev.map(source => 
-        source.id === editingSourceId 
-          ? { 
-              ...source, 
-              name: newSource.name,
-              url: newSource.url,
-              description: newSource.description
-            }
-          : source
-      ));
-
-      console.log('✅ Fonte editada com sucesso:', editingSourceId);
-      
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulação
-      
-      // Reset form
-      setNewSource({
-        name: '',
-        url: '',
-        description: ''
-      });
+      await updateNewsSource(editingSourceId, {
+        name: newSource.name,
+        url: newSource.url,
+        description: newSource.description
+      } as any);
+      toast.success('Fonte atualizada com sucesso!');
+      setNewSource({ name: '', url: '', description: '' });
       setEditingSourceId(null);
       setIsEditModalOpen(false);
     } catch (error) {
       console.error('Erro ao editar fonte:', error);
+      toast.error('Erro ao salvar alterações da fonte.');
     } finally {
       setIsSaving(false);
     }
@@ -258,17 +253,19 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
                       <Rss className="h-4 w-4" />
                       {source.name}
                     </CardTitle>
-                    <CardDescription className="flex items-center gap-2">
+                    <CardDescription>
+                      <span className="text-xs">
+                        Última execução: {source.last_run ? new Date(source.last_run).toLocaleDateString('pt-BR') : 'N/A'}
+                      </span>
+                    </CardDescription>
+                    <div className="flex items-center gap-2">
                       <Badge variant={getTypeBadge(source.type)}>
                         {getTypeLabel(source.type)}
                       </Badge>
                       <Badge variant={source.enabled ? 'default' : 'secondary'}>
                         {source.enabled ? 'Ativo' : 'Inativo'}
                       </Badge>
-                      <span className="text-xs">
-                        Última execução: {new Date(source.last_run).toLocaleDateString('pt-BR')}
-                      </span>
-                    </CardDescription>
+                    </div>
                   </div>
                   {canEditClient(clientId) && (
                     <DropdownMenu>

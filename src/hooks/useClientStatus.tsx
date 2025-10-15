@@ -8,6 +8,7 @@ export interface ClientStatus {
   hasNewsSources: boolean;
   hasKnowledgeBase: boolean;
   hasClientInputs: boolean;
+  hasSearchAutomation: boolean;
   missingItems: string[];
 }
 
@@ -19,6 +20,7 @@ export const useClientStatus = (clientId: string, isSelected: boolean = false) =
     hasNewsSources: false,
     hasKnowledgeBase: false,
     hasClientInputs: false,
+    hasSearchAutomation: false,
     missingItems: []
   });
   const [loading, setLoading] = useState(true);
@@ -58,18 +60,32 @@ export const useClientStatus = (clientId: string, isSelected: boolean = false) =
         .select('id')
         .eq('client_id', clientId);
 
-      // Buscar configurações do cliente
+      // Buscar configurações do cliente (inclui termos/frequências do buscador)
       const { data: clientSettings } = await supabase
         .from('client_settings')
-        .select('*')
+        .select('id, search_terms, search_frequencies')
         .eq('client_id', clientId)
         .single();
+
+      // Buscar integrações de busca
+      const { data: searchIntegrations } = await supabase
+        .from('search_integrations')
+        .select('id, enabled')
+        .eq('client_id', clientId);
 
       const hasNewsSources = (newsSources?.length || 0) > 0;
       const hasKnowledgeBase = (knowledgeBases?.length || 0) > 0;
       const hasKbItems = (kbItems?.length || 0) > 0;
       const hasClientInputs = (clientInputs?.length || 0) > 0;
       const hasSettings = !!clientSettings;
+      const hasEnabledIntegration = (searchIntegrations?.filter(i => i.enabled).length || 0) > 0;
+      const hasSearchTerms = Array.isArray((clientSettings as any)?.search_terms)
+        ? ((clientSettings as any).search_terms as any[]).some((t: any) => !!t?.enabled && !!`${t?.term ?? ''}`.trim())
+        : false;
+      const hasEnabledFrequency = Array.isArray((clientSettings as any)?.search_frequencies)
+        ? ((clientSettings as any).search_frequencies as any[]).some((f: any) => !!f?.enabled)
+        : false;
+      const hasSearchAutomation = hasEnabledIntegration || (hasSearchTerms && hasEnabledFrequency);
 
       // Calcular status da base de conhecimento
       let knowledgeStatus: 'complete' | 'pending' | 'empty' = 'empty';
@@ -79,7 +95,7 @@ export const useClientStatus = (clientId: string, isSelected: boolean = false) =
       if (!hasKnowledgeBase && !hasKbItems && !hasClientInputs && !hasSettings) {
         knowledgeStatus = 'empty';
         knowledgePercentage = 0;
-        missingItems = ['Base de conhecimento', 'Fontes de notícias', 'Configurações'];
+        missingItems = ['Base de conhecimento', 'Fontes de notícias', 'Configurações', 'Buscador de temas'];
       } else {
         // Calcular porcentagem baseada nos itens disponíveis
         let totalItems = 0;
@@ -121,6 +137,14 @@ export const useClientStatus = (clientId: string, isSelected: boolean = false) =
           missingItems.push('Configurações do cliente');
         }
 
+        // Buscador de Temas (peso 2)
+        totalItems += 2;
+        if (hasSearchAutomation) {
+          filledItems += 2;
+        } else {
+          missingItems.push('Buscador de temas');
+        }
+
         knowledgePercentage = totalItems > 0 ? Math.round((filledItems / totalItems) * 100) : 0;
 
         if (knowledgePercentage >= 80) {
@@ -139,6 +163,7 @@ export const useClientStatus = (clientId: string, isSelected: boolean = false) =
         hasNewsSources,
         hasKnowledgeBase,
         hasClientInputs,
+        hasSearchAutomation,
         missingItems
       });
 

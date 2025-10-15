@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save, CheckCircle, AlertCircle, Circle, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,7 @@ import { ClientMembersTab } from '@/components/ClientMembersTab';
 export default function ClientDetail() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { clients, loading, updateClient, refetch } = useClients();
   const { canEditClient, canViewClient, selectedClientId } = useClientContext();
   const [activeTab, setActiveTab] = useState('overview');
@@ -45,6 +46,14 @@ export default function ClientDetail() {
       });
     }
   }, [client]);
+
+  // Sincronizar aba inicial com query string (?tab=knowledge|news|integrations|members|overview)
+  React.useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   if (loading) {
     return (

@@ -31,11 +31,18 @@ export function ClientMembersTab({ clientId }: ClientMembersTabProps) {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [selectedMemberForTransfer, setSelectedMemberForTransfer] = useState<ClientMember | null>(null);
   const [activeTab, setActiveTab] = useState('members');
+  const [isMutating, setIsMutating] = useState(false);
   
   const { members, loading, error, removeMember, updateMemberRole, transferOwnership } = useClientMembers(clientId);
-  const { invites, loading: invitesLoading, cancelInvite, resendInvite } = useClientInvites(clientId);
+  const { invites, loading: invitesLoading, cancelInvite, resendInvite, sendInvite } = useClientInvites(clientId);
   const { canEditClient } = useClientContext();
   const { user } = useAuth();
+
+  // Debug: Log dos convites para verificar se estão sendo carregados
+  React.useEffect(() => {
+    console.log('ClientMembersTab - Invites updated:', invites);
+    console.log('ClientMembersTab - Invites length:', invites.length);
+  }, [invites]);
 
   const filteredMembers = members.filter(member =>
     member.user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -257,7 +264,7 @@ export function ClientMembersTab({ clientId }: ClientMembersTabProps) {
           </p>
         </div>
         {canEditClient(clientId) && (
-          <Button onClick={() => setShowCreateModal(true)}>
+          <Button onClick={() => setShowCreateModal(true)} disabled={isMutating}>
             <Plus className="h-4 w-4 mr-2" />
             Adicionar Membro
           </Button>
@@ -288,7 +295,12 @@ export function ClientMembersTab({ clientId }: ClientMembersTabProps) {
           </div>
 
           {/* Members List */}
-          {filteredMembers.length === 0 ? (
+          {isMutating ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Enviando convite...</p>
+            </div>
+          ) : filteredMembers.length === 0 ? (
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">
@@ -442,11 +454,11 @@ export function ClientMembersTab({ clientId }: ClientMembersTabProps) {
 
         {/* Invites Tab */}
         <TabsContent value="invites" className="space-y-6">
-          {invitesLoading ? (
+          {isMutating || invitesLoading ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Carregando convites...</p>
+                <p className="text-muted-foreground">{isMutating ? 'Enviando convite...' : 'Carregando convites...'}</p>
               </div>
             </div>
           ) : invites.length === 0 ? (
@@ -555,7 +567,12 @@ export function ClientMembersTab({ clientId }: ClientMembersTabProps) {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         clientId={clientId}
-        onInviteSent={() => setActiveTab('invites')}
+        onInviteSent={() => {
+          console.log('CreateMemberModal - onInviteSent called, switching to invites tab');
+          setActiveTab('invites');
+        }}
+        onMutatingChange={setIsMutating}
+        sendInviteFn={sendInvite}
       />
       
       <TransferOwnershipModal

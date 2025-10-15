@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { 
   TrendingUp, 
@@ -26,6 +27,10 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useClientContext } from "@/contexts/ClientContext";
 import { useClients } from "@/hooks/useClients";
+import { useClientKnowledgeValidation } from "@/hooks/useClientKnowledgeValidation";
+import { useClientStatus } from "@/hooks/useClientStatus";
+import { OnboardingBanner } from "@/components/OnboardingBanner";
+import { useFeaturedTopics } from "@/hooks/useFeaturedTopics";
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,6 +39,35 @@ export default function Dashboard() {
   const { selectedClientId, selectedClient } = useClientContext();
   const { clients, loading: clientsLoading } = useClients();
   const navigate = useNavigate();
+  const firstClientId = useMemo(() => clients[0]?.id as string | undefined, [clients]);
+  const { canGenerateContent: canGenerateFromKnowledge } = useClientKnowledgeValidation(firstClientId);
+  // Detectar automação do buscador para marcar etapa como concluída
+  const { status: firstClientStatus } = useClientStatus(firstClientId || '', false);
+  const hasSearchAutomation = !!firstClientStatus?.hasSearchAutomation;
+  const hasNewsSources = !!firstClientStatus?.hasNewsSources;
+  const { topics: featuredTopics } = useFeaturedTopics(firstClientId || '', 7, 8);
+  const handleRefreshFeed = async () => {
+    if (!firstClientId) return;
+    try {
+      toast({ title: "Atualizando feed...", description: "Buscando itens das fontes." });
+      const { data, error } = await supabase.functions.invoke('ingest-news', {
+        body: { clientId: firstClientId, days: 7 }
+      });
+      if (data && Array.isArray(data.validation) && data.validation.length > 0) {
+        const invalid = data.validation.filter((v: any) => !v.isRss || v.itemsFound === 0);
+        if (invalid.length > 0) {
+          toast({
+            title: "Validação de fontes",
+            description: `${invalid.length} fonte(s) sem RSS válido ou sem itens recentes.`
+          });
+        }
+      }
+      if (error) throw error;
+      toast({ title: "Feed atualizado", description: "Atualize a página para ver novos itens." });
+    } catch (e: any) {
+      toast({ title: "Erro ao atualizar feed", description: e?.message || 'Falha ao invocar ingest-news', variant: 'destructive' });
+    }
+  };
   
 
   // Dados vazios para novos usuários - serão carregados do Supabase quando implementado
@@ -54,6 +88,32 @@ export default function Dashboard() {
       onClick: () => navigate('/library')
     }
   ];
+
+  const renderFeaturedTopics = () => {
+    if (!featuredTopics || featuredTopics.length === 0) {
+      return (
+        <div className="rounded-md border p-4 text-sm text-muted-foreground">
+          {(!hasNewsSources) ? (
+            <span>Sem fontes cadastradas. Adicione fontes na aba "Fontes de Notícias".</span>
+          ) : (
+            <span>Sem temas em destaque no período selecionado. Suas fontes podem não ter publicado recentemente.</span>
+          )}
+        </div>
+      );
+    }
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        {featuredTopics.map(t => (
+          <div key={t.term} className="rounded-md border px-3 py-2 text-sm flex items-center justify-between">
+            <span className="truncate">#{t.term}</span>
+            <span className="opacity-60">{t.count}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // removed latest news section per request
 
   const getChannelIcon = (channel: string) => {
     switch (channel) {
@@ -104,142 +164,79 @@ export default function Dashboard() {
     return <LoadingScreen onComplete={handleGenerationComplete} />;
   }
 
-  // Componente de onboarding para novos usuários
-  const OnboardingSteps = () => (
-    <div className="space-y-6">
-      <div className="text-center space-y-4">
-        <div className="w-16 h-16 bg-gradient-to-r from-primary to-purple-600 rounded-full flex items-center justify-center mx-auto">
-          <Building2 className="h-8 w-8 text-white" />
-        </div>
-        <h2 className="text-2xl font-bold">Bem-vindo ao ATMK!</h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Para começar a gerar conteúdos personalizados, siga estes passos essenciais:
-        </p>
-      </div>
+  // Cálculo de progresso e próximo passo (mantendo regras atuais)
+  const hasCompany = clients.length > 0;
+  const hasConfiguredInfo = !!firstClientId; // mesma regra atual
+  const automationConfigured = hasSearchAutomation;
+  const canCreateFirstContent = hasCompany && canGenerateFromKnowledge;
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Passo 1: Criar Empresa */}
-        <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-primary">1</span>
-              </div>
-              <CardTitle className="text-lg">Criar uma Empresa</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Configure sua primeira empresa para começar a gerar conteúdos personalizados.
-            </p>
-            <Button 
-              onClick={() => navigate('/clients')}
-              className="w-full"
-            >
-              <Building2 className="h-4 w-4 mr-2" />
-              Criar Empresa
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </CardContent>
-        </Card>
+  const totalSteps = 5;
+  const completedSteps = [
+    hasCompany,
+    hasConfiguredInfo,
+    hasNewsSources,
+    automationConfigured,
+    canCreateFirstContent
+  ].filter(Boolean).length;
 
-        {/* Passo 2: Informações da Empresa */}
-        <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-primary">2</span>
-              </div>
-              <CardTitle className="text-lg">Configurar Informações</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Adicione informações importantes como tom de voz, público-alvo e descrição da empresa.
-            </p>
-            <Button 
-              onClick={() => navigate('/clients')}
-              variant="outline"
-              className="w-full"
-              disabled
-            >
-              <Info className="h-4 w-4 mr-2" />
-              Configurar (Após criar empresa)
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Passo 3: Fontes de Notícias */}
-        <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-primary">3</span>
-              </div>
-              <CardTitle className="text-lg">Fontes de Notícias</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Configure fontes confiáveis para sugerir temas relevantes e atualizados.
-            </p>
-            <Button 
-              variant="outline"
-              className="w-full"
-              disabled
-            >
-              <Rss className="h-4 w-4 mr-2" />
-              Configurar (Em breve)
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Passo 4: Automação */}
-        <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-primary">4</span>
-              </div>
-              <CardTitle className="text-lg">Automação de Busca</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Configure a automação para buscar temas relevantes na internet automaticamente.
-            </p>
-            <Button 
-              variant="outline"
-              className="w-full"
-              disabled
-            >
-              <Search className="h-4 w-4 mr-2" />
-              Configurar (Em breve)
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Alert className="border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
-          <strong>Dica:</strong> Comece criando sua primeira empresa. Depois você poderá configurar todas as outras funcionalidades para gerar conteúdos personalizados e relevantes.
-        </AlertDescription>
-      </Alert>
-    </div>
-  );
-
-  // Se não há clientes e não está carregando, mostrar onboarding
-  if (!clientsLoading && clients.length === 0) {
-    return (
-      <div className="p-6">
-        <OnboardingSteps />
-      </div>
-    );
-  }
+  const nextStep = !hasCompany
+    ? {
+        id: 1,
+        title: "Criar uma Empresa",
+        description:
+          "Configure sua primeira empresa para começar a gerar conteúdos personalizados.",
+        ctaLabel: "Criar Empresa",
+        onClick: () => navigate('/clients')
+      }
+    : !hasConfiguredInfo
+    ? {
+        id: 2,
+        title: "Configurar Informações",
+        description:
+          "Adicione tom de voz, público-alvo e descrição para personalizar sua IA.",
+        ctaLabel: "Configurar Informações",
+        onClick: () =>
+          firstClientId ? navigate(`/clients/${firstClientId}?tab=knowledge`) : navigate('/clients')
+      }
+    : !hasNewsSources
+    ? {
+        id: 3,
+        title: "Fontes de Notícias",
+        description:
+          "Conecte fontes confiáveis para sugerir temas relevantes e atualizados.",
+        ctaLabel: "Configurar Fontes",
+        onClick: () =>
+          firstClientId ? navigate(`/clients/${firstClientId}?tab=news`) : navigate('/clients')
+      }
+    : !automationConfigured
+    ? {
+        id: 4,
+        title: "Automação de Busca",
+        description:
+          "Habilite a automação para buscar temas relevantes automaticamente.",
+        ctaLabel: "Configurar Automação",
+        onClick: () =>
+          firstClientId ? navigate(`/clients/${firstClientId}?tab=integrations`) : navigate('/clients')
+      }
+    : !canCreateFirstContent
+    ? {
+        id: 5,
+        title: "Criar Primeiro Conteúdo",
+        description:
+          "Conclua as etapas anteriores para liberar a geração do primeiro conteúdo.",
+        ctaLabel: "Gerar Conteúdo",
+        onClick: () => navigate('/library')
+      }
+    : undefined;
 
   return (
     <div className="p-6 space-y-6">
+      <OnboardingBanner
+        totalSteps={totalSteps}
+        completedSteps={completedSteps}
+        nextStep={nextStep}
+        allDoneTitle="Bem-vindo ao ATMK!"
+      />
 
 
       {/* Stats Grid */}
@@ -268,53 +265,16 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Opportunities Section */}
+      {/* Featured Topics */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Temas em Destaque</h2>
+          <Button size="sm" variant="outline" onClick={handleRefreshFeed}>Atualizar feed agora</Button>
         </div>
-
-        <div className="grid gap-4">
-          {opportunities.map((opportunity) => (
-            <Card key={opportunity.id} className="bg-gradient-to-r from-card to-card/50 border shadow-card hover:shadow-elegant transition-all duration-300">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant={opportunity.type === "trending" ? "default" : "secondary"}>
-                        {opportunity.source}
-                      </Badge>
-                      <Badge variant="outline" className="text-green-600 border-green-200">
-                        {opportunity.trend}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-lg">{opportunity.title}</CardTitle>
-                    <CardDescription>{opportunity.description}</CardDescription>
-                  </div>
-                  <Button 
-                    onClick={() => handleGenerateContent(opportunity.id)}
-                    className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Gerar Conteúdo
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2 pt-2">
-                  <span className="text-sm text-muted-foreground">Canais sugeridos:</span>
-                  <div className="flex gap-1">
-                    {opportunity.channels.map((channel) => (
-                      <Badge key={channel} variant="outline" className="text-xs">
-                        {getChannelIcon(channel)}
-                        <span className="ml-1 capitalize">{channel}</span>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
+        {renderFeaturedTopics()}
       </div>
+
+      
 
       {/* Content Generation Modal - Available for all users */}
       <ContentGenerationModal

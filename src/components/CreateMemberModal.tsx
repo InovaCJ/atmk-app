@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClientInvites } from '@/hooks/useClientInvites';
+import type { ClientInvite, CreateClientInviteRequest } from '@/types/clients';
 import { toast } from 'sonner';
 
 const createMemberSchema = z.object({
@@ -35,9 +36,12 @@ interface CreateMemberModalProps {
   onClose: () => void;
   clientId: string;
   onInviteSent?: () => void;
+  // Opcional: usar função de envio do pai para atualizar lista sem recarregar
+  sendInviteFn?: (data: CreateClientInviteRequest) => Promise<ClientInvite>;
+  onMutatingChange?: (mutating: boolean) => void;
 }
 
-export function CreateMemberModal({ isOpen, onClose, clientId, onInviteSent }: CreateMemberModalProps) {
+export function CreateMemberModal({ isOpen, onClose, clientId, onInviteSent, sendInviteFn, onMutatingChange }: CreateMemberModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { sendInvite } = useClientInvites(clientId);
 
@@ -66,15 +70,18 @@ export function CreateMemberModal({ isOpen, onClose, clientId, onInviteSent }: C
         return;
       }
       
-      await sendInvite({
+      onMutatingChange?.(true);
+      const invite = await (sendInviteFn || sendInvite)({
         email: data.email,
         role: data.role
       });
+      console.log('CreateMemberModal - Invite sent successfully:', invite);
       toast.success('Convite enviado com sucesso!');
       reset();
       onClose();
       // Chamar callback para mudar para aba de convites
       if (onInviteSent) {
+        console.log('CreateMemberModal - Calling onInviteSent callback');
         onInviteSent();
       }
     } catch (error) {
@@ -83,6 +90,7 @@ export function CreateMemberModal({ isOpen, onClose, clientId, onInviteSent }: C
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
+      onMutatingChange?.(false);
     }
   };
 

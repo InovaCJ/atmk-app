@@ -39,7 +39,6 @@ interface SearchFrequency {
   id: string;
   frequency: 'daily' | 'weekly' | 'monthly';
   enabled: boolean;
-  cost: number;
 }
 
 interface ExternalService {
@@ -60,6 +59,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const { canEditClient } = useClientContext();
+  const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const { 
     integrations, 
     searchTerms, 
@@ -193,35 +193,24 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
     }
   };
 
-  const getFrequencyCost = (frequency: string) => {
-    switch (frequency) {
-      case 'daily':
-        return 1000; // R$ 10 por mês
-      case 'weekly':
-        return 500;  // R$ 5 por mês
-      case 'monthly':
-        return 0;    // R$ 0 - Grátis
-      default:
-        return 0;
-    }
-  };
+  // Função removida - não há mais cobrança por frequência
 
   const handleAddService = async () => {
     setIsSaving(true);
     try {
-      const newServiceData: ExternalService = {
-        id: Date.now().toString(),
-        name: newService.name,
-        provider: newService.provider,
-        enabled: true,
-        apiKey: newService.apiKey,
-        dailyQuota: newService.dailyQuota,
-        usageToday: 0,
-        createdAt: new Date().toISOString()
-      };
+      // Mapear provider para enum suportado pelo backend
+      const allowedProviders = ['serpapi', 'tavily', 'bing', 'custom'];
+      const provider = allowedProviders.includes(newService.provider)
+        ? (newService.provider as 'serpapi' | 'tavily' | 'bing' | 'custom')
+        : 'custom';
 
-      setExternalServices(prev => [...prev, newServiceData]);
-      console.log('✅ Serviço externo adicionado:', newServiceData);
+      await addIntegration({
+        provider,
+        api_key_ref: newService.apiKey,
+        daily_quota: newService.dailyQuota,
+        enabled: true,
+      });
+      toast.success('Serviço externo adicionado com sucesso!');
 
       // Reset form
       setNewService({
@@ -233,19 +222,20 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
       setIsAddServiceModalOpen(false);
     } catch (error) {
       console.error('Erro ao adicionar serviço:', error);
+      toast.error('Erro ao adicionar serviço. Verifique o provedor selecionado.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleUpdateSearchTerm = (id: string, term: string) => {
+  const handleUpdateSearchTerm = async (id: string, term: string) => {
     const updatedTerms = searchTerms.map(st => 
       st.id === id ? { ...st, term, enabled: term.trim() !== '' } : st
     );
     setSearchTerms(updatedTerms);
   };
 
-  const handleToggleFrequency = (id: string) => {
+  const handleToggleFrequency = async (id: string) => {
     const updatedFrequencies = searchFrequencies.map(sf => {
       if (sf.id === id) {
         // Se estiver desabilitando, apenas desabilita
@@ -355,7 +345,15 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
 
   const enabledSearchTerms = searchTerms.filter(st => st.enabled && st.term.trim() !== '');
   const enabledFrequencies = searchFrequencies.filter(sf => sf.enabled);
-  const totalCost = enabledFrequencies.reduce((sum, sf) => sum + sf.cost, 0);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -417,7 +415,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
             Buscador Próprio (PRO)
           </CardTitle>
           <CardDescription>
-            Configure termos de busca e frequência para automação do sistema
+            Configure termos de busca e frequência para automação do sistema de busca de notícias
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -453,18 +451,25 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
                       <p className="font-medium">{getFrequencyLabel(frequency.frequency)}</p>
                       <p className="text-sm text-muted-foreground">
                         {frequency.frequency === 'daily' 
-                          ? 'Busca diária em toda internet (30x por mês)'
+                          ? 'Busca automática diária em toda internet'
                           : frequency.frequency === 'weekly' 
-                          ? 'Busca semanal em toda internet (4x por mês)'
-                          : 'Busca mensal em toda internet (1x por mês)'
+                          ? 'Busca automática semanal em toda internet'
+                          : 'Busca automática mensal em toda internet'
                         }
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="font-medium text-green-600">R$ {(frequency.cost / 100).toFixed(2)}</p>
-                      <p className="text-xs text-muted-foreground">por mês</p>
+                      <p className="font-medium text-blue-600">
+                        {frequency.frequency === 'daily' 
+                          ? '30x por mês'
+                          : frequency.frequency === 'weekly' 
+                          ? '4x por mês'
+                          : '1x por mês'
+                        }
+                      </p>
+                      <p className="text-xs text-muted-foreground">busca automática</p>
                     </div>
                     <Button
                       variant={frequency.enabled ? 'default' : 'outline'}
@@ -490,8 +495,21 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
             </div>
             <div className="mt-4 p-3 bg-muted rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="font-medium">Custo Total Mensal:</span>
-                <span className="text-lg font-bold text-green-600">R$ {(totalCost / 100).toFixed(2)}</span>
+                <span className="font-medium">Frequência Selecionada:</span>
+                <div className="text-right">
+                  <span className="text-lg font-bold text-blue-600">
+                    {enabledFrequencies.length > 0 
+                      ? getFrequencyLabel(enabledFrequencies[0].frequency)
+                      : 'Nenhuma selecionada'
+                    }
+                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    {enabledFrequencies.length > 0 
+                      ? 'Busca automática configurada'
+                      : 'Configure uma frequência de busca'
+                    }
+                  </p>
+                </div>
               </div>
             </div>
             
@@ -501,18 +519,31 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
                 <Button 
                   onClick={async () => {
                     try {
+                      setIsSaving(true);
                       await updateSearchTerms(searchTerms);
                       await updateSearchFrequencies(searchFrequencies);
-                      toast.success('Configurações salvas com sucesso!');
+                      toast.success('Configurações de busca salvas com sucesso!');
                     } catch (error) {
                       console.error('Erro ao salvar:', error);
                       toast.error('Erro ao salvar configurações. Tente novamente.');
+                    } finally {
+                      setIsSaving(false);
                     }
                   }}
+                  disabled={isSaving}
                   className="min-w-[120px]"
                 >
-                  <Save className="h-4 w-4 mr-2" />
-                  Salvar Configurações
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Configurações
+                    </>
+                  )}
                 </Button>
               </div>
             )}
@@ -690,13 +721,21 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Custo Mensal</CardTitle>
+            <CardTitle className="text-sm font-medium">Frequência Ativa</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              R$ {(totalCost / 100).toFixed(2)}
+            <div className="text-2xl font-bold text-blue-600">
+              {enabledFrequencies.length > 0 
+                ? getFrequencyLabel(enabledFrequencies[0].frequency)
+                : 'Nenhuma'
+              }
             </div>
-            <p className="text-xs text-muted-foreground">Estimativa mensal</p>
+            <p className="text-xs text-muted-foreground">
+              {enabledFrequencies.length > 0 
+                ? 'Busca automática ativa'
+                : 'Configure uma frequência'
+              }
+            </p>
           </CardContent>
         </Card>
       </div>

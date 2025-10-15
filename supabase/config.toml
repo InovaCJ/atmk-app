@@ -52,3 +52,13 @@ verify_jwt = true
 
 [functions.generate-content]
 verify_jwt = true
+
+[functions.ingest-news]
+verify_jwt = true
+
+[cron.jobs]
+ingest_news_daily = { schedule = "0 3 * * *", command = "supabase functions invoke ingest-news --no-verify-jwt" }
+news_retention_daily = { schedule = "30 3 * * *", command = "supabase functions invoke news-retention --no-verify-jwt" }
+
+[functions.news-retention]
+verify_jwt = true
