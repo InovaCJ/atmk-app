@@ -272,7 +272,8 @@ export default function Library() {
               setIsPlanModalOpen(true);
               return;
             }
-            setIsGenerationModalOpen(true);
+            // Agora navegamos para a página de criação
+            navigate('/content/create');
           }}
           className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
           disabled={!canGenerate}

@@ -130,29 +130,10 @@ export default function Dashboard() {
     setIsModalOpen(true);
   };
 
-  const handleGenerationConfirm = async (config: any) => {
-    try {
-      setIsModalOpen(false);
-      setIsGenerating(true);
-      
-      toast({
-        title: "Gerando conteúdo...",
-        description: "Nossa IA está criando seu conteúdo personalizado. Isso pode levar alguns segundos.",
-      });
-
-      const { generateContentWithAI } = await import('@/utils/contentGeneration');
-      await generateContentWithAI(config);
-      
-      setIsGenerating(false);
-      toast({
-        title: "Conteúdo gerado com sucesso!",
-        description: "Seus conteúdos estão prontos na biblioteca.",
-      });
-      navigate('/library');
-    } catch (error) {
-      console.error('Error generating content:', error);
-      setIsGenerating(false);
-    }
+  const handleGenerationConfirm = async (_config: any) => {
+    // Redirecionar para a nova página de criação
+    setIsModalOpen(false);
+    navigate('/content/create');
   };
 
   const handleGenerationComplete = () => {

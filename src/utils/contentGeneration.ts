@@ -23,7 +23,15 @@ export async function generateContentWithAI(config: GenerationConfig) {
 
     if (error) {
       console.error('Error calling edge function:', error);
-      throw new Error(error.message || 'Erro na geração de conteúdo');
+      const serverMsg = (data as any)?.error as string | undefined;
+      const msg = serverMsg || (error as any)?.message || 'Erro na geração de conteúdo';
+      // Sugestões comuns
+      const hint = msg.includes('OPENAI_API_KEY')
+        ? 'Verifique a variável OPENAI_API_KEY configurada nas Edge Functions.'
+        : msg.includes('authorization') || msg.toLowerCase().includes('auth')
+        ? 'Sessão de usuário ausente. Refaça login e tente novamente.'
+        : undefined;
+      throw new Error(hint ? `${msg} — ${hint}` : msg);
     }
 
     if (!data.success) {

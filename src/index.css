@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Efeito de revelação por caractere para edições da IA */
+.ai-reveal {
+  filter: blur(4px);
+  opacity: 0.2;
+  display: inline-block;
+  animation: ai-reveal 600ms ease-out forwards;
+}
+
+@keyframes ai-reveal {
+  0% { filter: blur(6px); opacity: 0.1; }
+  60% { filter: blur(3px); opacity: 0.7; }
+  100% { filter: blur(0); opacity: 1; }
+}
+
+/* Placeholder para contentEditable vazio */
+[contenteditable][data-placeholder]:empty:before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import ContentCreate from "./pages/ContentCreate";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
                 </ProtectedRoute>
               }>
                 <Route index element={<Dashboard />} />
+              <Route path="content/create" element={<ContentCreate />} />
                 <Route path="library" element={<Library />} />
                 <Route path="clients" element={<Clients />} />
                 <Route path="clients/:clientId" element={<ClientDetail />} />

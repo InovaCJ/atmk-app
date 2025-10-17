@@ -36,6 +36,12 @@ export function Layout() {
           description: 'Seus conteúdos organizados e prontos para usar',
           hasFilter: false
         };
+      case '/content/create':
+        return {
+          title: 'Criar Conteúdo',
+          description: 'Gere conteúdos a partir de notícias, URLs ou contextos livres',
+          hasFilter: false
+        };
       case '/clients':
         return {
           title: 'Clientes',

@@ -31,6 +31,7 @@ import { useClientContext } from "@/contexts/ClientContext";
 
 const mainItems = [
   { title: "Dashboard", url: "/", icon: Home },
+  { title: "Criar Conteúdo", url: "/content/create", icon: Sparkles },
   { title: "Biblioteca", url: "/library", icon: BookOpen },
   // Clientes movido para footer
 ];
