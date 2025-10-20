@@ -15,4 +15,10 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    exclude: ["@openai/chatkit"],
+  },
+  ssr: {
+    noExternal: ["@openai/chatkit"],
+  },
 }));

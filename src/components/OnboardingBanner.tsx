@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, ArrowRight, Sparkles } from "lucide-react";
+import { CheckCircle, Sparkles, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface NextStep {
   id: number;
@@ -26,9 +26,32 @@ export function OnboardingBanner({
 }: OnboardingBannerProps) {
   const progress = Math.round((completedSteps / Math.max(totalSteps, 1)) * 100);
   const isAllDone = !nextStep && completedSteps >= totalSteps;
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const flag = localStorage.getItem("onboarding_banner_dismissed") === "1";
+      setDismissed(flag);
+    } catch {}
+  }, []);
+
+  if (isAllDone && dismissed) return null;
 
   return (
-    <Card className="border-0 shadow-elegant bg-gradient-to-r from-primary/10 via-purple-100/60 to-background p-6 md:p-8">
+    <Card className="relative border-0 shadow-elegant bg-gradient-to-r from-primary/10 via-purple-100/60 to-background p-6 md:p-8">
+      {isAllDone && (
+        <button
+          type="button"
+          aria-label="Fechar"
+          onClick={() => {
+            try { localStorage.setItem("onboarding_banner_dismissed", "1"); } catch {}
+            setDismissed(true);
+          }}
+          className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -46,28 +69,16 @@ export function OnboardingBanner({
           </h2>
           <p className="text-muted-foreground">
             {isAllDone
-              ? "Você concluiu todas as etapas iniciais. Explore o produto e gere seus conteúdos."
+              ? "Você concluiu todas as etapas iniciais. Agora é hora de explorar: comece criando seu primeiro conteúdo na tela de Criação."
               : nextStep?.description}
           </p>
 
-          <div className="max-w-md pt-2">
-            <Progress value={progress} className="h-2" />
+          <div className="w-full pt-2">
+            <Progress value={progress} className="h-2 w-full" />
           </div>
         </div>
 
-        <div className="shrink-0">
-          {isAllDone ? (
-            <Button onClick={() => nextStep?.onClick?.()} className="min-w-[200px]">
-              Explorar produto
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          ) : nextStep ? (
-            <Button onClick={nextStep.onClick} className="min-w-[220px]">
-              {nextStep.ctaLabel}
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          ) : null}
-        </div>
+        {/* CTA removido quando finalizado; mantemos apenas a instrução no texto */}
       </div>
     </Card>
   );

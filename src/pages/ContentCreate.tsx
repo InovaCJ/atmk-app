@@ -17,6 +17,10 @@ import { useClientContext } from "@/contexts/ClientContext";
 import { useNewsFeed } from "@/hooks/useNewsFeed";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Download, Scissors, Sparkles, Link as LinkIcon, Newspaper, Globe, CheckCircle2, Settings2, Wand2, Heading1, Heading2, Bold, Italic, Underline, List, ListOrdered, Undo2, Redo2, Palette, Strikethrough, Quote, Paperclip, Send } from "lucide-react";
+import type { ChatKitOptions } from "@openai/chatkit";
+import { AIChatKit } from "@/components/AIChatKit";
+import { chatKitOptions as defaultChatKitOptions } from "@/lib/chatkit-options";
+import { localDemoAdapter } from "@/lib/chat-adapter";
 
 // Categorias únicas (sem subtipos)
 type Category = "post" | "carousel" | "scriptShort" | "scriptYoutube" | "blog" | "email";
@@ -261,11 +265,15 @@ export default function ContentCreate() {
   const handlePromptSend = () => {
     if (!promptText.trim()) return;
     const current = editorRef.current?.innerHTML || "";
-    const next = transformContentByPrompt(current, promptText);
-    animateReplaceHtml(next);
     toast({ title: "Aplicando edição..." });
+    // Streaming local demo (substituir por adapter real do backend)
+    localDemoAdapter.streamEdit({ html: current, prompt: promptText }, (chunk) => {
+      if (chunk.type === "html") animateReplaceHtml(chunk.content);
+    });
     setPromptText("");
   };
+
+  const chatKitOptions: ChatKitOptions = defaultChatKitOptions;
 
   return (
     <div className="p-4 md:p-6 space-y-4 overflow-x-hidden">
@@ -450,15 +458,7 @@ export default function ContentCreate() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 rounded-lg border px-2 py-2 overflow-x-auto">
-                    <Button variant="ghost" size="icon"><Paperclip className="h-4 w-4"/></Button>
-                    <Input className="h-9 text-sm border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none" placeholder="Chat with your prompt..." value={promptText} onChange={(e) => setPromptText(e.target.value)} />
-                  <div className="flex items-center gap-2">
-                    <Button size="icon" className="h-9 w-9" onClick={handlePromptSend}>
-                        <Send className="h-4 w-4"/>
-                      </Button>
-                    </div>
-                  </div>
+                  <AIChatKit options={chatKitOptions} onSendFallback={(t) => { setPromptText(t); handlePromptSend(); }} />
                 </div>
               )}
             </CardContent>
