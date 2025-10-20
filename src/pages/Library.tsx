@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { 
   FileText, 
   Mail, 
@@ -26,6 +27,7 @@ import {
   Mic,
   Edit2,
   Images
+  , Trash2, Folder
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -36,6 +38,7 @@ import { PlanModal } from "@/components/PlanModal";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useClientKnowledgeValidation } from "@/hooks/useClientKnowledgeValidation";
 import { useClientContext } from "@/contexts/ClientContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { ContentFeedback } from "@/components/ContentFeedback";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
@@ -47,7 +50,6 @@ const EmptyState = ({ type, title, description, icon }: {
   description: string;
   icon: React.ReactNode;
 }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const { toast: toastFunc } = useToast();
   
@@ -59,20 +61,7 @@ const EmptyState = ({ type, title, description, icon }: {
   
   const canGenerate = canGenerateKnowledge && canGeneratePlan;
 
-  const handleGenerate = async (config: any) => {
-    try {
-      toast({
-        title: "Gerando conteúdo...",
-        description: "Nossa IA está criando seu conteúdo personalizado. Isso pode levar alguns segundos.",
-      });
-      
-      const { generateContentWithAI } = await import('@/utils/contentGeneration');
-      await generateContentWithAI(config);
-      // The utility function handles all toasts and UI feedback
-    } catch (error) {
-      console.error('Error in content generation:', error);
-    }
-  };
+  // Geração agora redireciona para a tela de criação
 
   const handleGenerateClick = () => {
     if (!canGenerateKnowledge) {
@@ -87,7 +76,7 @@ const EmptyState = ({ type, title, description, icon }: {
     if (!canGeneratePlan) {
       return; // Will trigger plan modal
     }
-    setIsModalOpen(true);
+    navigate('/content/create');
   };
 
   return (
@@ -113,11 +102,7 @@ const EmptyState = ({ type, title, description, icon }: {
         </Button>
       </div>
       
-      <ContentGenerationModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        onConfirm={handleGenerate}
-      />
+      {/* Modal de geração removido em favor da página de criação */}
     </>
   );
 };
@@ -134,14 +119,32 @@ export default function Library() {
   
   const navigate = useNavigate();
   const { selectedClient, selectedClientId } = useClientContext();
+  const { user } = useAuth();
   const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useClientKnowledgeValidation(selectedClientId || undefined);
   const { canGenerateContent: canGeneratePlan, remainingContent } = usePlanLimits();
   const { toast } = useToast();
   
   const canGenerate = canGenerateKnowledge && canGeneratePlan;
 
-  // Conteúdos vazios para novos usuários - serão carregados do Supabase quando implementado
-  const contents: any[] = [];
+  // Mock local por usuário (email da sessão)
+  const initialContents = useMemo(() => {
+    const email = user?.email || "";
+    if (email === "naturerota@gmail.com") {
+      const now = Date.now();
+      const make = (id: number, type: string, title: string, extra: any = {}) => ({ id, type, title, description: "Conteúdo gerado pela IA.", updatedAt: new Date(now - id * 86400000).toISOString(), ...extra });
+      const arr: any[] = [];
+      let idx = 1;
+      for (let i = 0; i < 5; i++) arr.push(make(idx++, "blog", `Sustentabilidade no Agro ${i+1}`, { content: "<p>Artigo...</p>" }));
+      for (let i = 0; i < 5; i++) arr.push(make(idx++, "email", `Campanha Outono ${i+1}`, { subject: "Assunto", content: "Corpo..." }));
+      for (let i = 0; i < 5; i++) arr.push(make(idx++, "social", `Post Engajamento ${i+1}`, { caption: "Legenda..." }));
+      for (let i = 0; i < 5; i++) arr.push(make(idx++, "carrossel", `Carrossel Produtos ${i+1}`, { slides: [{ title: "Slide 1", description: "..." }] }));
+      for (let i = 0; i < 5; i++) arr.push(make(idx++, "roteiro", `Roteiro Vídeo ${i+1}`, { category: "Tutorial", content: "Roteiro..." }));
+      return arr;
+    }
+    return [];
+  }, [user?.email]);
+
+  const [contents, setContents] = useState<any[]>(initialContents);
 
   const filteredContents = contents.filter(content => {
     const matchesSearch = content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -239,6 +242,14 @@ export default function Library() {
     setIsSheetOpen(true);
   };
 
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const confirmDelete = () => {
+    // Apenas simulação local
+    setContents(prev => prev.filter(c => c.id !== deleteTarget?.id));
+    setDeleteTarget(null);
+    toast({ title: "Conteúdo removido", description: "Esta ação não pode ser desfeita." });
+  };
+
   const getCurrentRating = (contentId: number) => {
     return contentFeedbacks[contentId]?.rating || contents.find(c => c.id === contentId)?.rating || 0;
   };
@@ -309,41 +320,28 @@ export default function Library() {
           
           {/* Content Display */}
           {filteredContents.length > 0 ? (
-            <div className="grid gap-4 mt-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
               {filteredContents.map((content) => (
-                <Card key={content.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openContentSheet(content)}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          {getTypeIcon(content.type)}
-                          <Badge variant="outline">{getTypeLabel(content.type)}</Badge>
-                        </div>
-                        <h3 className="font-semibold mb-1">{content.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">{content.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {content.createdAt ? new Date(content.createdAt).toLocaleDateString() : 'Data não disponível'}
-                          </span>
-                          {content.readTime && (
-                            <span>{content.readTime}</span>
-                          )}
-                        </div>
-                      </div>
+                <Card key={content.id} className="group hover:shadow-md transition-shadow">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star 
-                              key={star} 
-                              className={`h-4 w-4 ${star <= getCurrentRating(content.id) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
-                            />
-                          ))}
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
+                        {getTypeIcon(content.type)}
+                        <Badge variant="outline">{getTypeLabel(content.type)}</Badge>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" onClick={() => navigate(`/content/create?id=${content.id}`)}>
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(content)}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
+                    </div>
+                    <h3 className="font-semibold line-clamp-2 min-h-[44px]">{content.title}</h3>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Edited {content.updatedAt ? new Date(content.updatedAt).toLocaleDateString() : "--"}</span>
+                      <span className="flex items-center gap-1"><Folder className="h-3 w-3" /> 12 Files</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -634,6 +632,20 @@ export default function Library() {
           </div>
         </SheetContent>
         </Sheet>
+
+        {/* Modal de confirmação de exclusão */}
+        <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Excluir conteúdo?</DialogTitle>
+              <DialogDescription>Esta ação não pode ser desfeita. O conteúdo será removido permanentemente.</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+              <Button variant="destructive" onClick={confirmDelete}>Excluir</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Show plan modal for free users who hit limit, content modal otherwise */}
         {!canGeneratePlan && selectedClient?.plan === 'free' ? (
