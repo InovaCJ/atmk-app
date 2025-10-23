@@ -9,7 +9,8 @@ import {
   Star,
   Building2,
   ChevronDown,
-  User
+  User,
+  Workflow
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,6 +34,7 @@ const mainItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Criar Conteúdo", url: "/content/create", icon: Sparkles },
   { title: "Biblioteca", url: "/library", icon: BookOpen },
+  { title: "Automações", url: "/automations", icon: Workflow },
   // Clientes movido para footer
 ];
 

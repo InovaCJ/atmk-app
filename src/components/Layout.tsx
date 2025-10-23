@@ -42,6 +42,12 @@ export function Layout() {
           description: 'Gere conteúdos a partir de notícias, URLs ou contextos livres',
           hasFilter: false
         };
+      case '/automations':
+        return {
+          title: 'Automações',
+          description: 'Crie fluxos para gerar conteúdos automaticamente',
+          hasFilter: false
+        };
       case '/clients':
         return {
           title: 'Clientes',
@@ -55,6 +61,13 @@ export function Layout() {
           hasFilter: false
         };
       default:
+        if (location.pathname.startsWith('/automations/')) {
+          return {
+            title: 'Construtor de Automação',
+            description: 'Defina gatilhos, objetivos, categorias e frequência',
+            hasFilter: false
+          };
+        }
         // Verificar se é uma rota de detalhes do cliente
         if (location.pathname.startsWith('/clients/') && location.pathname !== '/clients') {
           return {

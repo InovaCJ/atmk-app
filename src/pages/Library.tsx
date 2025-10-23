@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Sheet,
   SheetContent,
@@ -109,7 +110,8 @@ const EmptyState = ({ type, title, description, icon }: {
 
 export default function Library() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("todos");
+  const [modeTab, setModeTab] = useState("manual"); // manual | auto
+  const [categoryFilter, setCategoryFilter] = useState("todos");
   const [selectedContent, setSelectedContent] = useState<any>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [contentFeedbacks, setContentFeedbacks] = useState<{[key: number]: {rating: number, feedback: string}}>({});
@@ -131,14 +133,19 @@ export default function Library() {
     const email = user?.email || "";
     if (email === "naturerota@gmail.com") {
       const now = Date.now();
-      const make = (id: number, type: string, title: string, extra: any = {}) => ({ id, type, title, description: "Conteúdo gerado pela IA.", updatedAt: new Date(now - id * 86400000).toISOString(), ...extra });
+      const make = (id: number, type: string, title: string, extra: any = {}, isAutomated: boolean = false) => ({ id, type, title, description: "Conteúdo gerado pela IA.", updatedAt: new Date(now - id * 86400000).toISOString(), isAutomated, ...extra });
       const arr: any[] = [];
       let idx = 1;
-      for (let i = 0; i < 5; i++) arr.push(make(idx++, "blog", `Sustentabilidade no Agro ${i+1}`, { content: "<p>Artigo...</p>" }));
-      for (let i = 0; i < 5; i++) arr.push(make(idx++, "email", `Campanha Outono ${i+1}`, { subject: "Assunto", content: "Corpo..." }));
-      for (let i = 0; i < 5; i++) arr.push(make(idx++, "social", `Post Engajamento ${i+1}`, { caption: "Legenda..." }));
-      for (let i = 0; i < 5; i++) arr.push(make(idx++, "carrossel", `Carrossel Produtos ${i+1}`, { slides: [{ title: "Slide 1", description: "..." }] }));
-      for (let i = 0; i < 5; i++) arr.push(make(idx++, "roteiro", `Roteiro Vídeo ${i+1}`, { category: "Tutorial", content: "Roteiro..." }));
+      for (let i = 0; i < 3; i++) arr.push(make(idx++, "blog", `Sustentabilidade no Agro ${i+1}`, { content: "<p>Artigo...</p>" }, false));
+      for (let i = 0; i < 2; i++) arr.push(make(idx++, "blog", `Tendências Semana ${i+1}`, { content: "<p>Artigo...</p>" }, true));
+      for (let i = 0; i < 3; i++) arr.push(make(idx++, "email", `Campanha Outono ${i+1}`, { subject: "Assunto", content: "Corpo..." }, false));
+      for (let i = 0; i < 2; i++) arr.push(make(idx++, "email", `Boletim Automático ${i+1}`, { subject: "Assunto", content: "Corpo..." }, true));
+      for (let i = 0; i < 3; i++) arr.push(make(idx++, "social", `Post Engajamento ${i+1}`, { caption: "Legenda..." }, false));
+      for (let i = 0; i < 2; i++) arr.push(make(idx++, "social", `Post Automático ${i+1}`, { caption: "Legenda..." }, true));
+      for (let i = 0; i < 3; i++) arr.push(make(idx++, "carrossel", `Carrossel Produtos ${i+1}`, { slides: [{ title: "Slide 1", description: "..." }] }, false));
+      for (let i = 0; i < 2; i++) arr.push(make(idx++, "carrossel", `Carrossel Automático ${i+1}`, { slides: [{ title: "Slide 1", description: "..." }] }, true));
+      for (let i = 0; i < 3; i++) arr.push(make(idx++, "roteiro", `Roteiro Vídeo ${i+1}`, { category: "Tutorial", content: "Roteiro..." }, false));
+      for (let i = 0; i < 2; i++) arr.push(make(idx++, "roteiro", `Roteiro Automático ${i+1}`, { category: "Tutorial", content: "Roteiro..." }, true));
       return arr;
     }
     return [];
@@ -149,8 +156,10 @@ export default function Library() {
   const filteredContents = contents.filter(content => {
     const matchesSearch = content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          content.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === "todos" || content.type === activeTab;
-    return matchesSearch && matchesTab;
+    const isAuto = !!content.isAutomated;
+    const matchesMode = modeTab === "manual" ? !isAuto : isAuto;
+    const matchesCategory = categoryFilter === "todos" ? true : content.type === categoryFilter;
+    return matchesSearch && matchesMode && matchesCategory;
   });
 
   const getTypeIcon = (type: string) => {
@@ -309,14 +318,29 @@ export default function Library() {
           />
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="todos">Todos ({contents.length})</TabsTrigger>
-            <TabsTrigger value="blog">Blog ({contents.filter(c => c.type === 'blog').length})</TabsTrigger>
-            <TabsTrigger value="carrossel">Carrossel ({contents.filter(c => c.type === 'carrossel').length})</TabsTrigger>
-            <TabsTrigger value="email">E-mail ({contents.filter(c => c.type === 'email').length})</TabsTrigger>
-            <TabsTrigger value="roteiro">Roteiros ({contents.filter(c => c.type === 'roteiro').length})</TabsTrigger>
-          </TabsList>
+        <Tabs value={modeTab} onValueChange={setModeTab}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <TabsList>
+              <TabsTrigger value="manual">Manuais</TabsTrigger>
+              <TabsTrigger value="auto">Automáticas</TabsTrigger>
+            </TabsList>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Categoria:</span>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="blog">Blog</SelectItem>
+                  <SelectItem value="carrossel">Carrossel</SelectItem>
+                  <SelectItem value="email">E-mail</SelectItem>
+                  <SelectItem value="social">Post social</SelectItem>
+                  <SelectItem value="roteiro">Roteiros</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           
           {/* Content Display */}
           {filteredContents.length > 0 ? (
