@@ -46,13 +46,14 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isIngesting, setIsIngesting] = useState(false);
   const [newSource, setNewSource] = useState({
     name: '',
     url: '',
     description: ''
   });
   const { canEditClient } = useClientContext();
-  const { newsSources, loading, addNewsSource, updateNewsSource, deleteNewsSource } = useNewsSources(clientId);
+  const { newsSources, loading, addNewsSource, updateNewsSource, deleteNewsSource, triggerIngestion } = useNewsSources(clientId);
 
   const filteredSources = newsSources.filter(source =>
     source.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -182,6 +183,20 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
     setIsEditModalOpen(false);
   };
 
+  const handleTriggerIngestion = async () => {
+    setIsIngesting(true);
+    toast.info("Iniciando coleta de notícias...");
+    try {
+      await triggerIngestion();
+      toast.success("Coleta iniciada em segundo plano. Os resultados aparecerão em breve.");
+    } catch (error) {
+      console.error("Error triggering ingestion:", error);
+      toast.error("Erro ao iniciar a coleta.");
+    } finally {
+      setIsIngesting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -193,10 +208,16 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
           </p>
         </div>
         {canEditClient(clientId) && (
-          <Button onClick={() => setIsAddModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Fonte
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" onClick={handleTriggerIngestion} disabled={isIngesting}>
+              <Play className="h-4 w-4 mr-2" />
+              {isIngesting ? 'Coletando...' : 'Coletar Agora'}
+            </Button>
+            <Button onClick={() => setIsAddModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Fonte
+            </Button>
+          </div>
         )}
       </div>
 
@@ -346,8 +367,8 @@ export function ClientNewsTab({ clientId }: ClientNewsTabProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {newsSources.length > 0 
-                ? new Date(Math.max(...newsSources.map(s => new Date(s.last_run).getTime())))
+              {newsSources.length > 0 && newsSources.some(s => s.last_run)
+                ? new Date(Math.max(...newsSources.filter(s => s.last_run).map(s => new Date(s.last_run).getTime())))
                     .toLocaleDateString('pt-BR')
                 : 'N/A'
               }

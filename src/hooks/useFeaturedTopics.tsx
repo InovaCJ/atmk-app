@@ -11,6 +11,8 @@ export function useFeaturedTopics(clientId: string, days: number = 7, limit: num
   const [topics, setTopics] = useState<FeaturedTopic[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshIndex, setRefreshIndex] = useState(0);
+  const refresh = () => setRefreshIndex(i => i + 1);
 
   const sinceIso = useMemo(() => {
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
@@ -40,7 +42,7 @@ export function useFeaturedTopics(clientId: string, days: number = 7, limit: num
           }
           throw error;
         }
-
+        console.log({ featuredTopics: data, clientId });
         const counts = new Map<string, number>();
         for (const row of data || []) {
           const arr = Array.isArray(row.topics) ? row.topics as string[] : [];
@@ -66,7 +68,7 @@ export function useFeaturedTopics(clientId: string, days: number = 7, limit: num
 
     load();
     return () => { mounted = false; };
-  }, [clientId, sinceIso, limit]);
+  }, [clientId, sinceIso, limit, refreshIndex]);
 
-  return { topics, loading, error };
+  return { topics, loading, error, refreshFeaturedTopics: refresh };
 }

@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { useClients } from '@/hooks/useClients';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Client, UserPermissions } from '@/types/clients';
 
 interface ClientContextType {
@@ -20,11 +21,9 @@ interface ClientContextType {
 const ClientContext = createContext<ClientContextType | undefined>(undefined);
 
 export const useClientContext = () => {
-  const context = useContext(ClientContext);
-  if (context === undefined) {
-    throw new Error('useClientContext deve ser usado dentro de um ClientProvider');
-  }
-  return context;
+  const ctx = useContext(ClientContext);
+  if (!ctx) throw new Error('useClientContext deve ser usado dentro de um ClientProvider');
+  return ctx;
 };
 
 interface ClientProviderProps {
@@ -32,50 +31,66 @@ interface ClientProviderProps {
 }
 
 export const ClientProvider: React.FC<ClientProviderProps> = ({ children }) => {
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  // --- STATE ---
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(() =>
+    localStorage.getItem('selectedClientId')
+  );
+
   const [userPermissions, setUserPermissions] = useState<UserPermissions | null>(null);
+
   const { user } = useAuth();
   const { clients, loading, error } = useClients();
 
-  // Auto-selecionar primeiro cliente quando carregar
+  // --- PERSIST SELECTED CLIENT ---
   useEffect(() => {
-    if (clients.length > 0 && !selectedClientId) {
+    if (selectedClientId) {
+      localStorage.setItem('selectedClientId', selectedClientId);
+    }
+  }, [selectedClientId]);
+
+  // --- AUTO SELECT CLIENT ---
+  useEffect(() => {
+    if (clients.length === 0) return;
+
+    // Caso ID salvo não exista mais
+    if (selectedClientId && !clients.some(c => c.id === selectedClientId)) {
+      setSelectedClientId(clients[0].id);
+      return;
+    }
+
+    // Caso não tenha ID nenhum
+    if (!selectedClientId) {
       setSelectedClientId(clients[0].id);
     }
   }, [clients, selectedClientId]);
 
-  // Carregar permissões do usuário
+  // --- LOAD USER PERMISSIONS ---
   useEffect(() => {
-    const loadUserPermissions = async () => {
+    const loadPermissions = async () => {
       if (!user) {
         setUserPermissions(null);
         return;
       }
 
       try {
-        // Buscar membros do usuário
         const { data: members } = await supabase
           .from('client_members')
           .select('client_id, role')
           .eq('user_id', user.id);
 
-        // Buscar clientes criados pelo usuário
         const { data: ownedClients } = await supabase
           .from('clients')
           .select('id')
           .eq('created_by', user.id);
 
         const clientRoles: Record<string, 'client_admin' | 'editor' | 'viewer'> = {};
-        
-        // Mapear roles dos membros
-        members?.forEach(member => {
-          clientRoles[member.client_id] = member.role;
+        members?.forEach(m => {
+          clientRoles[m.client_id] = m.role;
         });
 
-        // Owner tem permissões especiais
         const isOwner = ownedClients && ownedClients.length > 0;
 
-        const permissions: UserPermissions = {
+        setUserPermissions({
           userId: user.id,
           permissions: [
             'clients:create',
@@ -88,73 +103,80 @@ export const ClientProvider: React.FC<ClientProviderProps> = ({ children }) => {
           ],
           clientRoles,
           isOwner,
-        };
-
-        setUserPermissions(permissions);
+        });
       } catch (err) {
         console.error('Error loading user permissions:', err);
       }
     };
 
-    loadUserPermissions();
-  }, [user, clients]);
+    loadPermissions();
+  }, [user]);
 
-  const selectedClient = clients.find(c => c.id === selectedClientId) || null;
+  // --- SELECTED CLIENT MEMO ---
+  const selectedClient = useMemo(() => {
+    return clients.find(c => c.id === selectedClientId) || null;
+  }, [clients, selectedClientId]);
 
-  const canManageClients = !!user; // Qualquer usuário autenticado pode criar clientes
+  // --- PERMISSION CHECK FUNCTIONS (MEMOIZED) ---
 
-  const canManageClient = (clientId: string): boolean => {
-    if (!userPermissions) return false;
-    
-    // Owner pode gerenciar todos os clientes
-    if (userPermissions.isOwner) return true;
-    
-    // Client admin pode gerenciar seu cliente
-    const role = userPermissions.clientRoles[clientId];
-    return role === 'client_admin';
-  };
+  const canManageClients = !!user;
 
-  const canEditClient = (clientId: string): boolean => {
-    if (!userPermissions) return false;
-    
-    // Owner pode editar todos os clientes
-    if (userPermissions.isOwner) return true;
-    
-    // Client admin e editor podem editar
-    const role = userPermissions.clientRoles[clientId];
-    return role === 'client_admin' || role === 'editor';
-  };
-
-  const canViewClient = (clientId: string): boolean => {
-    if (!userPermissions) return false;
-    
-    // Owner pode ver todos os clientes
-    if (userPermissions.isOwner) return true;
-    
-    // Qualquer membro pode ver
-    return clientId in userPermissions.clientRoles;
-  };
-
-  const value = {
-    selectedClientId,
-    setSelectedClientId,
-    selectedClient,
-    clients,
-    loading,
-    error,
-    userPermissions,
-    canManageClients,
-    canManageClient,
-    canEditClient,
-    canViewClient,
-  };
-
-  return (
-    <ClientContext.Provider value={value}>
-      {children}
-    </ClientContext.Provider>
+  const canManageClient = useCallback(
+    (clientId: string) => {
+      if (!userPermissions) return false;
+      if (userPermissions.isOwner) return true;
+      return userPermissions.clientRoles[clientId] === 'client_admin';
+    },
+    [userPermissions]
   );
-};
 
-// Import supabase for the permissions check
-import { supabase } from '@/integrations/supabase/client';
+  const canEditClient = useCallback(
+    (clientId: string) => {
+      if (!userPermissions) return false;
+      if (userPermissions.isOwner) return true;
+      const role = userPermissions.clientRoles[clientId];
+      return role === 'client_admin' || role === 'editor';
+    },
+    [userPermissions]
+  );
+
+  const canViewClient = useCallback(
+    (clientId: string) => {
+      if (!userPermissions) return false;
+      if (userPermissions.isOwner) return true;
+      return clientId in userPermissions.clientRoles;
+    },
+    [userPermissions]
+  );
+
+  // --- MEMO CONTEXT VALUE ---
+  const value = useMemo(
+    () => ({
+      selectedClientId,
+      setSelectedClientId,
+      selectedClient,
+      clients,
+      loading,
+      error,
+      userPermissions,
+      canManageClients,
+      canManageClient,
+      canEditClient,
+      canViewClient,
+    }),
+    [
+      selectedClientId,
+      selectedClient,
+      clients,
+      loading,
+      error,
+      userPermissions,
+      canManageClients,
+      canManageClient,
+      canEditClient,
+      canViewClient,
+    ]
+  );
+
+  return <ClientContext.Provider value={value}>{children}</ClientContext.Provider>;
+};
