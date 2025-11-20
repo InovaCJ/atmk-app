@@ -19,7 +19,8 @@ CREATE INDEX IF NOT EXISTS idx_news_ingestion_runs_source_started ON news_ingest
 
 ALTER TABLE news_ingestion_runs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Client members can view ingestion runs" ON news_ingestion_runs
+DROP POLICY IF EXISTS "Client members can view ingestion runs" ON news_ingestion_runs;
+CREATE POLICY "Client members can view ingestion runs" ON news_ingestion_runs
   FOR SELECT USING (
     client_id IN (
       SELECT client_id FROM client_members WHERE user_id = auth.uid()
@@ -28,7 +29,8 @@ CREATE POLICY IF NOT EXISTS "Client members can view ingestion runs" ON news_ing
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Client admins and owners can insert ingestion runs" ON news_ingestion_runs
+DROP POLICY IF EXISTS "Client admins and owners can insert ingestion runs" ON news_ingestion_runs;
+CREATE POLICY "Client admins and owners can insert ingestion runs" ON news_ingestion_runs
   FOR INSERT WITH CHECK (
     client_id IN (
       SELECT id FROM clients WHERE created_by = auth.uid()

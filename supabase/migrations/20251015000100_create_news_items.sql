@@ -27,7 +27,8 @@ CREATE INDEX IF NOT EXISTS idx_news_items_source_id ON news_items (source_id);
 -- Enable RLS and add policies consistent with multi-tenant model
 ALTER TABLE news_items ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Client members can view news items" ON news_items
+DROP POLICY IF EXISTS "Client members can view news items" ON news_items;
+CREATE POLICY "Client members can view news items" ON news_items
   FOR SELECT USING (
     client_id IN (
       SELECT client_id FROM client_members WHERE user_id = auth.uid()
@@ -36,7 +37,8 @@ CREATE POLICY IF NOT EXISTS "Client members can view news items" ON news_items
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Client editors and admins can manage news items" ON news_items
+DROP POLICY IF EXISTS "Client editors and admins can manage news items" ON news_items;
+CREATE POLICY "Client editors and admins can manage news items" ON news_items
   FOR ALL USING (
     client_id IN (
       SELECT id FROM clients WHERE created_by = auth.uid()

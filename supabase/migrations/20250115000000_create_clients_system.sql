@@ -1,17 +1,54 @@
--- Migration: Create Clients Multi-Tenant System
--- Description: Implements multi-tenant client management with RBAC and isolated data
+-- Enable necessary extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create new enums for the clients system
-CREATE TYPE client_status AS ENUM ('active', 'archived');
-CREATE TYPE client_role AS ENUM ('client_admin', 'editor', 'viewer');
-CREATE TYPE input_type AS ENUM ('text', 'file', 'url', 'structured');
-CREATE TYPE kb_indexing_policy AS ENUM ('fulltext+embeddings', 'raw');
-CREATE TYPE vector_store AS ENUM ('pgvector', 'pinecone', 'qdrant', 'weaviate');
-CREATE TYPE news_source_type AS ENUM ('rss', 'api', 'scraper');
-CREATE TYPE search_provider AS ENUM ('serpapi', 'tavily', 'bing', 'custom');
-CREATE TYPE kb_source_type AS ENUM ('input', 'url', 'file', 'news', 'manual');
+-- Create shared enum types
+CREATE TYPE public.plan_type AS ENUM ('free', 'pro', 'business');
+CREATE TYPE public.content_status AS ENUM ('draft', 'scheduled', 'published', 'failed');
+CREATE TYPE public.ai_model AS ENUM ('openai_gpt4', 'openai_gpt35', 'google_gemini', 'perplexity', 'deepseek', 'claude', 'grok');
+CREATE TYPE public.content_type AS ENUM ('post', 'story', 'reel', 'article', 'newsletter');
 
--- Clients table (replaces companies with multi-tenant structure)
+-- Create client-specific enums
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'client_status') THEN
+        CREATE TYPE client_status AS ENUM ('active', 'archived');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'client_role') THEN
+        CREATE TYPE client_role AS ENUM ('client_admin', 'editor', 'viewer');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'input_type') THEN
+        CREATE TYPE input_type AS ENUM ('text', 'file', 'url', 'structured');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'kb_indexing_policy') THEN
+        CREATE TYPE kb_indexing_policy AS ENUM ('fulltext+embeddings', 'raw');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'vector_store') THEN
+        CREATE TYPE vector_store AS ENUM ('pgvector', 'pinecone', 'qdrant', 'weaviate');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'news_source_type') THEN
+        CREATE TYPE news_source_type AS ENUM ('rss', 'api', 'scraper');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'search_provider') THEN
+        CREATE TYPE search_provider AS ENUM ('serpapi', 'tavily', 'bing', 'custom');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'kb_source_type') THEN
+        CREATE TYPE kb_source_type AS ENUM ('input', 'url', 'file', 'news', 'manual');
+    END IF;
+END $$;
+
+-- Table for user profiles
+CREATE TABLE public.profiles (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name TEXT,
+  email TEXT,
+  phone TEXT,
+  avatar_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+-- Clients table
 CREATE TABLE clients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug VARCHAR(255) NOT NULL UNIQUE,
@@ -20,16 +57,7 @@ CREATE TABLE clients (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   status client_status DEFAULT 'active',
-  plan plan_type DEFAULT 'free',
-  
-  -- Legacy company fields for migration
-  brand_voice TEXT,
-  description TEXT,
-  industry VARCHAR(255),
-  logo_url TEXT,
-  target_audience TEXT,
-  website TEXT,
-  plan_expires_at TIMESTAMP WITH TIME ZONE
+  plan plan_type DEFAULT 'free'
 );
 
 -- Client members (RBAC)
@@ -39,11 +67,10 @@ CREATE TABLE client_members (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   role client_role NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
   UNIQUE(client_id, user_id)
 );
 
--- Client settings (tom de voz, diretrizes, etc.)
+-- Client settings
 CREATE TABLE client_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -54,11 +81,10 @@ CREATE TABLE client_settings (
   duplication_of UUID REFERENCES clients(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
   UNIQUE(client_id)
 );
 
--- Client inputs (textos, arquivos, URLs)
+-- Client inputs
 CREATE TABLE client_inputs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -84,19 +110,18 @@ CREATE TABLE knowledge_bases (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Knowledge base items (chunks with embeddings)
+-- Knowledge base items
 CREATE TABLE kb_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   kb_id UUID NOT NULL REFERENCES knowledge_bases(id) ON DELETE CASCADE,
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   source_type kb_source_type NOT NULL,
-  source_ref TEXT, -- id do ClientInput, URL, etc.
+  source_ref TEXT,
   chunk_id VARCHAR(255),
   text TEXT NOT NULL,
-  embeddings_ref TEXT, -- reference to stored embeddings
+  embeddings_ref TEXT,
   metadata JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
   UNIQUE(client_id, kb_id, chunk_id)
 );
 
@@ -108,23 +133,22 @@ CREATE TABLE news_sources (
   type news_source_type NOT NULL,
   url TEXT,
   api_config JSONB,
-  schedule VARCHAR(100) DEFAULT '0 */6 * * *', -- cron expression
+  schedule VARCHAR(100) DEFAULT '0 */6 * * *',
   enabled BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Search integrations (PRO features)
+-- Search integrations
 CREATE TABLE search_integrations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   provider search_provider NOT NULL,
-  api_key_ref TEXT NOT NULL, -- encrypted reference
+  api_key_ref TEXT NOT NULL,
   daily_quota INTEGER,
   enabled BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
   UNIQUE(client_id, provider)
 );
 
@@ -140,7 +164,7 @@ CREATE TABLE agent_profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Search usage tracking (for billing)
+-- Search usage tracking
 CREATE TABLE search_usage (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -151,20 +175,75 @@ CREATE TABLE search_usage (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create indexes for performance
-CREATE INDEX idx_clients_created_by ON clients(created_by);
-CREATE INDEX idx_clients_slug ON clients(slug);
-CREATE INDEX idx_client_members_client_id ON client_members(client_id);
-CREATE INDEX idx_client_members_user_id ON client_members(user_id);
-CREATE INDEX idx_client_inputs_client_id ON client_inputs(client_id);
-CREATE INDEX idx_kb_items_client_id ON kb_items(client_id);
-CREATE INDEX idx_kb_items_kb_id ON kb_items(kb_id);
-CREATE INDEX idx_news_sources_client_id ON news_sources(client_id);
-CREATE INDEX idx_search_integrations_client_id ON search_integrations(client_id);
-CREATE INDEX idx_agent_profiles_client_id ON agent_profiles(client_id);
-CREATE INDEX idx_search_usage_client_id ON search_usage(client_id);
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_clients_created_by ON clients(created_by);
+CREATE INDEX IF NOT EXISTS idx_client_members_user_id ON client_members(user_id);
 
--- Enable Row Level Security (RLS)
+-- Functions and Triggers
+-- Function to handle new user creation
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER 
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (user_id, full_name, email)
+  VALUES (
+    new.id,
+    new.raw_user_meta_data ->> 'full_name',
+    new.email
+  );
+  RETURN new;
+END;
+$$;
+
+-- Trigger to create a profile when a new user signs up
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Function to automatically update 'updated_at' columns
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+-- Apply 'updated_at' triggers to tables
+CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_clients_updated_at BEFORE UPDATE ON public.clients FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_client_settings_updated_at BEFORE UPDATE ON public.client_settings FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_client_inputs_updated_at BEFORE UPDATE ON public.client_inputs FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_knowledge_bases_updated_at BEFORE UPDATE ON public.knowledge_bases FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_news_sources_updated_at BEFORE UPDATE ON public.news_sources FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_search_integrations_updated_at BEFORE UPDATE ON public.search_integrations FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_agent_profiles_updated_at BEFORE UPDATE ON public.agent_profiles FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Function to create default items for a new client
+CREATE OR REPLACE FUNCTION create_default_items_for_client()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO knowledge_bases (client_id, name) VALUES (NEW.id, 'Principal');
+  INSERT INTO client_settings (client_id) VALUES (NEW.id);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to create default items when a new client is created
+CREATE TRIGGER create_default_items_trigger
+  AFTER INSERT ON clients
+  FOR EACH ROW
+  EXECUTE FUNCTION create_default_items_for_client();
+
+
+-- Row Level Security (RLS)
+-- Enable RLS for all tables
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE client_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE client_settings ENABLE ROW LEVEL SECURITY;
@@ -176,295 +255,53 @@ ALTER TABLE search_integrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE search_usage ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for clients
-CREATE POLICY "Users can view clients they are members of" ON clients
-  FOR SELECT USING (
-    id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid()
-    ) OR created_by = auth.uid()
-  );
+-- RLS Helper Functions (to avoid recursion)
+CREATE OR REPLACE FUNCTION public.is_member_of(_client_id UUID)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RETURN false; END IF;
+  RETURN EXISTS (SELECT 1 FROM client_members WHERE client_id = _client_id AND user_id = auth.uid());
+END;
+$$;
 
+CREATE OR REPLACE FUNCTION public.is_admin_of(_client_id UUID)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RETURN false; END IF;
+  RETURN EXISTS (SELECT 1 FROM client_members WHERE client_id = _client_id AND user_id = auth.uid() AND role = 'client_admin');
+END;
+$$;
+
+-- RLS Policies
+-- Profiles
+CREATE POLICY "Authenticated users can manage their own profile" ON public.profiles
+FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- Clients
+CREATE POLICY "Users can view clients they are members of or own" ON clients
+  FOR SELECT USING (public.is_member_of(id) OR created_by = auth.uid());
 CREATE POLICY "Users can create clients" ON clients
   FOR INSERT WITH CHECK (created_by = auth.uid());
-
 CREATE POLICY "Client admins and owners can update clients" ON clients
-  FOR UPDATE USING (
-    created_by = auth.uid() OR
-    id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid() AND role = 'client_admin'
-    )
-  );
+  FOR UPDATE USING (created_by = auth.uid() OR public.is_admin_of(id));
 
--- RLS Policies for client_members
+-- Client Members
 CREATE POLICY "Users can view members of their clients" ON client_members
-  FOR SELECT USING (
-    client_id IN (
-      SELECT id FROM clients 
-      WHERE created_by = auth.uid() OR id IN (
-        SELECT client_id FROM client_members 
-        WHERE user_id = auth.uid()
-      )
-    )
-  );
-
+  FOR SELECT USING (client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()) OR public.is_member_of(client_id));
 CREATE POLICY "Client admins and owners can manage members" ON client_members
-  FOR ALL USING (
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid() AND role = 'client_admin'
-    )
-  );
+  FOR ALL USING (client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()) OR public.is_admin_of(client_id));
 
--- RLS Policies for client_settings
+-- Client Settings
 CREATE POLICY "Client members can view settings" ON client_settings
-  FOR SELECT USING (
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    )
-  );
-
+  FOR SELECT USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
 CREATE POLICY "Client admins and owners can manage settings" ON client_settings
-  FOR ALL USING (
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid() AND role = 'client_admin'
-    )
-  );
+  FOR ALL USING (client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()) OR public.is_admin_of(client_id));
 
--- RLS Policies for client_inputs
-CREATE POLICY "Client members can view inputs" ON client_inputs
-  FOR SELECT USING (
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    )
-  );
-
-CREATE POLICY "Client editors and admins can manage inputs" ON client_inputs
-  FOR ALL USING (
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid() AND role IN ('client_admin', 'editor')
-    )
-  );
-
--- RLS Policies for knowledge_bases
-CREATE POLICY "Client members can view knowledge bases" ON knowledge_bases
-  FOR SELECT USING (
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    )
-  );
-
-CREATE POLICY "Client editors and admins can manage knowledge bases" ON knowledge_bases
-  FOR ALL USING (
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid() AND role IN ('client_admin', 'editor')
-    )
-  );
-
--- RLS Policies for kb_items
-CREATE POLICY "Client members can view kb items" ON kb_items
-  FOR SELECT USING (
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    )
-  );
-
-CREATE POLICY "Client editors and admins can manage kb items" ON kb_items
-  FOR ALL USING (
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid() AND role IN ('client_admin', 'editor')
-    )
-  );
-
--- RLS Policies for news_sources
-CREATE POLICY "Client members can view news sources" ON news_sources
-  FOR SELECT USING (
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    )
-  );
-
-CREATE POLICY "Client editors and admins can manage news sources" ON news_sources
-  FOR ALL USING (
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid() AND role IN ('client_admin', 'editor')
-    )
-  );
-
--- RLS Policies for search_integrations
-CREATE POLICY "Client members can view search integrations" ON search_integrations
-  FOR SELECT USING (
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    )
-  );
-
-CREATE POLICY "Client admins and owners can manage search integrations" ON search_integrations
-  FOR ALL USING (
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid() AND role = 'client_admin'
-    )
-  );
-
--- RLS Policies for agent_profiles
-CREATE POLICY "Client members can view agent profiles" ON agent_profiles
-  FOR SELECT USING (
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    )
-  );
-
-CREATE POLICY "Client editors and admins can manage agent profiles" ON agent_profiles
-  FOR ALL USING (
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid() AND role IN ('client_admin', 'editor')
-    )
-  );
-
--- RLS Policies for search_usage
-CREATE POLICY "Client members can view search usage" ON search_usage
-  FOR SELECT USING (
-    client_id IN (
-      SELECT client_id FROM client_members 
-      WHERE user_id = auth.uid()
-    ) OR
-    client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    )
-  );
-
--- Create default knowledge base for each client
-CREATE OR REPLACE FUNCTION create_default_kb_for_client()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO knowledge_bases (client_id, name, indexing_policy, vector_store)
-  VALUES (NEW.id, 'Principal', 'fulltext+embeddings', 'pgvector');
-  
-  INSERT INTO client_settings (client_id, tone_of_voice, style_guidelines, locale)
-  VALUES (NEW.id, 'Claro e objetivo', 'Evite jargões desnecessários', 'pt-BR');
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER create_default_kb_trigger
-  AFTER INSERT ON clients
-  FOR EACH ROW
-  EXECUTE FUNCTION create_default_kb_for_client();
-
--- Migration function to convert existing companies to clients
-CREATE OR REPLACE FUNCTION migrate_companies_to_clients()
-RETURNS void AS $$
-DECLARE
-  company_record RECORD;
-  new_client_id UUID;
-BEGIN
-  FOR company_record IN SELECT * FROM companies LOOP
-    -- Create new client
-    INSERT INTO clients (
-      id, slug, name, created_by, created_at, updated_at, status, plan,
-      brand_voice, description, industry, logo_url, target_audience, website, plan_expires_at
-    ) VALUES (
-      company_record.id,
-      LOWER(REPLACE(company_record.name, ' ', '-')),
-      company_record.name,
-      company_record.owner_id,
-      company_record.created_at,
-      company_record.updated_at,
-      'active',
-      company_record.plan_type,
-      company_record.brand_voice,
-      company_record.description,
-      company_record.industry,
-      company_record.logo_url,
-      company_record.target_audience,
-      company_record.website,
-      company_record.plan_expires_at
-    ) RETURNING id INTO new_client_id;
-    
-    -- Add owner as client_admin
-    INSERT INTO client_members (client_id, user_id, role)
-    VALUES (new_client_id, company_record.owner_id, 'client_admin');
-    
-    -- Migrate knowledge_base to kb_items
-    INSERT INTO kb_items (kb_id, client_id, source_type, text, metadata, created_at)
-    SELECT 
-      (SELECT id FROM knowledge_bases WHERE client_id = new_client_id LIMIT 1),
-      new_client_id,
-      'manual',
-      kb.content,
-      jsonb_build_object(
-        'title', kb.title,
-        'content_type', kb.content_type,
-        'source_url', kb.source_url,
-        'tags', kb.tags
-      ),
-      kb.created_at
-    FROM knowledge_base kb
-    WHERE kb.company_id = company_record.id;
-  END LOOP;
-END;
-$$ LANGUAGE plpgsql;
-
--- Run migration (uncomment when ready)
--- SELECT migrate_companies_to_clients();
+-- Generic policies for other tables (pode ser refinado depois)
+CREATE POLICY "Client members can access their client data" ON client_inputs FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
+CREATE POLICY "Client members can access their client data" ON knowledge_bases FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
+CREATE POLICY "Client members can access their client data" ON kb_items FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
+CREATE POLICY "Client members can access their client data" ON news_sources FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
+CREATE POLICY "Client members can access their client data" ON search_integrations FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
+CREATE POLICY "Client members can access their client data" ON agent_profiles FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
+CREATE POLICY "Client members can access their client data" ON search_usage FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
