@@ -29,7 +29,7 @@ export function useFeaturedTopics(clientId: string, days: number = 7, limit: num
       try {
         const { data, error } = await supabase
           .from('news_items')
-          .select('topics')
+          .select('topics,title')
           .eq('client_id', clientId)
           .eq('is_active', true)
           .gte('published_at', sinceIso)

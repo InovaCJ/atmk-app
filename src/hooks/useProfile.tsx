@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useClients } from './useClients';
 
 interface Profile {
   id: string;
@@ -19,6 +20,7 @@ export const useProfile = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { hasClients } = useClients();
 
   useEffect(() => {
     if (user) {
@@ -32,6 +34,10 @@ export const useProfile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
+      if (!hasClients) {
+        console.log('Skipping fetchProfile, clients not loaded yet');
+        return;
+      }
       const { data, error } = await supabase
         .from('profiles')
         .select('*')

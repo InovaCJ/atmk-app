@@ -32,7 +32,8 @@ import { useClientStatus } from "@/hooks/useClientStatus";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { useFeaturedTopics } from "@/hooks/useFeaturedTopics";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNewsService } from "@/hooks/useNewsService";
+import { usePostV1ApiIngestNews } from "@/http/generated";
+
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,13 +51,24 @@ export default function Dashboard() {
   const { topics: featuredTopics, refreshFeaturedTopics } = useFeaturedTopics(selectedClientId || '', 7, 8);
   const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
   const { session } = useAuth();
-  const { ingestNews } = useNewsService();
+  const { mutateAsync: ingestNews } = usePostV1ApiIngestNews({
+    client: {
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    },
+  });
+
   const handleRefreshFeed = async () => {
     setIsRefreshingFeed(true);
     try {
       toast({ title: "Atualizando feed...", description: "Buscando itens das fontes." });
 
-      const data = await ingestNews(selectedClientId!, 7);
+      await ingestNews({
+        data: {
+          clientId: selectedClientId || '',
+        }
+      });
 
       refreshFeaturedTopics();
       toast({ title: "Feed atualizado", description: "Os novos itens foram adicionados ao feed." });
@@ -145,7 +157,7 @@ export default function Dashboard() {
   }
 
   // Cálculo de progresso e próximo passo (mantendo regras atuais)
-  const hasCompany = clients.length > 0;
+  const hasCompany = clients?.length > 0;
   const hasConfiguredInfo = !!firstClientId; // mesma regra atual
   const automationConfigured = hasSearchAutomation;
   const canCreateFirstContent = hasCompany && canGenerateFromKnowledge;
@@ -247,7 +259,7 @@ export default function Dashboard() {
       {/* Featured Topics */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Temas em Destaque</h2>
+          <h2 className="text-xl font-semibold">Tags em Destaque</h2>
           <Button size="sm" variant="outline" onClick={handleRefreshFeed} disabled={isRefreshingFeed || !selectedClientId}>Atualizar feed agora</Button>
         </div>
         {renderFeaturedTopics()}

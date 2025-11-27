@@ -73,15 +73,20 @@ export const ClientProvider: React.FC<ClientProviderProps> = ({ children }) => {
       }
 
       try {
+        const { data: ownedClients } = await supabase
+          .from('clients')
+          .select('id')
+        // .eq('created_by', user.id);
+
+        if (!ownedClients?.length) {
+          console.log('Skipping permission load, no owned clients found');
+        }
+
         const { data: members } = await supabase
           .from('client_members')
           .select('client_id, role')
           .eq('user_id', user.id);
 
-        const { data: ownedClients } = await supabase
-          .from('clients')
-          .select('id')
-          .eq('created_by', user.id);
 
         const clientRoles: Record<string, 'client_admin' | 'editor' | 'viewer'> = {};
         members?.forEach(m => {

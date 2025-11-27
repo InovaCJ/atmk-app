@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { useClientContext } from '@/contexts/ClientContext';
 import { useClients } from '@/hooks/useClients';
@@ -173,7 +173,7 @@ export default function Clients() {
               );
             })()}
           </div>
-          
+
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-2" />
@@ -191,9 +191,9 @@ export default function Clients() {
           </div>
 
           <div className="pt-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="w-full"
               onClick={() => handleOpenClient(client)}
             >
@@ -256,7 +256,7 @@ export default function Clients() {
             {searchTerm ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
           </h3>
           <p className="text-muted-foreground mb-4">
-            {searchTerm 
+            {searchTerm
               ? 'Tente ajustar os termos de busca'
               : 'Comece criando seu primeiro cliente'
             }
@@ -281,7 +281,7 @@ export default function Clients() {
         isOpen={showCreateModal}
         onClose={handleCreateModalClose}
       />
-      
+
       <DuplicateClientModal
         isOpen={showDuplicateModal}
         onClose={() => setShowDuplicateModal(false)}

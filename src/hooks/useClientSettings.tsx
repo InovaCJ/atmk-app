@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClients } from './useClients';
 
 interface ClientSettings {
   id?: string;
@@ -26,7 +27,7 @@ interface KnowledgeBaseData {
     wordsWeUse: string[];
     bannedWords: string[];
   };
-  
+
   // 2. Negócio e Oferta
   business: {
     sector: string;
@@ -40,7 +41,7 @@ interface KnowledgeBaseData {
       pricing: string;
     }>;
   };
-  
+
   // 3. Público-Alvo
   audience: {
     primary: {
@@ -56,7 +57,7 @@ interface KnowledgeBaseData {
       goals: string[];
     };
   };
-  
+
   // 4. Conteúdo e Tom
   content: {
     toneOfVoice: string;
@@ -73,6 +74,7 @@ export function useClientSettings(clientId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { hasClients } = useClients();
 
   const fetchSettings = async () => {
     if (!clientId || !user) {
@@ -84,12 +86,18 @@ export function useClientSettings(clientId: string) {
       setLoading(true);
       setError(null);
 
+      if (!hasClients) {
+        console.log('Skipping fetchSettings, clients not loaded yet');
+        return;
+      }
+
       // Buscar configurações do cliente
       const { data: settingsData, error: settingsError } = await supabase
         .from('client_settings')
         .select('*')
         .eq('client_id', clientId)
         .single();
+
 
       if (settingsError && settingsError.code !== 'PGRST116') {
         throw settingsError;
@@ -165,7 +173,7 @@ export function useClientSettings(clientId: string) {
 
     try {
       console.log('💾 Salvando base de conhecimento:', { clientId, knowledgeData });
-      
+
       // Converter dados da base de conhecimento para JSON
       const promptDirectives = JSON.stringify(knowledgeData);
       console.log('📝 JSON gerado:', promptDirectives);
@@ -176,8 +184,8 @@ export function useClientSettings(clientId: string) {
           client_id: clientId,
           prompt_directives: promptDirectives,
           updated_at: new Date().toISOString()
-        }, { 
-          onConflict: 'client_id' 
+        }, {
+          onConflict: 'client_id'
         })
         .select()
         .single();
