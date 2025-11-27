@@ -27,22 +27,24 @@ CREATE INDEX IF NOT EXISTS idx_news_items_source_id ON news_items (source_id);
 -- Enable RLS and add policies consistent with multi-tenant model
 ALTER TABLE news_items ENABLE ROW LEVEL SECURITY;
 
+-- Grants (Crucial for access after schema reset)
+GRANT SELECT, INSERT, UPDATE, DELETE ON news_items TO authenticated;
+GRANT ALL ON news_items TO service_role;
+
 DROP POLICY IF EXISTS "Client members can view news items" ON news_items;
 CREATE POLICY "Client members can view news items" ON news_items
   FOR SELECT USING (
-    client_id IN (
-      SELECT client_id FROM client_members WHERE user_id = auth.uid()
-    ) OR client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    )
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
   );
 
 DROP POLICY IF EXISTS "Client editors and admins can manage news items" ON news_items;
 CREATE POLICY "Client editors and admins can manage news items" ON news_items
   FOR ALL USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
     client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    ) OR client_id IN (
       SELECT client_id FROM client_members 
       WHERE user_id = auth.uid() AND role IN ('client_admin', 'editor')
     )
@@ -51,5 +53,3 @@ CREATE POLICY "Client editors and admins can manage news items" ON news_items
 COMMENT ON TABLE news_items IS 'Normalized news/articles aggregated from client news_sources';
 COMMENT ON COLUMN news_items.topics IS 'Array with extracted topics/keywords for the item';
 COMMENT ON CONSTRAINT news_items_client_urlhash_unique ON news_items IS 'Deduplication per client via URL hash';
-
-

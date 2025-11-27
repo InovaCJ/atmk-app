@@ -1,3 +1,11 @@
+drop schema if exists public cascade;
+create schema public;
+
+-- Reset grants consistent with Supabase defaults:
+grant usage on schema public to postgres, anon, authenticated, service_role;
+grant create on schema public to postgres, service_role;
+
+
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -178,6 +186,7 @@ CREATE TABLE search_usage (
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_clients_created_by ON clients(created_by);
 CREATE INDEX IF NOT EXISTS idx_client_members_user_id ON client_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_client_members_client_id ON client_members(client_id);
 
 -- Functions and Triggers
 -- Function to handle new user creation
@@ -240,6 +249,44 @@ CREATE TRIGGER create_default_items_trigger
   FOR EACH ROW
   EXECUTE FUNCTION create_default_items_for_client();
 
+-- =============================================================================
+-- HELPER FUNCTIONS PARA RLS (QUEBRANDO RECURSÃO)
+-- =============================================================================
+
+-- Function to get clients owned by the current user (Bypasses RLS)
+CREATE OR REPLACE FUNCTION public.get_owned_clients()
+RETURNS SETOF UUID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT id FROM clients WHERE created_by = auth.uid();
+$$;
+
+-- Function to get clients where the current user is a member (Bypasses RLS to avoid loop in client_members)
+CREATE OR REPLACE FUNCTION public.get_member_client_ids()
+RETURNS SETOF UUID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT client_id FROM client_members WHERE user_id = auth.uid();
+$$;
+
+-- =============================================================================
+-- GRANTS (PERMISSÕES DE TABELAS)
+-- =============================================================================
+-- Como recriamos o schema public, precisamos reaplicar os grants básicos
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
+
+-- Grant execute on functions
+GRANT EXECUTE ON FUNCTION public.get_owned_clients TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_member_client_ids TO authenticated, service_role;
+
 
 -- Row Level Security (RLS)
 -- Enable RLS for all tables
@@ -255,53 +302,207 @@ ALTER TABLE search_integrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE search_usage ENABLE ROW LEVEL SECURITY;
 
--- RLS Helper Functions (to avoid recursion)
-CREATE OR REPLACE FUNCTION public.is_member_of(_client_id UUID)
-RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  IF auth.uid() IS NULL THEN RETURN false; END IF;
-  RETURN EXISTS (SELECT 1 FROM client_members WHERE client_id = _client_id AND user_id = auth.uid());
-END;
-$$;
+-- =============================================================================
+-- RLS POLICIES
+-- =============================================================================
 
-CREATE OR REPLACE FUNCTION public.is_admin_of(_client_id UUID)
-RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  IF auth.uid() IS NULL THEN RETURN false; END IF;
-  RETURN EXISTS (SELECT 1 FROM client_members WHERE client_id = _client_id AND user_id = auth.uid() AND role = 'client_admin');
-END;
-$$;
-
--- RLS Policies
 -- Profiles
-CREATE POLICY "Authenticated users can manage their own profile" ON public.profiles
-FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Authenticated users can manage their own profile" ON public.profiles;
+CREATE POLICY "Authenticated users can manage their own profile" 
+  ON public.profiles FOR ALL TO authenticated 
+  USING (auth.uid() = user_id) 
+  WITH CHECK (auth.uid() = user_id);
 
--- Clients
-CREATE POLICY "Users can view clients they are members of or own" ON clients
-  FOR SELECT USING (public.is_member_of(id) OR created_by = auth.uid());
-CREATE POLICY "Users can create clients" ON clients
-  FOR INSERT WITH CHECK (created_by = auth.uid());
-CREATE POLICY "Client admins and owners can update clients" ON clients
-  FOR UPDATE USING (created_by = auth.uid() OR public.is_admin_of(id));
+-- =============================================================================
+-- CLIENTS TABLE
+-- =============================================================================
 
--- Client Members
-CREATE POLICY "Users can view members of their clients" ON client_members
-  FOR SELECT USING (client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()) OR public.is_member_of(client_id));
-CREATE POLICY "Client admins and owners can manage members" ON client_members
-  FOR ALL USING (client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()) OR public.is_admin_of(client_id));
+-- SELECT: Usuários veem clients que criaram OU que são membros (via função segura)
+DROP POLICY IF EXISTS "Users can view clients they are members of or own" ON clients;
+CREATE POLICY "Users can view clients they are members of or own" 
+  ON clients FOR SELECT 
+  USING (
+    created_by = auth.uid() 
+    OR id IN (SELECT get_member_client_ids())
+  );
 
--- Client Settings
-CREATE POLICY "Client members can view settings" ON client_settings
-  FOR SELECT USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
-CREATE POLICY "Client admins and owners can manage settings" ON client_settings
-  FOR ALL USING (client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()) OR public.is_admin_of(client_id));
+-- INSERT: Qualquer usuário autenticado pode criar um client
+DROP POLICY IF EXISTS "Users can create clients" ON clients;
+CREATE POLICY "Users can create clients" 
+  ON clients FOR INSERT 
+  WITH CHECK (created_by = auth.uid());
 
--- Generic policies for other tables (pode ser refinado depois)
-CREATE POLICY "Client members can access their client data" ON client_inputs FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
-CREATE POLICY "Client members can access their client data" ON knowledge_bases FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
-CREATE POLICY "Client members can access their client data" ON kb_items FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
-CREATE POLICY "Client members can access their client data" ON news_sources FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
-CREATE POLICY "Client members can access their client data" ON search_integrations FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
-CREATE POLICY "Client members can access their client data" ON agent_profiles FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
-CREATE POLICY "Client members can access their client data" ON search_usage FOR ALL USING (public.is_member_of(client_id) OR client_id IN (SELECT id FROM clients WHERE created_by = auth.uid()));
+-- UPDATE: Apenas owners e admins podem atualizar
+DROP POLICY IF EXISTS "Client admins and owners can update clients" ON clients;
+CREATE POLICY "Client admins and owners can update clients" 
+  ON clients FOR UPDATE 
+  USING (
+    created_by = auth.uid() 
+    OR id IN (
+      SELECT client_id FROM client_members 
+      WHERE user_id = auth.uid() AND role = 'client_admin'
+    )
+  );
+
+-- DELETE: Apenas owners podem deletar
+DROP POLICY IF EXISTS "Only owners can delete clients" ON clients;
+CREATE POLICY "Only owners can delete clients" 
+  ON clients FOR DELETE 
+  USING (created_by = auth.uid());
+
+-- =============================================================================
+-- CLIENT_MEMBERS TABLE - Uso de funções Security Definer é vital aqui
+-- =============================================================================
+
+-- SELECT: Usuários veem membros dos clients que fazem parte
+DROP POLICY IF EXISTS "Users can view members of their clients" ON client_members;
+CREATE POLICY "Users can view members of their clients" 
+  ON client_members FOR SELECT 
+  USING (
+    -- Vê seus próprios registros
+    user_id = auth.uid()
+    OR
+    -- Vê membros de clients onde é owner
+    client_id IN (SELECT get_owned_clients())
+    OR
+    -- Vê membros de clients onde é membro (sem recursão na tabela)
+    client_id IN (SELECT get_member_client_ids())
+  );
+
+-- INSERT: Apenas owners e admins podem adicionar membros
+DROP POLICY IF EXISTS "Client admins and owners can add members" ON client_members;
+CREATE POLICY "Client admins and owners can add members" 
+  ON client_members FOR INSERT 
+  WITH CHECK (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (
+      SELECT client_id FROM client_members 
+      WHERE user_id = auth.uid() AND role = 'client_admin'
+    )
+  );
+
+-- UPDATE: Apenas owners e admins podem atualizar roles
+DROP POLICY IF EXISTS "Client admins and owners can update members" ON client_members;
+CREATE POLICY "Client admins and owners can update members" 
+  ON client_members FOR UPDATE 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (
+      SELECT client_id FROM client_members 
+      WHERE user_id = auth.uid() AND role = 'client_admin'
+    )
+  );
+
+-- DELETE: Apenas owners e admins podem remover membros
+DROP POLICY IF EXISTS "Client admins and owners can delete members" ON client_members;
+CREATE POLICY "Client admins and owners can delete members" 
+  ON client_members FOR DELETE 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (
+      SELECT client_id FROM client_members 
+      WHERE user_id = auth.uid() AND role = 'client_admin'
+    )
+  );
+
+-- =============================================================================
+-- CLIENT_SETTINGS
+-- =============================================================================
+
+DROP POLICY IF EXISTS "Client members can view settings" ON client_settings;
+CREATE POLICY "Client members can view settings" 
+  ON client_settings FOR SELECT 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
+  );
+
+DROP POLICY IF EXISTS "Client admins and owners can manage settings" ON client_settings;
+CREATE POLICY "Client admins and owners can manage settings" 
+  ON client_settings FOR ALL 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (
+      SELECT client_id FROM client_members 
+      WHERE user_id = auth.uid() AND role = 'client_admin'
+    )
+  );
+
+-- =============================================================================
+-- DEMAIS TABELAS - Padronizando com as funções auxiliares
+-- =============================================================================
+
+-- CLIENT_INPUTS
+DROP POLICY IF EXISTS "Client members can access their client data" ON client_inputs;
+CREATE POLICY "Client members can access their client data" 
+  ON client_inputs FOR ALL 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
+  );
+
+-- KNOWLEDGE_BASES
+DROP POLICY IF EXISTS "Client members can access their client data" ON knowledge_bases;
+CREATE POLICY "Client members can access their client data" 
+  ON knowledge_bases FOR ALL 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
+  );
+
+-- KB_ITEMS
+DROP POLICY IF EXISTS "Client members can access their client data" ON kb_items;
+CREATE POLICY "Client members can access their client data" 
+  ON kb_items FOR ALL 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
+  );
+
+-- NEWS_SOURCES
+DROP POLICY IF EXISTS "Client members can access their client data" ON news_sources;
+CREATE POLICY "Client members can access their client data" 
+  ON news_sources FOR ALL 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
+  );
+
+-- SEARCH_INTEGRATIONS
+DROP POLICY IF EXISTS "Client members can access their client data" ON search_integrations;
+CREATE POLICY "Client members can access their client data" 
+  ON search_integrations FOR ALL 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
+  );
+
+-- AGENT_PROFILES
+DROP POLICY IF EXISTS "Client members can access their client data" ON agent_profiles;
+CREATE POLICY "Client members can access their client data" 
+  ON agent_profiles FOR ALL 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
+  );
+
+-- SEARCH_USAGE
+DROP POLICY IF EXISTS "Client members can access their client data" ON search_usage;
+CREATE POLICY "Client members can access their client data" 
+  ON search_usage FOR ALL 
+  USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
+  );

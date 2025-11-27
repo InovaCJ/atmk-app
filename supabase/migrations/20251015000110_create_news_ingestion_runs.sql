@@ -19,27 +19,27 @@ CREATE INDEX IF NOT EXISTS idx_news_ingestion_runs_source_started ON news_ingest
 
 ALTER TABLE news_ingestion_runs ENABLE ROW LEVEL SECURITY;
 
+-- Grants
+GRANT SELECT, INSERT, UPDATE, DELETE ON news_ingestion_runs TO authenticated;
+GRANT ALL ON news_ingestion_runs TO service_role;
+
 DROP POLICY IF EXISTS "Client members can view ingestion runs" ON news_ingestion_runs;
 CREATE POLICY "Client members can view ingestion runs" ON news_ingestion_runs
   FOR SELECT USING (
-    client_id IN (
-      SELECT client_id FROM client_members WHERE user_id = auth.uid()
-    ) OR client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    )
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
   );
 
 DROP POLICY IF EXISTS "Client admins and owners can insert ingestion runs" ON news_ingestion_runs;
 CREATE POLICY "Client admins and owners can insert ingestion runs" ON news_ingestion_runs
   FOR INSERT WITH CHECK (
+    client_id IN (SELECT get_owned_clients())
+    OR
     client_id IN (
-      SELECT id FROM clients WHERE created_by = auth.uid()
-    ) OR client_id IN (
       SELECT client_id FROM client_members 
       WHERE user_id = auth.uid() AND role = 'client_admin'
     )
   );
 
 COMMENT ON TABLE news_ingestion_runs IS 'Telemetry of news ingestion executions per client/source';
-
-

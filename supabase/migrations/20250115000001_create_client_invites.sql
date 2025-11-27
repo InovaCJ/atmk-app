@@ -30,19 +30,23 @@ CREATE INDEX idx_client_invites_status ON client_invites(status);
 -- Add RLS policies for client_invites
 ALTER TABLE client_invites ENABLE ROW LEVEL SECURITY;
 
+-- Grants
+GRANT SELECT, INSERT, UPDATE, DELETE ON client_invites TO authenticated;
+GRANT ALL ON client_invites TO service_role;
+
 -- Policy: Users can view invites for clients they are members of
 CREATE POLICY "Users can view invites for their clients" ON client_invites
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM client_members 
-      WHERE client_members.client_id = client_invites.client_id 
-      AND client_members.user_id = auth.uid()
-    )
+    client_id IN (SELECT get_owned_clients())
+    OR
+    client_id IN (SELECT get_member_client_ids())
   );
 
 -- Policy: Only client admins can create invites
 CREATE POLICY "Only client admins can create invites" ON client_invites
   FOR INSERT WITH CHECK (
+    client_id IN (SELECT get_owned_clients())
+    OR
     EXISTS (
       SELECT 1 FROM client_members 
       WHERE client_members.client_id = client_invites.client_id 
@@ -54,6 +58,8 @@ CREATE POLICY "Only client admins can create invites" ON client_invites
 -- Policy: Only client admins can update invites
 CREATE POLICY "Only client admins can update invites" ON client_invites
   FOR UPDATE USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
     EXISTS (
       SELECT 1 FROM client_members 
       WHERE client_members.client_id = client_invites.client_id 
@@ -65,6 +71,8 @@ CREATE POLICY "Only client admins can update invites" ON client_invites
 -- Policy: Only client admins can delete invites
 CREATE POLICY "Only client admins can delete invites" ON client_invites
   FOR DELETE USING (
+    client_id IN (SELECT get_owned_clients())
+    OR
     EXISTS (
       SELECT 1 FROM client_members 
       WHERE client_members.client_id = client_invites.client_id 
