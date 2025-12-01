@@ -3,11 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { 
-  TrendingUp, 
-  FileText, 
-  Mail, 
-  Share2, 
+import {
+  TrendingUp,
+  FileText,
+  Mail,
+  Share2,
   Calendar,
   ChevronRight,
   Sparkles,
@@ -31,6 +31,9 @@ import { useClientKnowledgeValidation } from "@/hooks/useClientKnowledgeValidati
 import { useClientStatus } from "@/hooks/useClientStatus";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { useFeaturedTopics } from "@/hooks/useFeaturedTopics";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePostV1ApiIngestNews } from "@/http/generated";
+
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,30 +48,38 @@ export default function Dashboard() {
   const { status: firstClientStatus } = useClientStatus(firstClientId || '', false);
   const hasSearchAutomation = !!firstClientStatus?.hasSearchAutomation;
   const hasNewsSources = !!firstClientStatus?.hasNewsSources;
-  const { topics: featuredTopics } = useFeaturedTopics(firstClientId || '', 7, 8);
+  const { topics: featuredTopics, refreshFeaturedTopics } = useFeaturedTopics(selectedClientId || '', 7, 8);
+  const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
+  const { session } = useAuth();
+  const { mutateAsync: ingestNews } = usePostV1ApiIngestNews({
+    client: {
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    },
+  });
+
   const handleRefreshFeed = async () => {
-    if (!firstClientId) return;
+    setIsRefreshingFeed(true);
     try {
       toast({ title: "Atualizando feed...", description: "Buscando itens das fontes." });
-      const { data, error } = await supabase.functions.invoke('ingest-news', {
-        body: { clientId: firstClientId, days: 7 }
-      });
-      if (data && Array.isArray(data.validation) && data.validation.length > 0) {
-        const invalid = data.validation.filter((v: any) => !v.isRss || v.itemsFound === 0);
-        if (invalid.length > 0) {
-          toast({
-            title: "Validação de fontes",
-            description: `${invalid.length} fonte(s) sem RSS válido ou sem itens recentes.`
-          });
+
+      await ingestNews({
+        data: {
+          clientId: selectedClientId || '',
         }
-      }
-      if (error) throw error;
-      toast({ title: "Feed atualizado", description: "Atualize a página para ver novos itens." });
+      });
+
+      refreshFeaturedTopics();
+      toast({ title: "Feed atualizado", description: "Os novos itens foram adicionados ao feed." });
+
     } catch (e: any) {
       toast({ title: "Erro ao atualizar feed", description: e?.message || 'Falha ao invocar ingest-news', variant: 'destructive' });
+    } finally {
+      setIsRefreshingFeed(false);
     }
   };
-  
+
 
   // Dados vazios para novos usuários - serão carregados do Supabase quando implementado
   const opportunities: any[] = [];
@@ -146,7 +157,7 @@ export default function Dashboard() {
   }
 
   // Cálculo de progresso e próximo passo (mantendo regras atuais)
-  const hasCompany = clients.length > 0;
+  const hasCompany = clients?.length > 0;
   const hasConfiguredInfo = !!firstClientId; // mesma regra atual
   const automationConfigured = hasSearchAutomation;
   const canCreateFirstContent = hasCompany && canGenerateFromKnowledge;
@@ -162,15 +173,15 @@ export default function Dashboard() {
 
   const nextStep = !hasCompany
     ? {
-        id: 1,
-        title: "Criar uma Empresa",
-        description:
-          "Configure sua primeira empresa para começar a gerar conteúdos personalizados.",
-        ctaLabel: "Criar Empresa",
-        onClick: () => navigate('/clients')
-      }
+      id: 1,
+      title: "Criar uma Empresa",
+      description:
+        "Configure sua primeira empresa para começar a gerar conteúdos personalizados.",
+      ctaLabel: "Criar Empresa",
+      onClick: () => navigate('/clients')
+    }
     : !hasConfiguredInfo
-    ? {
+      ? {
         id: 2,
         title: "Configurar Informações",
         description:
@@ -179,36 +190,36 @@ export default function Dashboard() {
         onClick: () =>
           firstClientId ? navigate(`/clients/${firstClientId}?tab=knowledge`) : navigate('/clients')
       }
-    : !hasNewsSources
-    ? {
-        id: 3,
-        title: "Fontes de Notícias",
-        description:
-          "Conecte fontes confiáveis para sugerir temas relevantes e atualizados.",
-        ctaLabel: "Configurar Fontes",
-        onClick: () =>
-          firstClientId ? navigate(`/clients/${firstClientId}?tab=news`) : navigate('/clients')
-      }
-    : !automationConfigured
-    ? {
-        id: 4,
-        title: "Automação de Busca",
-        description:
-          "Habilite a automação para buscar temas relevantes automaticamente.",
-        ctaLabel: "Configurar Automação",
-        onClick: () =>
-          firstClientId ? navigate(`/clients/${firstClientId}?tab=integrations`) : navigate('/clients')
-      }
-    : !canCreateFirstContent
-    ? {
-        id: 5,
-        title: "Criar Primeiro Conteúdo",
-        description:
-          "Conclua as etapas anteriores para liberar a geração do primeiro conteúdo.",
-        ctaLabel: "Gerar Conteúdo",
-        onClick: () => navigate('/library')
-      }
-    : undefined;
+      : !hasNewsSources
+        ? {
+          id: 3,
+          title: "Fontes de Notícias",
+          description:
+            "Conecte fontes confiáveis para sugerir temas relevantes e atualizados.",
+          ctaLabel: "Configurar Fontes",
+          onClick: () =>
+            firstClientId ? navigate(`/clients/${firstClientId}?tab=news`) : navigate('/clients')
+        }
+        : !automationConfigured
+          ? {
+            id: 4,
+            title: "Automação de Busca",
+            description:
+              "Habilite a automação para buscar temas relevantes automaticamente.",
+            ctaLabel: "Configurar Automação",
+            onClick: () =>
+              firstClientId ? navigate(`/clients/${firstClientId}?tab=integrations`) : navigate('/clients')
+          }
+          : !canCreateFirstContent
+            ? {
+              id: 5,
+              title: "Criar Primeiro Conteúdo",
+              description:
+                "Conclua as etapas anteriores para liberar a geração do primeiro conteúdo.",
+              ctaLabel: "Gerar Conteúdo",
+              onClick: () => navigate('/library')
+            }
+            : undefined;
 
   return (
     <div className="p-6 space-y-6">
@@ -223,11 +234,10 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
-          <Card 
-            key={index} 
-            className={`bg-gradient-to-br from-card to-card/50 border shadow-card ${
-              stat.onClick ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''
-            }`}
+          <Card
+            key={index}
+            className={`bg-gradient-to-br from-card to-card/50 border shadow-card ${stat.onClick ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''
+              }`}
             onClick={stat.onClick}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -249,13 +259,13 @@ export default function Dashboard() {
       {/* Featured Topics */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Temas em Destaque</h2>
-          <Button size="sm" variant="outline" onClick={handleRefreshFeed}>Atualizar feed agora</Button>
+          <h2 className="text-xl font-semibold">Tags em Destaque</h2>
+          <Button size="sm" variant="outline" onClick={handleRefreshFeed} disabled={isRefreshingFeed || !selectedClientId}>Atualizar feed agora</Button>
         </div>
         {renderFeaturedTopics()}
       </div>
 
-      
+
 
       {/* Content Generation Modal - Available for all users */}
       <ContentGenerationModal

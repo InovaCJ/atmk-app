@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ClientMember, CreateClientMemberRequest } from '@/types/clients';
+import { useClients } from './useClients';
 
 export function useClientMembers(clientId: string) {
   const [members, setMembers] = useState<ClientMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { hasClients } = useClients();
   const { user } = useAuth();
 
   const fetchMembers = async () => {
@@ -15,6 +17,10 @@ export function useClientMembers(clientId: string) {
     try {
       setLoading(true);
       setError(null);
+      if (!hasClients) {
+        console.log('skipping fetchMembers, clients not loaded yet');
+        return;
+      }
 
       // Primeiro, tentar buscar sem join para verificar se a tabela existe
       const { data: membersData, error: membersError } = await supabase
@@ -36,7 +42,7 @@ export function useClientMembers(clientId: string) {
       // Se temos membros, tentar buscar os dados dos usuários
       if (membersData && membersData.length > 0) {
         const userIds = membersData.map(member => member.user_id);
-        
+
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, user_id, full_name, email, avatar_url')
@@ -94,6 +100,11 @@ export function useClientMembers(clientId: string) {
     if (!user || !clientId) throw new Error('Dados insuficientes');
 
     try {
+      if (!hasClients) {
+        console.log('Clients not loaded yet');
+        throw new Error('Clientes não carregados ainda');
+      }
+
       // First, find user by email
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -156,8 +167,8 @@ export function useClientMembers(clientId: string) {
 
       if (error) throw error;
 
-      setMembers(prev => 
-        prev.map(member => 
+      setMembers(prev =>
+        prev.map(member =>
           member.id === memberId ? { ...member, ...data } : member
         )
       );
@@ -171,6 +182,10 @@ export function useClientMembers(clientId: string) {
 
   const removeMember = async (memberId: string) => {
     try {
+      if (!hasClients) {
+        console.log('Clients not loaded yet');
+        throw new Error('Clientes não carregados ainda');
+      }
       const { error } = await supabase
         .from('client_members')
         .delete()
@@ -189,6 +204,11 @@ export function useClientMembers(clientId: string) {
     if (!user || !clientId) throw new Error('Dados insuficientes');
 
     try {
+      if (!hasClients) {
+        console.log('Clients not loaded yet');
+        throw new Error('Clientes não carregados ainda');
+      }
+
       // First, verify current user is admin
       const currentMember = members.find(m => m.user_id === user.id);
       if (!currentMember || currentMember.role !== 'client_admin') {
@@ -223,7 +243,7 @@ export function useClientMembers(clientId: string) {
       if (demoteError) throw demoteError;
 
       // Update local state
-      setMembers(prev => 
+      setMembers(prev =>
         prev.map(member => {
           if (member.id === memberId) {
             return { ...member, ...updatedMember };

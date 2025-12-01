@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,92 +7,143 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, Globe, Newspaper, Play, Save, Sparkles, StopCircle, Workflow } from "lucide-react";
+import { Clock, Globe, Newspaper, Play, Save, Sparkles, StopCircle, Workflow, Loader2, Trash2, Copy, CheckSquare } from "lucide-react";
 import { useClientContext } from "@/contexts/ClientContext";
 import { useNewsSources } from "@/hooks/useNewsSources";
 import { useFeaturedTopics } from "@/hooks/useFeaturedTopics";
-
-type TriggerType = "news_sources" | "web_search";
-type Frequency = "daily" | "weekly" | "biweekly" | "monthly";
-type Category = "post" | "carousel" | "scriptShort" | "scriptYoutube" | "blog" | "email";
+import { useAutomations } from "@/hooks/useAutomations";
+import { AutomationCategory, AutomationFrequency, AutomationTriggerType, AutomationStatus } from "@/types/automation";
+import { toast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
 
 export default function AutomationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-  const runNow = new URLSearchParams(location.search).get("run") === "now";
   const { selectedClientId } = useClientContext();
-
+  
   const { newsSources } = useNewsSources(selectedClientId || "");
   const { topics } = useFeaturedTopics(selectedClientId || "", 14, 12);
+  const { getAutomation, createAutomation, updateAutomation, deleteAutomation } = useAutomations(selectedClientId);
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Form State
   const [name, setName] = useState("Nova automação");
-  const [trigger, setTrigger] = useState<TriggerType>("news_sources");
+  const [trigger, setTrigger] = useState<AutomationTriggerType>("news_sources");
   const [objective, setObjective] = useState("");
-  const [category, setCategory] = useState<Category>("post");
-  const [frequency, setFrequency] = useState<Frequency>("weekly");
+  const [category, setCategory] = useState<AutomationCategory>("post");
+  const [frequency, setFrequency] = useState<AutomationFrequency>("weekly");
+  
+  // Encerramento / Limites
   const [endAfterRuns, setEndAfterRuns] = useState<string>("12");
-  const [neverEnds, setNeverEnds] = useState<boolean>(false);
-  const [status, setStatus] = useState<"draft" | "active" | "paused">("draft");
+  const [neverEnds, setNeverEnds] = useState<boolean>(true);
+  
+  // Quantidade por execução
+  const [generationsPerRun, setGenerationsPerRun] = useState<string>("1");
 
-  useEffect(() => {
-    if (id === "new") {
-      setStatus("draft");
-    }
-  }, [id]);
+  const [status, setStatus] = useState<AutomationStatus>("draft");
 
+  // Load existing data
   useEffect(() => {
-    if (runNow) {
-      // Placeholder: apenas valida inputs por enquanto
-      // Integração real virá na task específica
-    }
-  }, [runNow]);
+    const loadData = async () => {
+      if (id && id !== "new") {
+        setIsLoading(true);
+        const automation = await getAutomation(id);
+        if (automation) {
+          setName(automation.name);
+          setTrigger(automation.trigger_type);
+          setObjective(automation.objective || "");
+          setCategory(automation.category);
+          setFrequency(automation.frequency);
+          setStatus(automation.status);
+          
+          if (automation.end_after_runs) {
+            setEndAfterRuns(automation.end_after_runs.toString());
+            setNeverEnds(false);
+          } else {
+            setNeverEnds(true);
+          }
+
+          if (automation.generations_per_run) {
+            setGenerationsPerRun(automation.generations_per_run.toString());
+          }
+        } else {
+          toast({ title: "Automação não encontrada", variant: "destructive" });
+          navigate("/automations");
+        }
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, [id, selectedClientId]); 
 
   const canSave = useMemo(() => !!name.trim() && !!objective.trim() && !!selectedClientId, [name, objective, selectedClientId]);
 
-  const persistAutomation = (payload: any) => {
-    try {
-      const key = "atmk_automations";
-      const raw = localStorage.getItem(key);
-      const current = raw ? JSON.parse(raw) : [];
-      const idx = current.findIndex((a: any) => a.id === payload.id);
-      if (idx >= 0) current[idx] = payload; else current.unshift(payload);
-      localStorage.setItem(key, JSON.stringify(current));
-    } catch {}
-  };
-
-  const handleSave = (newStatus?: "draft" | "active" | "paused") => {
+  const handleSave = async (newStatus?: AutomationStatus) => {
     if (!canSave) return;
-    const isNew = id === "new";
+    setIsSaving(true);
+
     const payload = {
-      id: isNew ? `auto_${Date.now()}` : id,
       name,
-      trigger,
+      trigger_type: trigger,
       objective,
       category,
       frequency,
-      neverEnds,
-      endAfterRuns: neverEnds ? null : Number(endAfterRuns || 0) || 0,
       status: newStatus || status,
-      runs: 0,
-      lastRun: undefined,
+      end_after_runs: neverEnds ? null : (parseInt(endAfterRuns) || null),
+      generations_per_run: parseInt(generationsPerRun) || 1
     };
-    persistAutomation(payload);
-    navigate("/automations");
+
+    try {
+      if (id === "new") {
+        await createAutomation(payload);
+      } else if (id) {
+        await updateAutomation(id, payload);
+      }
+      navigate("/automations");
+    } catch (error) {
+      // Error handled in hook
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const handleDelete = async () => {
+    if (id && id !== "new" && confirm("Tem certeza que deseja excluir esta automação?")) {
+      await deleteAutomation(id);
+      navigate("/automations");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Workflow className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-2xl font-semibold">Construtor de Automação</h1>
+          <h1 className="text-2xl font-semibold">
+            {id === "new" ? "Nova Automação" : "Editar Automação"}
+          </h1>
         </div>
         <div className="flex gap-2">
+          {id !== "new" && (
+            <Button variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleDelete}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
           <Button variant="outline" onClick={() => navigate("/automations")}>Voltar</Button>
-          <Button disabled={!canSave} onClick={() => handleSave("draft")}>
-            <Save className="h-4 w-4 mr-2" />Salvar rascunho
+          <Button disabled={!canSave || isSaving} onClick={() => handleSave()}>
+            {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            <Save className="h-4 w-4 mr-2" />
+            Salvar
           </Button>
         </div>
       </div>
@@ -102,13 +153,25 @@ export default function AutomationBuilder() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
+              <CardTitle>Configurações Básicas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Nome da automação</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Posts semanais sobre IA" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Gatilho</CardTitle>
               <CardDescription>Defina como a automação encontra material para gerar conteúdo</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Tipo de gatilho</Label>
-                <Select value={trigger} onValueChange={(v) => setTrigger(v as TriggerType)}>
+                <Select value={trigger} onValueChange={(v) => setTrigger(v as AutomationTriggerType)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
@@ -124,7 +187,7 @@ export default function AutomationBuilder() {
                   <Label>Fontes disponíveis ({newsSources.length})</Label>
                   <div className="flex flex-wrap gap-2">
                     {newsSources.map((s) => (
-                      <Badge key={s.id} variant="secondary">{s.title || s.url}</Badge>
+                      <Badge key={s.id} variant="secondary">{s.name || s.url}</Badge>
                     ))}
                     {newsSources.length === 0 && (
                       <span className="text-sm text-muted-foreground">Cadastre fontes em Configurações</span>
@@ -160,49 +223,92 @@ export default function AutomationBuilder() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Categoria e frequência</CardTitle>
-              <CardDescription>Escolha o tipo de conteúdo e com que frequência gerar</CardDescription>
+              <CardTitle>Categoria e Frequência</CardTitle>
+              <CardDescription>Defina o que será gerado e quando</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="space-y-6">
+              
+              {/* Row 1: Categoria */}
               <div className="space-y-2">
-                <Label>Categoria</Label>
-                <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <Label>Categoria de Conteúdo</Label>
+                <Select value={category} onValueChange={(v) => setCategory(v as AutomationCategory)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="post">Post social</SelectItem>
                     <SelectItem value="carousel">Carrossel</SelectItem>
-                    <SelectItem value="scriptShort">Roteiro curto</SelectItem>
+                    <SelectItem value="scriptShort">Roteiro curto (Reels/TikTok)</SelectItem>
                     <SelectItem value="scriptYoutube">Roteiro YouTube</SelectItem>
-                    <SelectItem value="blog">Blog</SelectItem>
-                    <SelectItem value="email">E-mail</SelectItem>
+                    <SelectItem value="blog">Artigo de Blog</SelectItem>
+                    <SelectItem value="email">E-mail Marketing</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Frequência</Label>
-                <Select value={frequency} onValueChange={(v) => setFrequency(v as Frequency)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Diária</SelectItem>
-                    <SelectItem value="weekly">Semanal</SelectItem>
-                    <SelectItem value="biweekly">Quinzenal</SelectItem>
-                    <SelectItem value="monthly">Mensal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Encerramento</Label>
-                <div className="flex items-center gap-2">
-                  <input id="neverEnds" type="checkbox" checked={neverEnds} onChange={(e) => setNeverEnds(e.target.checked)} />
-                  <Label htmlFor="neverEnds">Nunca encerrar</Label>
+
+              {/* Row 2: Frequência + Encerramento */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Frequência</Label>
+                  <Select value={frequency} onValueChange={(v) => setFrequency(v as AutomationFrequency)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Diária</SelectItem>
+                      <SelectItem value="weekly">Semanal</SelectItem>
+                      <SelectItem value="biweekly">Quinzenal</SelectItem>
+                      <SelectItem value="monthly">Mensal</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                {!neverEnds && (
-                  <>
-                    <Input type="number" min={1} value={endAfterRuns} onChange={(e) => setEndAfterRuns(e.target.value)} />
-                    <p className="text-xs text-muted-foreground">Encerrar após N execuções</p>
-                  </>
-                )}
+
+                <div className="space-y-3 rounded-lg border p-3 bg-muted/10">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="neverEnds" className="cursor-pointer">Execução contínua</Label>
+                    <Switch 
+                      id="neverEnds" 
+                      checked={neverEnds}
+                      onCheckedChange={setNeverEnds}
+                    />
+                  </div>
+                  {!neverEnds && (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">Encerrar após</span>
+                      <Input 
+                        type="number" 
+                        min={1} 
+                        className="h-8"
+                        value={endAfterRuns} 
+                        onChange={(e) => setEndAfterRuns(e.target.value)} 
+                      />
+                      <span className="text-sm text-muted-foreground">execuções</span>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Row 3: Quantidade de conteúdos */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Conteúdos por execução</Label>
+                  <Badge variant="outline" className="font-normal">Máx: 5</Badge>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Input 
+                    type="number" 
+                    min={1} 
+                    max={5}
+                    value={generationsPerRun} 
+                    onChange={(e) => setGenerationsPerRun(e.target.value)}
+                    className="max-w-[120px]" 
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Quantos itens serão gerados a cada vez que a automação rodar.
+                  </p>
+                </div>
+              </div>
+
             </CardContent>
           </Card>
         </div>
@@ -232,14 +338,17 @@ export default function AutomationBuilder() {
                   <div className="text-sm text-muted-foreground">Objetivo</div>
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    <span>{objective || "(não definido)"}</span>
+                    <span className="line-clamp-1">{objective || "(não definido)"}</span>
                   </div>
                 </div>
                 <Separator />
                 <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">Categoria</div>
+                  <div className="text-sm text-muted-foreground">Ação</div>
                   <div className="flex items-center gap-2">
-                    <Badge>{category}</Badge>
+                    <Copy className="h-4 w-4" />
+                    <span>
+                      Gerar <strong>{generationsPerRun}</strong> {category === "scriptShort" ? "roteiro(s)" : category + "(s)"}
+                    </span>
                   </div>
                 </div>
                 <Separator />
@@ -251,6 +360,12 @@ export default function AutomationBuilder() {
                       {frequency === "daily" ? "Diária" : frequency === "weekly" ? "Semanal" : frequency === "biweekly" ? "Quinzenal" : "Mensal"}
                     </span>
                   </div>
+                  {!neverEnds && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                      <CheckSquare className="h-3 w-3" />
+                      <span>Até {endAfterRuns} execuções</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -263,9 +378,23 @@ export default function AutomationBuilder() {
             </CardHeader>
             <CardContent className="flex gap-2">
               {status === "active" ? (
-                <Button variant="outline" onClick={() => { setStatus("paused"); handleSave("paused"); }}><StopCircle className="h-4 w-4 mr-2" />Pausar</Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => { setStatus("paused"); handleSave("paused"); }}
+                  disabled={isSaving}
+                  className="w-full"
+                >
+                  <StopCircle className="h-4 w-4 mr-2" />Pausar
+                </Button>
               ) : (
-                <Button onClick={() => { setStatus("active"); handleSave("active"); }}><Play className="h-4 w-4 mr-2" />Ativar</Button>
+                <Button 
+                  onClick={() => { setStatus("active"); handleSave("active"); }}
+                  disabled={isSaving || !canSave}
+                  className="w-full"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  {status === "paused" ? "Retomar" : "Ativar"}
+                </Button>
               )}
             </CardContent>
           </Card>
@@ -274,5 +403,3 @@ export default function AutomationBuilder() {
     </div>
   );
 }
-
-

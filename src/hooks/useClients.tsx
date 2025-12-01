@@ -23,7 +23,6 @@ export function useClients() {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('created_by', user.id) // Apenas clientes do usuário atual
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -83,8 +82,8 @@ export function useClients() {
 
       if (error) throw error;
 
-      setClients(prev => 
-        prev.map(client => 
+      setClients(prev =>
+        prev.map(client =>
           client.id === clientId ? { ...client, ...data } : client
         )
       );
@@ -181,6 +180,7 @@ export function useClients() {
   }, [user]);
 
   return {
+    hasClients: clients?.length > 0,
     clients,
     loading,
     error,

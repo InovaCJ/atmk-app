@@ -19,7 +19,7 @@ export function useNewsSources(clientId: string) {
   const [newsSources, setNewsSources] = useState<NewsSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const fetchNewsSources = async () => {
     if (!clientId || !user) {
@@ -92,7 +92,7 @@ export function useNewsSources(clientId: string) {
 
       if (error) throw error;
 
-      setNewsSources(prev => 
+      setNewsSources(prev =>
         prev.map(source => source.id === id ? data : source)
       );
       return data;
@@ -123,6 +123,27 @@ export function useNewsSources(clientId: string) {
     }
   };
 
+  const triggerIngestion = async () => {
+    if (!clientId || !user || !session?.access_token) {
+      throw new Error('Cliente, usuário ou sessão não encontrados');
+    }
+
+    // Criar um cliente Supabase autenticado com o token atual da sessão
+    // const supabaseAuthenticatedClient = createSupabaseClient(session.access_token);
+
+    // const { error } = await supabaseAuthenticatedClient.functions.invoke('ingest-news', {
+    //   body: { clientId },
+    // });
+
+    const response = await fetch("http://localhost:3333/v1/api/ingest-news");
+
+    const { error, ...data } = await response.json()
+
+    if (error) {
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchNewsSources();
   }, [clientId, user]);
@@ -134,6 +155,7 @@ export function useNewsSources(clientId: string) {
     addNewsSource,
     updateNewsSource,
     deleteNewsSource,
+    triggerIngestion,
     refetch: fetchNewsSources
   };
 }

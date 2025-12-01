@@ -6,10 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/components/ui/use-toast";
@@ -21,6 +20,8 @@ import type { ChatKitOptions } from "@openai/chatkit";
 import { AIChatKit } from "@/components/AIChatKit";
 import { chatKitOptions as defaultChatKitOptions } from "@/lib/chatkit-options";
 import { localDemoAdapter } from "@/lib/chat-adapter";
+import { usePostV1ApiGenerateContent, PostV1ApiGenerateContentMutationRequestTypeEnumKey, SourceTypeEnumKey } from "@/http/generated";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Categorias únicas (sem subtipos)
 type Category = "post" | "carousel" | "scriptShort" | "scriptYoutube" | "blog" | "email";
@@ -43,6 +44,9 @@ function mapCategoryToBackend(category: Category): "social" | "video" | "blog" |
 
 function buildDocFromResponse(contentType: string, data: any): string {
   // Converte a resposta da função em HTML simples para o editor
+  toast({ title: "Debug", description: `Ajustar o prompt para devolver o formato desejado` });
+  return data;
+
   try {
     if (contentType === "blog" && data?.content) {
       return `<h1>${data.title || "Artigo"}</h1>\n<div>${(data.content as string).replace(/\n/g, "<br/>")}</div>`;
@@ -59,7 +63,7 @@ function buildDocFromResponse(contentType: string, data: any): string {
     if (contentType === "video") {
       return `<h2>${data?.title || "Roteiro de Vídeo"}</h2><div>${(data?.content || "").toString().replace(/\n/g, "<br/>")}</div>`;
     }
-  } catch {}
+  } catch { }
   return typeof data === "string" ? `<div>${data}</div>` : `<div>Conteúdo gerado.</div>`;
 }
 
@@ -75,10 +79,20 @@ export default function ContentCreate() {
   const [objective, setObjective] = useState<string>("");
   const [useKnowledge, setUseKnowledge] = useState<boolean>(true);
   const [category, setCategory] = useState<Category | "">("");
+  const { session } = useAuth();
+  const [inputType, setInputType] = useState("text");
+  const { mutateAsync: generateContent } = usePostV1ApiGenerateContent({
+    client: {
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    },
+  });
   // Sem subtipo: todas as postagens são híbridas
 
   // Carregar itens de notícia recentes
   const { items: newsItems, loading: newsLoading } = useNewsFeed({ clientId: selectedClientId || "", days: 7, pageSize: 50 });
+
 
   // Editor
   const [html, setHtml] = useState<string>("");
@@ -161,20 +175,37 @@ export default function ContentCreate() {
     try {
       setIsGenerating(true);
       const backendType = mapCategoryToBackend(category as Category);
-      const { generateContentWithAI } = await import("@/utils/contentGeneration");
-      const result = await generateContentWithAI({
-        opportunityId: "onboarding-generated",
-        contentType: backendType,
-        companyId: selectedClientId as string,
-      } as any);
 
-      const htmlDoc = buildDocFromResponse(backendType, result);
+      const result = await generateContent({
+        data: {
+          type: category as PostV1ApiGenerateContentMutationRequestTypeEnumKey,
+          source: inputType === "text" ? undefined : {
+            type: inputType as SourceTypeEnumKey,
+            resource: inputType === "feed" ? newsId : sourceUrl.trim(),
+          },
+          useKnowledgeBase: useKnowledge,
+          objective: objective.trim(),
+          context: contextText.trim(),
+        }
+      });
+
+      const htmlDoc = buildDocFromResponse(backendType, result.text);
+      console.log({ result, htmlDoc });
+
+      // Update DOM directly (this is the source of truth for contentEditable)
+      if (editorRef.current) {
+        editorRef.current.innerHTML = htmlDoc;
+        editorRef.current.focus();
+      }
+
+      // Then sync state to match DOM
       setHtml(htmlDoc);
-      // escreve dentro do editor
-      if (editorRef.current) editorRef.current.innerHTML = htmlDoc;
+
+      console.log({ htmlDoc, editor: editorRef.current?.innerHTML });
       toast({ title: "Conteúdo gerado!", description: "Ajuste o texto ao lado direito e exporte quando quiser." });
     } catch (e: any) {
-      toast({ title: "Erro ao gerar", description: e?.message || "Falha inesperada", variant: "destructive" });
+      const errorMessage = e.response?.data?.error?.message || e.message || "Erro desconhecido";
+      toast({ title: "Erro ao gerar", description: errorMessage, variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
@@ -185,7 +216,7 @@ export default function ContentCreate() {
       const text = editorRef.current?.innerText || "";
       await navigator.clipboard.writeText(text);
       toast({ title: "Copiado", description: "Conteúdo copiado para a área de transferência." });
-    } catch {}
+    } catch { }
   };
 
   const downloadTxt = () => {
@@ -273,6 +304,12 @@ export default function ContentCreate() {
     setPromptText("");
   };
 
+  const INPUT_TYPE_OPTIONS = [
+    { value: "text", label: "Texto" },
+    { value: "url", label: "URL" },
+    { value: "feed", label: "Feed de notícias" },
+  ];
+
   const chatKitOptions: ChatKitOptions = defaultChatKitOptions;
 
   return (
@@ -283,43 +320,68 @@ export default function ContentCreate() {
             <CardContent className="space-y-6 p-4 md:p-6">
               <div className="space-y-2">
                 <Label>Fonte do tema</Label>
+                <div className="space-y-2">
+                  <Select value={inputType}
+                    onValueChange={setInputType}>
+                    <SelectTrigger className="text-left">
+                      <SelectValue placeholder="Selecione a fonte do tema" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INPUT_TYPE_OPTIONS.map((opt) => (
+                        <SelectItem
+                          key={opt.value}
+                          value={opt.value}
+                        >
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-1 gap-3">
                   <div className="flex items-center gap-2">
-                    <Newspaper className="h-4 w-4" />
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full justify-between">
-                          {newsId ? (newsItems.find((n) => n.id === newsId)?.title || "Notícia selecionada") : "Selecionar notícia do feed"}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-[360px] max-w-[90vw] max-h-[360px] overflow-auto">
-                        <DropdownMenuLabel>Últimas notícias</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {newsLoading && <div className="px-3 py-2 text-sm text-muted-foreground">Carregando...</div>}
-                        {!newsLoading && newsItems.length === 0 && (
-                          <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum item recente</div>
-                        )}
-                        {!newsLoading && newsItems.map((n) => (
-                          <DropdownMenuCheckboxItem
-                            key={n.id}
-                            checked={newsId === n.id}
-                            onCheckedChange={() => setNewsId(n.id)}
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-medium line-clamp-1">{n.title}</span>
-                              <span className="text-xs text-muted-foreground line-clamp-1">{n.url}</span>
-                            </div>
-                          </DropdownMenuCheckboxItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {
+                      inputType === "feed" && <>
+                        <Newspaper className="h-4 w-4" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full justify-between">
+                              {newsId ? (newsItems.find((n) => n.id === newsId)?.title || "Notícia selecionada") : "Selecionar notícia do feed"}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-[360px] max-w-[90vw] max-h-[360px] overflow-auto">
+                            <DropdownMenuLabel>Últimas notícias</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {newsLoading && <div className="px-3 py-2 text-sm text-muted-foreground">Carregando...</div>}
+                            {!newsLoading && newsItems.length === 0 && (
+                              <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum item recente</div>
+                            )}
+                            {!newsLoading && newsItems.map((n) => (
+                              <DropdownMenuCheckboxItem
+                                key={n.id}
+                                checked={newsId === n.id}
+                                onCheckedChange={() => setNewsId(n.id)}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium line-clamp-1">{n.title}</span>
+                                  <span className="text-xs text-muted-foreground line-clamp-1">{n?.news_sources?.name}</span>
+                                </div>
+                              </DropdownMenuCheckboxItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu></>
+                    }
                   </div>
-                  <div className="flex items-center gap-2">
-                    <LinkIcon className="h-4 w-4" />
-                    <Input placeholder="Ou cole a URL da notícia" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} />
-                  </div>
+                  {
+                    inputType === "url" && <>
+                      <div className="flex items-center gap-2">
+                        <LinkIcon className="h-4 w-4" />
+                        <Input placeholder="Ou cole a URL da notícia" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} />
+                      </div>
+                    </>
+                  }
                 </div>
-                <p className="text-xs text-muted-foreground">Se não escolher uma notícia, descreva o tema abaixo.</p>
+                <p className="text-xs text-muted-foreground">Se não escolher uma fonte, descreva o tema abaixo.</p>
               </div>
 
               <div className="space-y-2">
@@ -381,86 +443,86 @@ export default function ContentCreate() {
         <ResizablePanel defaultSize={60} minSize={45} maxSize={75}>
           <Card className="h-full rounded-none border-0">
             <CardContent className="p-4 md:p-6">
-              {isGenerating ? (
-                <div className="py-16"><LoadingScreen /></div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="rounded-lg border overflow-hidden">
-                    <div className="flex items-center gap-1 border-b bg-muted/30 px-2 py-2">
-                      <Button variant="ghost" size="icon" onClick={() => exec("bold")}><Bold className="h-4 w-4"/></Button>
-                      <Button variant="ghost" size="icon" onClick={() => exec("italic")}><Italic className="h-4 w-4"/></Button>
-                      <Button variant="ghost" size="icon" onClick={() => exec("underline")}><Underline className="h-4 w-4"/></Button>
-                      <Button variant="ghost" size="icon" onClick={() => exec("strikeThrough")}><Strikethrough className="h-4 w-4"/></Button>
-                      <Separator orientation="vertical" className="mx-1 h-5"/>
-                      <Button variant="ghost" size="icon" onClick={applyLink}><LinkIcon className="h-4 w-4"/></Button>
-                      <Button variant="ghost" size="icon" onClick={() => exec("insertUnorderedList")}><List className="h-4 w-4"/></Button>
-                      <Button variant="ghost" size="icon" onClick={() => exec("insertOrderedList")}><ListOrdered className="h-4 w-4"/></Button>
-                      <Separator orientation="vertical" className="mx-1 h-5"/>
-                      <Button variant="ghost" size="icon" onClick={() => exec("formatBlock", "h1")}><Heading1 className="h-4 w-4"/></Button>
-                      <Button variant="ghost" size="icon" onClick={() => exec("formatBlock", "h2")}><Heading2 className="h-4 w-4"/></Button>
-                      <Button variant="ghost" size="icon" onClick={() => exec("formatBlock", "blockquote")}><Quote className="h-4 w-4"/></Button>
-                      {/* Removido botão de bloco de código por enquanto */}
-                      <Separator orientation="vertical" className="mx-1 h-5"/>
+              {isGenerating && <div className="py-16"><LoadingScreen estimatedTime={60} /></div>}
+              <div className={`space-y-3 transition-opacity duration-200 ${isGenerating ? 'pointer-events-none opacity-50' : ''}`} aria-busy={isGenerating}>
+
+                {/* <div className={`space-y-3 ${isGenerating ? 'hidden' : ''} `} > */}
+                <div className="rounded-lg border overflow-hidden">
+                  <div className="flex items-center gap-1 border-b bg-muted/30 px-2 py-2">
+                    <Button variant="ghost" size="icon" onClick={() => exec("bold")}><Bold className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => exec("italic")}><Italic className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => exec("underline")}><Underline className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => exec("strikeThrough")}><Strikethrough className="h-4 w-4" /></Button>
+                    <Separator orientation="vertical" className="mx-1 h-5" />
+                    <Button variant="ghost" size="icon" onClick={applyLink}><LinkIcon className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => exec("insertUnorderedList")}><List className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => exec("insertOrderedList")}><ListOrdered className="h-4 w-4" /></Button>
+                    <Separator orientation="vertical" className="mx-1 h-5" />
+                    <Button variant="ghost" size="icon" onClick={() => exec("formatBlock", "h1")}><Heading1 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => exec("formatBlock", "h2")}><Heading2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => exec("formatBlock", "blockquote")}><Quote className="h-4 w-4" /></Button>
+                    {/* Removido botão de bloco de código por enquanto */}
+                    <Separator orientation="vertical" className="mx-1 h-5" />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-48">
+                        <div className="px-2 py-1.5">
+                          <div className="text-xs text-muted-foreground mb-1">Cor personalizada (HEX)</div>
+                          <div className="flex items-center gap-2">
+                            <Input value={customColor} onChange={(e) => setCustomColor(e.target.value)} placeholder="#000000" className="h-8" />
+                            <Button size="sm" variant="outline" onClick={() => { const v = customColor.trim(); if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v)) exec("foreColor", v); }}>
+                              OK
+                            </Button>
+                          </div>
+                        </div>
+                        <DropdownMenuSeparator />
+                        {(["#111827", "#1f2937", "#dc2626", "#16a34a", "#2563eb", "#6b21a8", "#ca8a04"]).map((c) => (
+                          <DropdownMenuCheckboxItem key={c} checked={false} onCheckedChange={() => exec("foreColor", c)}>
+                            <span className="inline-block h-3 w-3 rounded-full mr-2" style={{ backgroundColor: c }} /> {c}
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <div
+                    ref={editorRef}
+                    className="min-h-[300px] md:min-h-[420px] w-full p-2 md:p-3 focus:outline-none prose prose-stone max-w-full text-[15px]"
+                    contentEditable
+                    suppressContentEditableWarning
+                    data-placeholder="Edite aqui. Você também pode gerar conteúdo à esquerda e ajustar neste editor."
+                    onInput={(e) => { setHtml((e.target as HTMLDivElement).innerHTML); saveSelection(); }}
+                    onMouseUp={saveSelection}
+                    onKeyUp={saveSelection}
+                  />
+
+                  <div className="flex items-center justify-between border-t px-2 py-2 text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => exec("undo")}><Undo2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => exec("redo")}><Redo2 className="h-4 w-4" /></Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" onClick={copyToClipboard}><Scissors className="h-4 w-4 mr-2" />Copiar</Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon"><Palette className="h-4 w-4"/></Button>
+                          <Button variant="ghost"><Download className="h-4 w-4 mr-2" />Baixar</Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-48">
-                          <div className="px-2 py-1.5">
-                            <div className="text-xs text-muted-foreground mb-1">Cor personalizada (HEX)</div>
-                            <div className="flex items-center gap-2">
-                              <Input value={customColor} onChange={(e) => setCustomColor(e.target.value)} placeholder="#000000" className="h-8" />
-                              <Button size="sm" variant="outline" onClick={() => { const v = customColor.trim(); if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v)) exec("foreColor", v); }}>
-                                OK
-                              </Button>
-                            </div>
-                          </div>
+                        <DropdownMenuContent>
+                          <DropdownMenuLabel>Formatos</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          {(["#111827", "#1f2937", "#dc2626", "#16a34a", "#2563eb", "#6b21a8", "#ca8a04"]).map((c) => (
-                            <DropdownMenuCheckboxItem key={c} checked={false} onCheckedChange={() => exec("foreColor", c)}>
-                              <span className="inline-block h-3 w-3 rounded-full mr-2" style={{ backgroundColor: c }} /> {c}
-                            </DropdownMenuCheckboxItem>
-                          ))}
+                          <DropdownMenuCheckboxItem checked={false} onCheckedChange={downloadTxt}>TXT</DropdownMenuCheckboxItem>
+                          <DropdownMenuCheckboxItem checked={false} onCheckedChange={downloadDoc}>DOC</DropdownMenuCheckboxItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-
-                    <div
-                      ref={editorRef}
-                      className="min-h-[300px] md:min-h-[420px] w-full p-2 md:p-3 focus:outline-none prose prose-stone max-w-full text-[15px]"
-                      contentEditable
-                      suppressContentEditableWarning
-                      data-placeholder="Edite aqui. Você também pode gerar conteúdo à esquerda e ajustar neste editor."
-                      onInput={(e) => { setHtml((e.target as HTMLDivElement).innerHTML); saveSelection(); }}
-                      onMouseUp={saveSelection}
-                      onKeyUp={saveSelection}
-                    />
-
-                    <div className="flex items-center justify-between border-t px-2 py-2 text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => exec("undo")}><Undo2 className="h-4 w-4"/></Button>
-                        <Button variant="ghost" size="icon" onClick={() => exec("redo")}><Redo2 className="h-4 w-4"/></Button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" onClick={copyToClipboard}><Scissors className="h-4 w-4 mr-2"/>Copiar</Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost"><Download className="h-4 w-4 mr-2"/>Baixar</Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuLabel>Formatos</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuCheckboxItem checked={false} onCheckedChange={downloadTxt}>TXT</DropdownMenuCheckboxItem>
-                            <DropdownMenuCheckboxItem checked={false} onCheckedChange={downloadDoc}>DOC</DropdownMenuCheckboxItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
                   </div>
-
-                  <AIChatKit options={chatKitOptions} onSendFallback={(t) => { setPromptText(t); handlePromptSend(); }} />
                 </div>
-              )}
+
+                <AIChatKit options={chatKitOptions} onSendFallback={(t) => { setPromptText(t); handlePromptSend(); }} />
+              </div>
+
             </CardContent>
           </Card>
         </ResizablePanel>

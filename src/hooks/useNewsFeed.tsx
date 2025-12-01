@@ -50,7 +50,12 @@ export function useNewsFeed(params: UseNewsFeedParams) {
       try {
         let query = supabase
           .from('news_items')
-          .select('*', { count: 'exact' })
+          .select(`
+          *,
+          news_sources:source_id (
+            name
+          )
+          `, { count: 'exact' })
           .eq('client_id', clientId)
           .gte('published_at', sinceIso)
           .order('published_at', { ascending: false });

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useClients } from './useClients';
 
 interface KnowledgeItem {
   id: string;
@@ -20,6 +21,7 @@ export const useKnowledgeBase = (companyId?: string) => {
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { hasClients } = useClients();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -41,10 +43,15 @@ export const useKnowledgeBase = (companyId?: string) => {
 
     try {
       setLoading(true);
+      if (!hasClients) {
+        console.log('Skipping fetchKnowledgeItems, clients not loaded yet');
+        return;
+      }
+
       const { data, error } = await supabase
-        .from('knowledge_base')
+        .from('knowledge_bases')
         .select('*')
-        .eq('company_id', companyId)
+        .eq('client_id', companyId)
         .order('updated_at', { ascending: false });
 
       if (error) {
@@ -121,7 +128,7 @@ export const useKnowledgeBase = (companyId?: string) => {
 
       // Update local state
       if (existingId) {
-        setItems(prev => prev.map(item => 
+        setItems(prev => prev.map(item =>
           item.id === existingId ? data : item
         ));
         toast({
