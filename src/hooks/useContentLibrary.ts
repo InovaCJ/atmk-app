@@ -8,13 +8,13 @@ export interface ContentItem {
   user_id: string;
   title: string;
   content: string;
-  category: "post" | "carousel" | "scriptShort" | "scriptYoutube" | "blog" | "email"
+  category: "post" | "carousel" | "scriptShort" | "scriptYoutube" | "blog" | "email";
+  type: string;
   status: 'draft' | 'scheduled' | 'published' | 'failed';
   // ai_model?: string;
   created_at: string;
   updated_at: string;
-  // hashtags?: string[];
-  // media_urls?: string[];
+  media_urls?: string[];
   // platform?: string[];
   // scheduled_for?: string;
 }

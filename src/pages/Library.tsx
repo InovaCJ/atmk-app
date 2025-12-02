@@ -20,12 +20,15 @@ import {
   Copy,
   Search,
   Sparkles,
-  Calendar,
   Edit2,
   Images,
   Trash2,
-  Folder,
-  Mic
+  Bot,
+  User,
+  Layers,
+  FileEdit,
+  Video,
+  Youtube
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -100,7 +103,7 @@ const EmptyState = ({ type, title, description, icon }: {
 
 export default function Library() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [modeTab, setModeTab] = useState("todos"); // todos | rascunho | publicado
+  const [generationType, setGenerationType] = useState("all"); // all | manual | automatic
   const [categoryFilter, setCategoryFilter] = useState("todos");
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -126,48 +129,38 @@ export default function Library() {
       const matchesSearch = content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         content.content.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesMode = modeTab === "todos" ? true : content.status === modeTab;
+      // Filter by generation type (manual vs automatic)
+      // Note: Adjust 'manual' string if your backend uses a different value like 'created' or null
+      const typeValue = content.type || 'manual';
+      const matchesType = generationType === "all" ? true : typeValue === generationType;
 
       // Map backend types to filter categories if needed
       // Backend types: post, story, reel, article, newsletter
       const matchesCategory = categoryFilter === "todos" ? true : content.category === categoryFilter;
-
-      return matchesSearch && matchesMode && matchesCategory;
+      return matchesSearch && matchesType && matchesCategory;
     });
-  }, [contents, searchTerm, modeTab, categoryFilter]);
+  }, [contents, searchTerm, generationType, categoryFilter]);
+
+  const contentCategories = {
+    email: { label: "Email", icon: Mail },
+    blog: { label: "Artigo", icon: FileText },
+    carousel: { label: "Carrossel", icon: Images },
+    post: { label: "Post", icon: FileEdit },
+    scriptShort: { label: "Reel/Story", icon: Video },
+    scriptYoutube: { label: "YouTube", icon: Youtube },
+  };
 
   const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "blog": return <FileText className="h-4 w-4" />;
-      case "newsletter": return <Mail className="h-4 w-4" />;
-      case "post": return <Share2 className="h-4 w-4" />;
-      case "story": return <Images className="h-4 w-4" />;
-      case "reel": return <Mic className="h-4 w-4" />;
-      default: return <FileText className="h-4 w-4" />;
-    }
+    const Icon =
+      contentCategories[type as keyof typeof contentCategories]?.icon ||
+      FileText;
+
+    return <Icon className="h-4 w-4" />;
   };
+
 
   const getTypeLabel = (type: string) => {
-    switch (type) {
-      case "blog": return "Artigo";
-      case "email": return "Email";
-      case "newsletter": return "Newsletter";
-      case "social": return "Post";
-      case "story": return "Story";
-      case "scriptShort": return "Reel/Vídeo";
-      case "scriptYoutube": return "Youtube";
-      default: return type;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "published": return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Publicado</Badge>;
-      case "draft": return <Badge variant="secondary">Rascunho</Badge>;
-      case "scheduled": return <Badge variant="outline" className="border-blue-200 text-blue-700">Agendado</Badge>;
-      case "failed": return <Badge variant="destructive">Falhou</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
-    }
+    return (contentCategories[type as keyof typeof contentCategories])?.label || type;
   };
 
   const handleCopy = (text: string, type: string) => {
@@ -301,12 +294,21 @@ export default function Library() {
           />
         </div>
 
-        <Tabs value={modeTab} onValueChange={setModeTab}>
+        <Tabs value={generationType} onValueChange={setGenerationType}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <TabsList>
-              <TabsTrigger value="todos">Todos</TabsTrigger>
-              <TabsTrigger value="draft">Rascunhos</TabsTrigger>
-              <TabsTrigger value="published">Publicados</TabsTrigger>
+              <TabsTrigger value="all" className="flex gap-2">
+                <Layers className="h-4 w-4" />
+                Todos
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="flex gap-2">
+                <User className="h-4 w-4" />
+                Manual
+              </TabsTrigger>
+              <TabsTrigger value="automatic" className="flex gap-2">
+                <Sparkles className="h-4 w-4" />
+                Automático
+              </TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Tipo:</span>
@@ -316,11 +318,9 @@ export default function Library() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="article">Artigo</SelectItem>
-                  <SelectItem value="post">Post Social</SelectItem>
-                  <SelectItem value="newsletter">Newsletter</SelectItem>
-                  <SelectItem value="story">Story</SelectItem>
-                  <SelectItem value="reel">Reel/Vídeo</SelectItem>
+                  {Object.entries(contentCategories).map(([key, { label }]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -353,7 +353,6 @@ export default function Library() {
                     <h3 className="font-semibold line-clamp-2 min-h-[44px]">{content.title}</h3>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{new Date(content.created_at).toLocaleDateString()}</span>
-                      {getStatusBadge(content.status)}
                     </div>
                     {/* <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
                       {content.ai_model && (
@@ -371,9 +370,12 @@ export default function Library() {
             <div className="mt-8">
               <EmptyState
                 type="todos"
-                title="Nenhum conteúdo encontrado"
-                description="Tente ajustar sua busca ou gerar novos conteúdos"
-                icon={<FileText className="h-16 w-16" />}
+                title={`Nenhum conteúdo ${generationType === 'manual' ? 'manual' : 'automático'} encontrado`}
+                description={generationType === 'manual'
+                  ? "Gere novos conteúdos manualmente na tela de criação."
+                  : "Configure automações para gerar conteúdo automaticamente."
+                }
+                icon={generationType === 'manual' ? <User className="h-16 w-16" /> : <Bot className="h-16 w-16" />}
               />
             </div>
           )}
@@ -389,7 +391,6 @@ export default function Library() {
               {selectedContent?.title}
             </SheetTitle>
             <SheetDescription className="text-base flex gap-2 items-center">
-              {selectedContent?.status && getStatusBadge(selectedContent.status)}
               <span>Criado em {selectedContent?.created_at ? new Date(selectedContent.created_at).toLocaleString() : ''}</span>
             </SheetDescription>
           </SheetHeader>
@@ -402,13 +403,10 @@ export default function Library() {
                     {getTypeIcon(selectedContent.category)}
                     {getTypeLabel(selectedContent.category)}
                   </Badge>
-                  {/* {selectedContent.hashtags && selectedContent.hashtags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {selectedContent.hashtags.map((tag, i) => (
-                        <Badge key={i} variant="secondary">#{tag}</Badge>
-                      ))}
-                    </div>
-                  )} */}
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    {selectedContent.type === 'automatic' ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
+                    {selectedContent.type === 'automatic' ? 'Automático' : 'Manual'}
+                  </Badge>
                 </div>
 
                 {/* Exibição genérica baseada no conteúdo */}

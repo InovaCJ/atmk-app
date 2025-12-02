@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AutomationRun } from '@/types/automation';
 
-export function useAutomationRuns(clientId: string | null) {
+export function useAutomationRuns(clientId: string | null, limit: number = 20) {
   const [runs, setRuns] = useState<AutomationRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,12 +29,12 @@ export function useAutomationRuns(clientId: string | null) {
             category
           )
         `)
-        .eq('client_id', clientId)
+        // .eq('client_id', clientId)
         .order('started_at', { ascending: false })
-        .limit(20);
+        .limit(limit);
 
       if (error) throw error;
-      
+
       // Cast the response to match our interface, handling potential nulls from join
       const formattedRuns: AutomationRun[] = (data || []).map((item: any) => ({
         ...item,
@@ -54,7 +54,7 @@ export function useAutomationRuns(clientId: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [user, clientId]);
+  }, [user, clientId, limit]);
 
   useEffect(() => {
     fetchRuns();
