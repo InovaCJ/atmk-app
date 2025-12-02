@@ -15,7 +15,7 @@ import { toast } from "@/components/ui/use-toast";
 import { useClientContext } from "@/contexts/ClientContext";
 import { useNewsFeed } from "@/hooks/useNewsFeed";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { Download, Scissors, Sparkles, Link as LinkIcon, Newspaper, Globe, CheckCircle2, Settings2, Wand2, Heading1, Heading2, Bold, Italic, Underline, List, ListOrdered, Undo2, Redo2, Palette, Strikethrough, Quote, Paperclip, Send } from "lucide-react";
+import { Download, Scissors, Sparkles, Link as LinkIcon, Newspaper, Globe, CheckCircle2, Settings2, Wand2, Heading1, Heading2, Bold, Italic, Underline, List, ListOrdered, Undo2, Redo2, Palette, Strikethrough, Quote, Paperclip, Send, Search } from "lucide-react";
 import type { ChatKitOptions } from "@openai/chatkit";
 import { AIChatKit } from "@/components/AIChatKit";
 import { chatKitOptions as defaultChatKitOptions } from "@/lib/chatkit-options";
@@ -43,28 +43,72 @@ function mapCategoryToBackend(category: Category): "social" | "video" | "blog" |
 }
 
 function buildDocFromResponse(contentType: string, data: any): string {
-  // Converte a resposta da função em HTML simples para o editor
-  toast({ title: "Debug", description: `Ajustar o prompt para devolver o formato desejado` });
-  return data;
+  // Função auxiliar para converter quebras de linha em <br />
+  const convertNewlinesToBr = (text: string): string => {
+    if (!text) return "";
+    // Verifica se o texto já contém HTML
+    const hasHtml = /<[a-z][\s\S]*>/i.test(text);
+    
+    if (hasHtml) {
+      // Se já tem HTML, apenas converte quebras de linha que não estão dentro de tags
+      // Usa uma abordagem mais simples: substitui \n por <br /> diretamente
+      return text.replace(/\n/g, "<br />");
+    } else {
+      // Se não tem HTML, escapa caracteres especiais e converte quebras de linha
+      const escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      return escaped.replace(/\n/g, "<br />");
+    }
+  };
+
+  // Se data é uma string simples, converte quebras de linha e retorna
+  if (typeof data === "string") {
+    return `<div>${convertNewlinesToBr(data)}</div>`;
+  }
 
   try {
     if (contentType === "blog" && data?.content) {
-      return `<h1>${data.title || "Artigo"}</h1>\n<div>${(data.content as string).replace(/\n/g, "<br/>")}</div>`;
+      const content = typeof data.content === "string" 
+        ? convertNewlinesToBr(data.content)
+        : data.content;
+      return `<h1>${data.title || "Artigo"}</h1><div>${content}</div>`;
     }
     if (contentType === "email" && data?.content) {
-      return `<h1>${data.title || data.subject || "E-mail"}</h1>\n<div>${data.content}</div>`;
+      const content = typeof data.content === "string"
+        ? convertNewlinesToBr(data.content)
+        : data.content;
+      return `<h1>${data.title || data.subject || "E-mail"}</h1><div>${content}</div>`;
     }
     if (contentType === "social") {
-      const body = [data?.content, (data?.hashtags || [])?.join(" "), data?.cta]
+      const content = typeof data.content === "string"
+        ? convertNewlinesToBr(data.content)
+        : data.content || "";
+      const hashtags = data?.hashtags ? (Array.isArray(data.hashtags) ? data.hashtags.join(" ") : data.hashtags) : "";
+      const cta = typeof data.cta === "string" ? convertNewlinesToBr(data.cta) : data.cta || "";
+      const body = [content, hashtags, cta]
         .filter(Boolean)
         .join("<br/><br/>");
       return `<h2>${data?.title || "Post para redes sociais"}</h2><div>${body}</div>`;
     }
     if (contentType === "video") {
-      return `<h2>${data?.title || "Roteiro de Vídeo"}</h2><div>${(data?.content || "").toString().replace(/\n/g, "<br/>")}</div>`;
+      const content = typeof data.content === "string"
+        ? convertNewlinesToBr(data.content)
+        : (data.content || "").toString();
+      return `<h2>${data?.title || "Roteiro de Vídeo"}</h2><div>${content}</div>`;
     }
-  } catch { }
-  return typeof data === "string" ? `<div>${data}</div>` : `<div>Conteúdo gerado.</div>`;
+  } catch (error) {
+    console.error("Erro ao processar resposta:", error);
+  }
+  
+  // Fallback: se for objeto, tenta converter para string
+  if (typeof data === "object" && data !== null) {
+    const contentStr = data.content || data.text || JSON.stringify(data, null, 2);
+    return `<div>${convertNewlinesToBr(String(contentStr))}</div>`;
+  }
+  
+  return `<div>${convertNewlinesToBr(String(data || "Conteúdo gerado."))}</div>`;
 }
 
 export default function ContentCreate() {
@@ -81,6 +125,9 @@ export default function ContentCreate() {
   const [category, setCategory] = useState<Category | "">("");
   const { session } = useAuth();
   const [inputType, setInputType] = useState("text");
+  const [newsSearchTerm, setNewsSearchTerm] = useState<string>("");
+  const newsDropdownTriggerRef = useRef<HTMLDivElement>(null);
+  const [dropdownWidth, setDropdownWidth] = useState<number | undefined>(undefined);
   const { mutateAsync: generateContent } = usePostV1ApiGenerateContent({
     client: {
       headers: {
@@ -92,6 +139,16 @@ export default function ContentCreate() {
 
   // Carregar itens de notícia recentes
   const { items: newsItems, loading: newsLoading } = useNewsFeed({ clientId: selectedClientId || "", days: 7, pageSize: 50 });
+
+  // Filtrar notícias baseado no termo de busca
+  const filteredNewsItems = useMemo(() => {
+    if (!newsSearchTerm.trim()) return newsItems;
+    const searchLower = newsSearchTerm.toLowerCase();
+    return newsItems.filter((n) => 
+      n.title?.toLowerCase().includes(searchLower) ||
+      n?.news_sources?.name?.toLowerCase().includes(searchLower)
+    );
+  }, [newsItems, newsSearchTerm]);
 
 
   // Editor
@@ -343,33 +400,70 @@ export default function ContentCreate() {
                     {
                       inputType === "feed" && <>
                         <Newspaper className="h-4 w-4" />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full justify-between">
-                              {newsId ? (newsItems.find((n) => n.id === newsId)?.title || "Notícia selecionada") : "Selecionar notícia do feed"}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="w-[360px] max-w-[90vw] max-h-[360px] overflow-auto">
-                            <DropdownMenuLabel>Últimas notícias</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {newsLoading && <div className="px-3 py-2 text-sm text-muted-foreground">Carregando...</div>}
-                            {!newsLoading && newsItems.length === 0 && (
-                              <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum item recente</div>
-                            )}
-                            {!newsLoading && newsItems.map((n) => (
-                              <DropdownMenuCheckboxItem
-                                key={n.id}
-                                checked={newsId === n.id}
-                                onCheckedChange={() => setNewsId(n.id)}
+                        <div ref={newsDropdownTriggerRef} className="flex-1">
+                          <DropdownMenu 
+                            onOpenChange={(open) => {
+                              if (open && newsDropdownTriggerRef.current) {
+                                setDropdownWidth(newsDropdownTriggerRef.current.offsetWidth);
+                              }
+                              if (!open) {
+                                setNewsSearchTerm("");
+                              }
+                            }}
+                          >
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                className="w-full justify-between min-w-0 overflow-hidden whitespace-normal [&>span]:truncate [&>span]:block"
                               >
-                                <div className="flex flex-col">
-                                  <span className="font-medium line-clamp-1">{n.title}</span>
-                                  <span className="text-xs text-muted-foreground line-clamp-1">{n?.news_sources?.name}</span>
+                                <span className="text-left flex-1 min-w-0 mr-2 overflow-hidden text-ellipsis whitespace-nowrap">
+                                  {newsId ? (newsItems.find((n) => n.id === newsId)?.title || "Notícia selecionada") : "Selecionar notícia do feed"}
+                                </span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent 
+                              className="max-h-[360px] overflow-hidden flex flex-col"
+                              style={{ width: dropdownWidth ? `${dropdownWidth}px` : undefined }}
+                              align="start"
+                            >
+                            <div className="p-2 border-b">
+                              <div className="relative">
+                                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  placeholder="Buscar notícias..."
+                                  value={newsSearchTerm}
+                                  onChange={(e) => setNewsSearchTerm(e.target.value)}
+                                  className="pl-8 h-9"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                            </div>
+                            <div className="overflow-y-auto flex-1">
+                              <DropdownMenuLabel className="px-2">Últimas notícias</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {newsLoading && <div className="px-3 py-2 text-sm text-muted-foreground">Carregando...</div>}
+                              {!newsLoading && filteredNewsItems.length === 0 && (
+                                <div className="px-3 py-2 text-sm text-muted-foreground">
+                                  {newsSearchTerm ? "Nenhuma notícia encontrada" : "Nenhum item recente"}
                                 </div>
-                              </DropdownMenuCheckboxItem>
-                            ))}
+                              )}
+                              {!newsLoading && filteredNewsItems.map((n) => (
+                                <DropdownMenuCheckboxItem
+                                  key={n.id}
+                                  checked={newsId === n.id}
+                                  onCheckedChange={() => setNewsId(n.id)}
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="font-medium line-clamp-1">{n.title}</span>
+                                    <span className="text-xs text-muted-foreground line-clamp-1">{n?.news_sources?.name}</span>
+                                  </div>
+                                </DropdownMenuCheckboxItem>
+                              ))}
+                            </div>
                           </DropdownMenuContent>
-                        </DropdownMenu></>
+                        </DropdownMenu>
+                        </div></>
                     }
                   </div>
                   {
@@ -489,7 +583,7 @@ export default function ContentCreate() {
 
                   <div
                     ref={editorRef}
-                    className="min-h-[300px] md:min-h-[420px] w-full p-2 md:p-3 focus:outline-none prose prose-stone max-w-full text-[15px]"
+                    className="min-h-[300px] md:min-h-[420px] w-full p-2 md:p-3 focus:outline-none prose prose-stone max-w-full text-[15px] whitespace-pre-wrap"
                     contentEditable
                     suppressContentEditableWarning
                     data-placeholder="Edite aqui. Você também pode gerar conteúdo à esquerda e ajustar neste editor."
