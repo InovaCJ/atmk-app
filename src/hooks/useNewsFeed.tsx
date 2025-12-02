@@ -57,8 +57,8 @@ export function useNewsFeed(params: UseNewsFeedParams) {
           )
           `, { count: 'exact' })
           .eq('client_id', clientId)
-          .gte('published_at', sinceIso)
-          .order('published_at', { ascending: false });
+          .gte('created_at', sinceIso)
+          .order('created_at', { ascending: false });
 
         if (!includeInactive) {
           query = query.eq('is_active', true);
@@ -81,6 +81,7 @@ export function useNewsFeed(params: UseNewsFeedParams) {
         const from = (page - 1) * pageSize;
         const to = from + pageSize - 1;
         const { data, error, count } = await query.range(from, to);
+
         if (error) {
           // Tolerar primeiro boot sem tabela no remoto (404) ou relação ausente
           const msg = String(error.message || '');

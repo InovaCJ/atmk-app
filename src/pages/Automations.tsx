@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Clock, Plus, Sparkles, Workflow, Loader2 } from "lucide-react";
+import { Calendar, Clock, Plus, Sparkles, Workflow, Loader2, ArrowRight } from "lucide-react";
 import { useClientContext } from "@/contexts/ClientContext";
 import { useAutomations } from "@/hooks/useAutomations";
 import { AutomationHistoryTable } from "@/components/AutomationHistoryTable";
@@ -146,7 +146,15 @@ export default function Automations() {
           )}
 
           {/* History Table Section */}
-          <AutomationHistoryTable clientId={selectedClientId} />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Últimas Execuções</h2>
+              <Button variant="ghost" className="text-sm" onClick={() => navigate("/automations/runs")}>
+                Ver histórico completo <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+            <AutomationHistoryTable clientId={selectedClientId} />
+          </div>
         </div>
       )}
     </div>

@@ -18,6 +18,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import ContentCreate from "./pages/ContentCreate";
 import Automations from "./pages/Automations";
 import AutomationBuilder from "./pages/AutomationBuilder";
+import AutomationRuns from "./pages/AutomationRuns";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="content/create" element={<ContentCreate />} />
                 <Route path="library" element={<Library />} />
                 <Route path="automations" element={<Automations />} />
+                <Route path="automations/runs" element={<AutomationRuns />} />
                 <Route path="automations/:id" element={<AutomationBuilder />} />
                 <Route path="clients" element={<Clients />} />
                 <Route path="clients/:clientId" element={<ClientDetail />} />

@@ -15,14 +15,16 @@ import { useAutomations } from "@/hooks/useAutomations";
 import { AutomationCategory, AutomationFrequency, AutomationTriggerType, AutomationStatus } from "@/types/automation";
 import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { useSearchIntegrations } from "@/hooks/useSearchIntegrations";
 
 export default function AutomationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { selectedClientId } = useClientContext();
-  
+
   const { newsSources } = useNewsSources(selectedClientId || "");
-  const { topics } = useFeaturedTopics(selectedClientId || "", 14, 12);
+  const { searchTerms } = useSearchIntegrations(selectedClientId || "");
+
   const { getAutomation, createAutomation, updateAutomation, deleteAutomation } = useAutomations(selectedClientId);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -34,11 +36,11 @@ export default function AutomationBuilder() {
   const [objective, setObjective] = useState("");
   const [category, setCategory] = useState<AutomationCategory>("post");
   const [frequency, setFrequency] = useState<AutomationFrequency>("weekly");
-  
+
   // Encerramento / Limites
   const [endAfterRuns, setEndAfterRuns] = useState<string>("12");
   const [neverEnds, setNeverEnds] = useState<boolean>(true);
-  
+
   // Quantidade por execução
   const [generationsPerRun, setGenerationsPerRun] = useState<string>("1");
 
@@ -57,7 +59,7 @@ export default function AutomationBuilder() {
           setCategory(automation.category);
           setFrequency(automation.frequency);
           setStatus(automation.status);
-          
+
           if (automation.end_after_runs) {
             setEndAfterRuns(automation.end_after_runs.toString());
             setNeverEnds(false);
@@ -76,7 +78,7 @@ export default function AutomationBuilder() {
       }
     };
     loadData();
-  }, [id, selectedClientId]); 
+  }, [id, selectedClientId]);
 
   const canSave = useMemo(() => !!name.trim() && !!objective.trim() && !!selectedClientId, [name, objective, selectedClientId]);
 
@@ -196,12 +198,12 @@ export default function AutomationBuilder() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Label>Temas recentes</Label>
+                  <Label>Termos de busca</Label>
                   <div className="flex flex-wrap gap-2">
-                    {topics.map((t) => (
+                    {searchTerms.filter(t => t.term.trim() !== "").map((t) => (
                       <Badge key={t.term} variant="secondary">{t.term}</Badge>
                     ))}
-                    {topics.length === 0 && (
+                    {searchTerms.filter(t => t.term.trim() !== "").length === 0 && (
                       <span className="text-sm text-muted-foreground">Adicione termos em Configurações</span>
                     )}
                   </div>
@@ -227,7 +229,7 @@ export default function AutomationBuilder() {
               <CardDescription>Defina o que será gerado e quando</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              
+
               {/* Row 1: Categoria */}
               <div className="space-y-2">
                 <Label>Categoria de Conteúdo</Label>
@@ -266,8 +268,8 @@ export default function AutomationBuilder() {
                 <div className="space-y-3 rounded-lg border p-3 bg-muted/10">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="neverEnds" className="cursor-pointer">Execução contínua</Label>
-                    <Switch 
-                      id="neverEnds" 
+                    <Switch
+                      id="neverEnds"
                       checked={neverEnds}
                       onCheckedChange={setNeverEnds}
                     />
@@ -275,12 +277,12 @@ export default function AutomationBuilder() {
                   {!neverEnds && (
                     <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
                       <span className="text-sm text-muted-foreground whitespace-nowrap">Encerrar após</span>
-                      <Input 
-                        type="number" 
-                        min={1} 
+                      <Input
+                        type="number"
+                        min={1}
                         className="h-8"
-                        value={endAfterRuns} 
-                        onChange={(e) => setEndAfterRuns(e.target.value)} 
+                        value={endAfterRuns}
+                        onChange={(e) => setEndAfterRuns(e.target.value)}
                       />
                       <span className="text-sm text-muted-foreground">execuções</span>
                     </div>
@@ -295,13 +297,13 @@ export default function AutomationBuilder() {
                   <Badge variant="outline" className="font-normal">Máx: 5</Badge>
                 </div>
                 <div className="flex items-center gap-4">
-                  <Input 
-                    type="number" 
-                    min={1} 
+                  <Input
+                    type="number"
+                    min={1}
                     max={5}
-                    value={generationsPerRun} 
+                    value={generationsPerRun}
                     onChange={(e) => setGenerationsPerRun(e.target.value)}
-                    className="max-w-[120px]" 
+                    className="max-w-[120px]"
                   />
                   <p className="text-sm text-muted-foreground">
                     Quantos itens serão gerados a cada vez que a automação rodar.
@@ -378,8 +380,8 @@ export default function AutomationBuilder() {
             </CardHeader>
             <CardContent className="flex gap-2">
               {status === "active" ? (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => { setStatus("paused"); handleSave("paused"); }}
                   disabled={isSaving}
                   className="w-full"
@@ -387,7 +389,7 @@ export default function AutomationBuilder() {
                   <StopCircle className="h-4 w-4 mr-2" />Pausar
                 </Button>
               ) : (
-                <Button 
+                <Button
                   onClick={() => { setStatus("active"); handleSave("active"); }}
                   disabled={isSaving || !canSave}
                   className="w-full"
