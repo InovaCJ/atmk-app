@@ -243,7 +243,7 @@ export default function Dashboard() {
     ? {
       id: 1,
       title: "Criar uma Empresa",
-      description: "Configure sua primeira empresa para começar a gerar conteúdos personalizados.",
+      description: "Crie e configure um cliente para começar a gerar conteúdos personalizados.",
       ctaLabel: "Criar Empresa",
       onClick: () => navigate('/clients')
     }
@@ -319,7 +319,8 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 w-full md:w-auto">
             <Newspaper className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Feed de Notícias & Oportunidades</h2>
+            <h2 className="text-xl font-semibold">Temas para gerar conteúdo
+            </h2>
           </div>
 
           <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
