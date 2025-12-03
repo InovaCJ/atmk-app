@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
+import { usePostHog } from '@posthog/react';
 
 const Auth = () => {
   // Login states
@@ -15,7 +16,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // Signup states
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
@@ -23,7 +24,8 @@ const Auth = () => {
   const [signupPassword, setSignupPassword] = useState('');
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [isSignupLoading, setIsSignupLoading] = useState(false);
-  
+
+  const posthog = usePostHog();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -35,7 +37,7 @@ const Auth = () => {
         navigate('/');
       }
     };
-    
+
     checkUser();
   }, [navigate]);
 
@@ -51,7 +53,7 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-    
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -73,6 +75,10 @@ const Auth = () => {
           });
         }
       } else {
+        posthog?.identify(signupEmail, {
+          email: signupEmail,
+        });
+        posthog?.capture('User Logged In');
         toast({
           title: "Login realizado!",
           description: "Bem-vindo de volta!",
@@ -111,7 +117,7 @@ const Auth = () => {
     }
 
     setIsSignupLoading(true);
-    
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email: signupEmail,
@@ -145,6 +151,10 @@ const Auth = () => {
           });
         }
       } else {
+        posthog?.identify(signupEmail, {
+          email: signupEmail,
+        });
+        posthog?.capture('User Sign Up');
         toast({
           title: "Conta criada com sucesso!",
           description: "Bem-vindo! Você já pode acessar a plataforma.",
@@ -177,7 +187,7 @@ const Auth = () => {
               <TabsTrigger value="login">Entrar</TabsTrigger>
               <TabsTrigger value="signup">Cadastrar</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="login" className="space-y-4 mt-6">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
@@ -223,16 +233,16 @@ const Auth = () => {
                     </Button>
                   </div>
                 </div>
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={isLoading}
                 >
                   {isLoading ? "Entrando..." : "Entrar"}
                 </Button>
               </form>
             </TabsContent>
-            
+
             <TabsContent value="signup" className="space-y-4 mt-6">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
@@ -306,9 +316,9 @@ const Auth = () => {
                     </Button>
                   </div>
                 </div>
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={isSignupLoading}
                 >
                   {isSignupLoading ? "Criando conta..." : "Criar Conta"}
