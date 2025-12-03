@@ -230,7 +230,7 @@ export default function AutomationBuilder() {
             </CardHeader>
             <CardContent className="space-y-6">
 
-              {/* Row 1: Categoria */}
+              {/* Categoria de Conteúdo - Full Width */}
               <div className="space-y-2">
                 <Label>Categoria de Conteúdo</Label>
                 <Select value={category} onValueChange={(v) => setCategory(v as AutomationCategory)}>
@@ -248,8 +248,9 @@ export default function AutomationBuilder() {
                 </Select>
               </div>
 
-              {/* Row 2: Frequência + Encerramento */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Grid: Frequência + Execução Contínua */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Frequência */}
                 <div className="space-y-2">
                   <Label>Frequência</Label>
                   <Select value={frequency} onValueChange={(v) => setFrequency(v as AutomationFrequency)}>
@@ -265,47 +266,53 @@ export default function AutomationBuilder() {
                   </Select>
                 </div>
 
-                <div className="space-y-3 rounded-lg border p-3 bg-muted/10">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="neverEnds" className="cursor-pointer">Execução contínua</Label>
-                    <Switch
-                      id="neverEnds"
-                      checked={neverEnds}
-                      onCheckedChange={setNeverEnds}
-                    />
-                  </div>
-                  {!neverEnds && (
-                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-                      <span className="text-sm text-muted-foreground whitespace-nowrap">Encerrar após</span>
-                      <Input
-                        type="number"
-                        min={1}
-                        className="h-8"
-                        value={endAfterRuns}
-                        onChange={(e) => setEndAfterRuns(e.target.value)}
+                {/* Execução Contínua */}
+                <div className="space-y-2">
+                  <Label>Execução</Label>
+                  <div className="space-y-3 rounded-lg border p-3 bg-muted/10 h-[calc(100%-1.5rem)]">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="neverEnds" className="cursor-pointer text-sm font-normal">
+                        Execução contínua
+                      </Label>
+                      <Switch
+                        id="neverEnds"
+                        checked={neverEnds}
+                        onCheckedChange={setNeverEnds}
                       />
-                      <span className="text-sm text-muted-foreground">execuções</span>
                     </div>
-                  )}
+                    {!neverEnds && (
+                      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">Encerrar após</span>
+                        <Input
+                          type="number"
+                          min={1}
+                          className="h-8 text-sm"
+                          value={endAfterRuns}
+                          onChange={(e) => setEndAfterRuns(e.target.value)}
+                        />
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">exec.</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Row 3: Quantidade de conteúdos */}
-              <div className="space-y-2">
+              {/* Conteúdos por Execução - Full Width */}
+              <div className="space-y-3 rounded-lg border p-4 bg-muted/5">
                 <div className="flex items-center justify-between">
-                  <Label>Conteúdos por execução</Label>
+                  <Label className="text-base">Conteúdos por execução</Label>
                   <Badge variant="outline" className="font-normal">Máx: 5</Badge>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4">
                   <Input
                     type="number"
                     min={1}
                     max={5}
                     value={generationsPerRun}
                     onChange={(e) => setGenerationsPerRun(e.target.value)}
-                    className="max-w-[120px]"
+                    className="max-w-[100px]"
                   />
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground flex-1">
                     Quantos itens serão gerados a cada vez que a automação rodar.
                   </p>
                 </div>

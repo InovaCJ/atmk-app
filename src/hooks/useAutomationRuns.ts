@@ -29,7 +29,7 @@ export function useAutomationRuns(clientId: string | null, limit: number = 20) {
             category
           )
         `)
-        // .eq('client_id', clientId)
+        .eq('client_id', clientId)
         .order('started_at', { ascending: false })
         .limit(limit);
 

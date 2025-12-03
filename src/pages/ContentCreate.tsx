@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { toast } from "@/components/ui/use-toast";
 import { useClientContext } from "@/contexts/ClientContext";
 import { useNewsFeed } from "@/hooks/useNewsFeed";
-import { Sparkles, Link as LinkIcon, Newspaper, Globe, ListRestart } from "lucide-react";
+import { Sparkles, Link as LinkIcon, Newspaper, Globe, ListRestart, Search } from "lucide-react";
 import { usePostV1ApiGenerateContent, PostV1ApiGenerateContentMutationRequestTypeEnumKey, SourceTypeEnumKey } from "@/http/generated";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetV1ApiGeneratedContentGeneratedcontentid } from "@/http/generated/hooks/useGetV1ApiGeneratedContentGeneratedcontentid";
@@ -27,6 +27,7 @@ export default function ContentCreate() {
   const [params, setSearchParams] = useSearchParams();
 
   // Fonte
+  const [newsSearchTerm, setNewsSearchTerm] = useState<string>("");
   const [newsId, setNewsId] = useState<string>("");
   const [sourceUrl, setSourceUrl] = useState<string>("");
   const [contextText, setContextText] = useState<string>("");
@@ -37,6 +38,10 @@ export default function ContentCreate() {
   const [inputType, setInputType] = useState("text");
   const [generatedContentId, setGeneratedContentId] = useState<string | null>(params.get("id"));
   const [isGenerating, setIsGenerating] = useState(false);
+  const newsDropdownTriggerRef = useRef<HTMLDivElement>(null);
+  const [dropdownWidth, setDropdownWidth] = useState<number | undefined>(undefined);
+
+
 
   const { data: content, isLoading: isContentLoading } = useGetV1ApiGeneratedContentGeneratedcontentid(generatedContentId || "", {
     client: {
@@ -56,6 +61,15 @@ export default function ContentCreate() {
 
   // Carregar itens de notícia recentes
   const { items: newsItems, loading: newsLoading } = useNewsFeed({ clientId: selectedClientId || "", days: 7, pageSize: 50 });
+
+  const filteredNewsItems = useMemo(() => {
+    if (!newsSearchTerm.trim()) return newsItems;
+    const searchLower = newsSearchTerm.toLowerCase();
+    return newsItems.filter((n) =>
+      n.title?.toLowerCase().includes(searchLower) ||
+      n?.news_sources?.name?.toLowerCase().includes(searchLower)
+    );
+  }, [newsItems, newsSearchTerm]);
 
   const canGenerate = useMemo(() => {
     const hasSource = Boolean(newsId || sourceUrl.trim());
@@ -121,6 +135,11 @@ export default function ContentCreate() {
   const handleGenerate = async () => {
     if (!canGenerate) {
       toast({ title: "Preencha os campos", description: "Selecione ao menos um formato e informe fonte ou contexto.", variant: "destructive" });
+      return;
+    }
+
+    if (!selectedClientId) {
+      toast({ title: "Cliente não selecionado", description: "Selecione um cliente antes de gerar conteúdo.", variant: "destructive" });
       return;
     }
 
@@ -198,33 +217,70 @@ export default function ContentCreate() {
                     {
                       inputType === "feed" && <>
                         <Newspaper className="h-4 w-4" />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full justify-between" disabled={Boolean(generatedContentId)}>
-                              {newsId ? (newsItems.find((n) => n.id === newsId)?.title || "Notícia selecionada") : "Selecionar notícia do feed"}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="w-[360px] max-w-[90vw] max-h-[360px] overflow-auto" >
-                            <DropdownMenuLabel>Últimas notícias</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {newsLoading && <div className="px-3 py-2 text-sm text-muted-foreground">Carregando...</div>}
-                            {!newsLoading && newsItems.length === 0 && (
-                              <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum item recente</div>
-                            )}
-                            {!newsLoading && newsItems.map((n) => (
-                              <DropdownMenuCheckboxItem
-                                key={n.id}
-                                checked={newsId === n.id}
-                                onCheckedChange={() => setNewsId(n.id)}
+                        <div ref={newsDropdownTriggerRef} className="flex-1">
+                          <DropdownMenu
+                            onOpenChange={(open) => {
+                              if (open && newsDropdownTriggerRef.current) {
+                                setDropdownWidth(newsDropdownTriggerRef.current.offsetWidth);
+                              }
+                              if (!open) {
+                                setNewsSearchTerm("");
+                              }
+                            }}
+                          >
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-between min-w-0 overflow-hidden whitespace-normal [&>span]:truncate [&>span]:block"
                               >
-                                <div className="flex flex-col">
-                                  <span className="font-medium line-clamp-1">{n.title}</span>
-                                  <span className="text-xs text-muted-foreground line-clamp-1">{n?.news_sources?.name}</span>
+                                <span className="text-left flex-1 min-w-0 mr-2 overflow-hidden text-ellipsis whitespace-nowrap">
+                                  {newsId ? (newsItems.find((n) => n.id === newsId)?.title || "Notícia selecionada") : "Selecionar notícia do feed"}
+                                </span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              className="max-h-[360px] overflow-hidden flex flex-col"
+                              style={{ width: dropdownWidth ? `${dropdownWidth}px` : undefined }}
+                              align="start"
+                            >
+                              <div className="p-2 border-b">
+                                <div className="relative">
+                                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    placeholder="Buscar notícias..."
+                                    value={newsSearchTerm}
+                                    onChange={(e) => setNewsSearchTerm(e.target.value)}
+                                    className="pl-8 h-9"
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={(e) => e.stopPropagation()}
+                                  />
                                 </div>
-                              </DropdownMenuCheckboxItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu></>
+                              </div>
+                              <div className="overflow-y-auto flex-1">
+                                <DropdownMenuLabel className="px-2">Últimas notícias</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {newsLoading && <div className="px-3 py-2 text-sm text-muted-foreground">Carregando...</div>}
+                                {!newsLoading && filteredNewsItems.length === 0 && (
+                                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                                    {newsSearchTerm ? "Nenhuma notícia encontrada" : "Nenhum item recente"}
+                                  </div>
+                                )}
+                                {!newsLoading && filteredNewsItems.map((n) => (
+                                  <DropdownMenuCheckboxItem
+                                    key={n.id}
+                                    checked={newsId === n.id}
+                                    onCheckedChange={() => setNewsId(n.id)}
+                                  >
+                                    <div className="flex flex-col">
+                                      <span className="font-medium line-clamp-1">{n.title}</span>
+                                      <span className="text-xs text-muted-foreground line-clamp-1">{n?.news_sources?.name}</span>
+                                    </div>
+                                  </DropdownMenuCheckboxItem>
+                                ))}
+                              </div>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div></>
                     }
                   </div>
                   {
