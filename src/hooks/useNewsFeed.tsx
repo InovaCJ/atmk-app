@@ -1,21 +1,13 @@
 // New hook: useNewsFeed
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 
-export interface NewsItem {
-  id: string;
-  client_id: string;
-  source_id: string;
-  title: string;
-  url: string;
-  published_at: string | null;
-  author?: string | null;
-  summary?: string | null;
-  content?: string | null;
-  topics?: string[];
-  is_active: boolean;
-  created_at: string;
-}
+export type NewsItem = Database['public']['Tables']['news_items']['Row'] & {
+  news_sources: {
+    name: string;
+  } | null;
+};
 
 export interface UseNewsFeedParams {
   clientId: string;

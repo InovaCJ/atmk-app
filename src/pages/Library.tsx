@@ -127,7 +127,7 @@ export default function Library() {
   const filteredContents = useMemo(() => {
     return contents.filter(content => {
       const matchesSearch = content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        content.content.toLowerCase().includes(searchTerm.toLowerCase());
+        content.title.toLowerCase().includes(searchTerm.toLowerCase());
 
       // Filter by generation type (manual vs automatic)
       // Note: Adjust 'manual' string if your backend uses a different value like 'created' or null
@@ -416,21 +416,21 @@ export default function Library() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleCopy(selectedContent.content || "", "Conteúdo")}
+                      onClick={() => handleCopy(selectedContent.text || "", "Conteúdo")}
                     >
                       <Copy className="h-4 w-4 mr-2" />
                       Copiar
                     </Button>
                   </div>
                   {/* Tenta renderizar como HTML se parecer HTML, senão texto puro */}
-                  {selectedContent.content.includes('<') ? (
+                  {selectedContent.title.includes('<') ? (
                     <div
                       className="min-h-[300px] p-4 border rounded-md prose prose-sm max-w-none dark:prose-invert bg-card"
-                      dangerouslySetInnerHTML={{ __html: selectedContent.content }}
+                      dangerouslySetInnerHTML={{ __html: selectedContent.title }}
                     />
                   ) : (
                     <Textarea
-                      value={selectedContent.content}
+                      value={selectedContent.title}
                       readOnly
                       className="min-h-[300px] font-mono text-sm"
                     />
@@ -438,7 +438,7 @@ export default function Library() {
                 </div>
 
                 {/* Metadata específica se houver mídia */}
-                {selectedContent.media_urls && selectedContent.media_urls.length > 0 && (
+                {/* {selectedContent.media_urls && selectedContent.media_urls.length > 0 && (
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Mídia</label>
                     <ImageCarousel
@@ -446,7 +446,7 @@ export default function Library() {
                       title={selectedContent.title}
                     />
                   </div>
-                )}
+                )} */}
 
                 {/* Rating and Feedback */}
                 <ContentFeedback
