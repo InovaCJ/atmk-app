@@ -9,11 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import { usePeriod } from "@/contexts/PeriodContext";
 
 export function Layout() {
   const location = useLocation();
-  const [selectedPeriod, setSelectedPeriod] = useState("30 dias");
+  const { selectedPeriod, setSelectedPeriod } = usePeriod();
   
   const periodOptions = [
     "7 dias",

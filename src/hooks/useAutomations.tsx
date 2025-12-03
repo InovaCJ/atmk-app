@@ -22,7 +22,7 @@ export function useAutomations(clientId: string | null) {
       const { data, error } = await supabase
         .from('automations')
         .select('*')
-        // .eq('client_id', clientId)
+        .eq('client_id', clientId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

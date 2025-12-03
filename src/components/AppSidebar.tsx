@@ -1,16 +1,13 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   BookOpen,
-  Brain,
   Home,
   Settings,
   Sparkles,
-  Star,
   Building2,
-  ChevronDown,
   User,
-  Workflow
+  Workflow,
+  Plus
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,7 +23,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlanModal } from "./PlanModal";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { useClientContext } from "@/contexts/ClientContext";
 
@@ -45,8 +41,8 @@ const managementItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
-  const [showPlanModal, setShowPlanModal] = useState(false);
   const { selectedClient, clients, setSelectedClientId } = useClientContext();
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -75,53 +71,62 @@ export function AppSidebar() {
 
         <SidebarContent>
           {/* Seção do Cliente Selecionado */}
-          {clients.length > 0 && (
-            <SidebarGroup>
-              <SidebarGroupLabel>Cliente Atual</SidebarGroupLabel>
-              <SidebarGroupContent>
-                {clients.length === 1 ? (
-                  // Exibir cliente único
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-sidebar-accent/50">
-                    <User className="h-4 w-4 text-sidebar-accent-foreground" />
-                    <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                      <span className="text-sm font-medium text-sidebar-accent-foreground">
-                        {selectedClient?.name}
-                      </span>
-                      <span className="text-xs text-sidebar-accent-foreground/70">
-                        {selectedClient?.slug}
-                      </span>
-                    </div>
+          <SidebarGroup>
+            <SidebarGroupLabel>Cliente Atual</SidebarGroupLabel>
+            <SidebarGroupContent>
+              {clients.length === 0 ? (
+                <div className="px-2">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start border-dashed text-muted-foreground hover:text-primary hover:border-primary"
+                    onClick={() => navigate('/clients')}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Cadastrar Cliente
+                  </Button>
+                </div>
+              ) : clients.length === 1 ? (
+                // Exibir cliente único
+                <div className="flex items-center gap-2 p-2 rounded-md bg-sidebar-accent/50">
+                  <User className="h-4 w-4 text-sidebar-accent-foreground" />
+                  <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                    <span className="text-sm font-medium text-sidebar-accent-foreground">
+                      {selectedClient?.name}
+                    </span>
+                    <span className="text-xs text-sidebar-accent-foreground/70">
+                      {selectedClient?.slug}
+                    </span>
                   </div>
-                ) : (
-                  // Select para múltiplos clientes
-                  <div className="px-2">
-                    <Select value={selectedClient?.id || ""} onValueChange={handleClientChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione um cliente">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span className="group-data-[collapsible=icon]:hidden">
-                              {selectedClient?.name || "Selecione um cliente"}
-                            </span>
+                </div>
+              ) : (
+                // Select para múltiplos clientes
+                <div className="px-2">
+                  <Select value={selectedClient?.id || ""} onValueChange={handleClientChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione um cliente">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          <span className="group-data-[collapsible=icon]:hidden">
+                            {selectedClient?.name || "Selecione um cliente"}
+                          </span>
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{client.name}</span>
+                            <span className="text-xs text-muted-foreground">{client.slug}</span>
                           </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{client.name}</span>
-                              <span className="text-xs text-muted-foreground">{client.slug}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </SidebarGroupContent>
+          </SidebarGroup>
 
           <SidebarGroup>
             <SidebarGroupLabel>Principal</SidebarGroupLabel>
@@ -162,41 +167,10 @@ export function AppSidebar() {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {/* Upgrade Pro */}
-            <div className="space-y-2 group-data-[collapsible=icon]:hidden">
-              <Button 
-                onClick={() => setShowPlanModal(true)}
-                variant="outline" 
-                className="w-full justify-start bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:bg-primary/10"
-              >
-                <Star className="h-4 w-4 mr-2" />
-                Upgrade Pro
-              </Button>
-              <div className="text-xs text-muted-foreground px-2">
-                <p>Plano Gratuito</p>
-                <p>2/10 teste gratuito</p>
-              </div>
-            </div>
-            <div className="hidden group-data-[collapsible=icon]:block">
-              <Button 
-                onClick={() => setShowPlanModal(true)}
-                variant="outline" 
-                size="icon"
-                className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:bg-primary/10"
-              >
-                <Star className="h-4 w-4" />
-              </Button>
-            </div>
-            
             <UserProfileDropdown />
           </div>
         </SidebarFooter>
       </Sidebar>
-
-      <PlanModal 
-        isOpen={showPlanModal} 
-        onClose={() => setShowPlanModal(false)} 
-      />
     </>
   );
 }

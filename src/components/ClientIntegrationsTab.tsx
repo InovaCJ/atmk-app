@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -15,11 +15,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { useClientContext } from '@/contexts/ClientContext';
 import { useSearchIntegrations } from '@/hooks/useSearchIntegrations';
@@ -60,18 +60,18 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
   const [isSaving, setIsSaving] = useState(false);
   const { canEditClient } = useClientContext();
   const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  const { 
-    integrations, 
-    searchTerms, 
-    searchFrequencies, 
+  const {
+    integrations,
+    searchTerms,
+    searchFrequencies,
     setSearchTerms,
     setSearchFrequencies,
-    loading, 
-    addIntegration, 
-    updateIntegration, 
+    loading,
+    addIntegration,
+    updateIntegration,
     deleteIntegration,
     updateSearchTerms,
-    updateSearchFrequencies 
+    updateSearchFrequencies
   } = useSearchIntegrations(clientId);
 
   // Converter integrações para o formato esperado pelo componente
@@ -229,7 +229,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
   };
 
   const handleUpdateSearchTerm = async (id: string, term: string) => {
-    const updatedTerms = searchTerms.map(st => 
+    const updatedTerms = searchTerms.map(st =>
       st.id === id ? { ...st, term, enabled: term.trim() !== '' } : st
     );
     setSearchTerms(updatedTerms);
@@ -279,7 +279,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
 
   const handleSaveServiceConfig = async () => {
     if (!editingServiceId) return;
-    
+
     setIsSaving(true);
     try {
       await updateIntegration(editingServiceId, {
@@ -288,7 +288,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
       });
 
       toast.success('Configurações salvas com sucesso!');
-      
+
       // Reset form
       setServiceConfig({
         apiKey: '',
@@ -362,16 +362,8 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
         <div>
           <h2 className="text-xl font-semibold">Buscador de Temas</h2>
           <p className="text-muted-foreground">
-            Configure termos de busca e integre serviços externos para monitoramento de temas
+            Configure termos de busca para monitoramento automático de temas
           </p>
-        </div>
-        <div className="flex gap-2">
-          {canEditClient(clientId) && (
-            <Button onClick={() => setIsAddServiceModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Integração
-            </Button>
-          )}
         </div>
       </div>
 
@@ -450,11 +442,11 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
                     <div>
                       <p className="font-medium">{getFrequencyLabel(frequency.frequency)}</p>
                       <p className="text-sm text-muted-foreground">
-                        {frequency.frequency === 'daily' 
+                        {frequency.frequency === 'daily'
                           ? 'Busca automática diária em toda internet'
-                          : frequency.frequency === 'weekly' 
-                          ? 'Busca automática semanal em toda internet'
-                          : 'Busca automática mensal em toda internet'
+                          : frequency.frequency === 'weekly'
+                            ? 'Busca automática semanal em toda internet'
+                            : 'Busca automática mensal em toda internet'
                         }
                       </p>
                     </div>
@@ -462,11 +454,11 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <p className="font-medium text-blue-600">
-                        {frequency.frequency === 'daily' 
+                        {frequency.frequency === 'daily'
                           ? '30x por mês'
-                          : frequency.frequency === 'weekly' 
-                          ? '4x por mês'
-                          : '1x por mês'
+                          : frequency.frequency === 'weekly'
+                            ? '4x por mês'
+                            : '1x por mês'
                         }
                       </p>
                       <p className="text-xs text-muted-foreground">busca automática</p>
@@ -498,13 +490,13 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
                 <span className="font-medium">Frequência Selecionada:</span>
                 <div className="text-right">
                   <span className="text-lg font-bold text-blue-600">
-                    {enabledFrequencies.length > 0 
+                    {enabledFrequencies.length > 0
                       ? getFrequencyLabel(enabledFrequencies[0].frequency)
                       : 'Nenhuma selecionada'
                     }
                   </span>
                   <p className="text-xs text-muted-foreground">
-                    {enabledFrequencies.length > 0 
+                    {enabledFrequencies.length > 0
                       ? 'Busca automática configurada'
                       : 'Configure uma frequência de busca'
                     }
@@ -512,11 +504,11 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
                 </div>
               </div>
             </div>
-            
+
             {/* Botão de Salvar */}
             {canEditClient(clientId) && (
               <div className="flex justify-end pt-4 border-t">
-                <Button 
+                <Button
                   onClick={async () => {
                     try {
                       setIsSaving(true);
@@ -551,140 +543,8 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
         </CardContent>
       </Card>
 
-      {/* Serviços Externos */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ExternalLink className="h-5 w-5" />
-            Serviços Externos
-          </CardTitle>
-          <CardDescription>
-            Integre com SerpAPI, Tavily, Apify, Perplexity e outros buscadores
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Search */}
-          <div className="flex items-center space-x-2 mb-4">
-            <Input
-              placeholder="Buscar serviços..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-
-          {/* Services List */}
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Carregando integrações...</p>
-            </div>
-          ) : filteredServices.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">
-                {searchTerm ? 'Nenhum serviço encontrado' : 'Configure o Buscador de Temas'}
-              </h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                {searchTerm 
-                  ? 'Tente ajustar os termos de busca para encontrar o serviço desejado.'
-                  : 'Configure serviços de busca externos para encontrar temas relevantes automaticamente na internet e sugerir conteúdos personalizados.'
-                }
-              </p>
-              {!searchTerm && canEditClient(clientId) && (
-                <div className="space-y-3">
-                  <Button onClick={() => setIsAddServiceModalOpen(true)} size="lg">
-                    <Plus className="h-5 w-5 mr-2" />
-                    Configurar Primeiro Serviço
-                  </Button>
-                  <p className="text-sm text-muted-foreground">
-                    Recomendamos: SerpAPI, Tavily ou Bing Search API
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredServices.map((service) => (
-                <Card key={service.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Search className="h-4 w-4" />
-                          {service.name}
-                        </CardTitle>
-                        <CardDescription className="flex items-center gap-2">
-                          <Badge variant={getProviderBadge(service.provider)}>
-                            {getProviderLabel(service.provider)}
-                          </Badge>
-                          <Badge variant={service.enabled ? 'default' : 'secondary'}>
-                            {service.enabled ? 'Ativo' : 'Inativo'}
-                          </Badge>
-                          <span className="text-xs">
-                            {service.usageToday}/{service.dailyQuota} usos hoje
-                          </span>
-                        </CardDescription>
-                      </div>
-                      {canEditClient(clientId) && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditService(service.id)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              Ver Documentação
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-destructive"
-                              onClick={() => handleRemoveService(service.id)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Cota diária:</span>
-                        <span className="text-sm font-medium">{service.dailyQuota}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Uso hoje:</span>
-                        <span className="text-sm font-medium">{service.usageToday}</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full transition-all"
-                          style={{ 
-                            width: `${(service.usageToday / service.dailyQuota) * 100}%` 
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Termos Ativos</CardTitle>
@@ -709,29 +569,17 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Serviços Externos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {externalServices.length}
-            </div>
-            <p className="text-xs text-muted-foreground">Integrações configuradas</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Frequência Ativa</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {enabledFrequencies.length > 0 
+              {enabledFrequencies.length > 0
                 ? getFrequencyLabel(enabledFrequencies[0].frequency)
                 : 'Nenhuma'
               }
             </div>
             <p className="text-xs text-muted-foreground">
-              {enabledFrequencies.length > 0 
+              {enabledFrequencies.length > 0
                 ? 'Busca automática ativa'
                 : 'Configure uma frequência'
               }
@@ -739,189 +587,7 @@ export function ClientIntegrationsTab({ clientId }: ClientIntegrationsTabProps) 
           </CardContent>
         </Card>
       </div>
-
-      {/* Modal de Adicionar Serviço */}
-      <Dialog open={isAddServiceModalOpen} onOpenChange={setIsAddServiceModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Nova Integração Externa</DialogTitle>
-            <DialogDescription>
-              Configure um novo serviço de busca externo
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="service-name">Nome do Serviço</Label>
-              <Input
-                id="service-name"
-                value={newService.name}
-                onChange={(e) => setNewService(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Ex: SerpAPI"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="service-provider">Provedor</Label>
-              <Select value={newService.provider} onValueChange={(value) => setNewService(prev => ({ ...prev, provider: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o provedor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="serpapi">SerpAPI</SelectItem>
-                  <SelectItem value="tavily">Tavily</SelectItem>
-                  <SelectItem value="apify">Apify</SelectItem>
-                  <SelectItem value="perplexity">Perplexity</SelectItem>
-                  <SelectItem value="bing">Bing Search</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="service-apikey">API Key</Label>
-              <Input
-                id="service-apikey"
-                value={newService.apiKey}
-                onChange={(e) => setNewService(prev => ({ ...prev, apiKey: e.target.value }))}
-                placeholder="Sua chave de API..."
-                type="password"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="service-quota">Cota Diária</Label>
-              <Input
-                id="service-quota"
-                value={newService.dailyQuota}
-                onChange={(e) => setNewService(prev => ({ ...prev, dailyQuota: parseInt(e.target.value) || 100 }))}
-                type="number"
-                placeholder="100"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddServiceModalOpen(false)} disabled={isSaving}>
-              Cancelar
-            </Button>
-            <Button onClick={handleAddService} disabled={isSaving || !newService.name || !newService.provider || !newService.apiKey}>
-              {isSaving ? 'Salvando...' : 'Adicionar Serviço'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de Configurações do Serviço */}
-      <Dialog open={isConfigServiceModalOpen} onOpenChange={setIsConfigServiceModalOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Configurar Serviço de Busca</DialogTitle>
-            <DialogDescription>
-              Configure a chave da API, frases de busca e frequência para este serviço
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex-1 overflow-y-auto space-y-6 py-4">
-            {/* API Key */}
-            <div className="space-y-2">
-              <Label htmlFor="config-api-key">Chave da API</Label>
-              <Input
-                id="config-api-key"
-                value={serviceConfig.apiKey}
-                onChange={(e) => setServiceConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                placeholder="Cole sua chave de API aqui..."
-                type="password"
-              />
-              <p className="text-xs text-muted-foreground">
-                Sua chave será armazenada de forma segura e criptografada
-              </p>
-            </div>
-
-            {/* Frases de Busca */}
-            <div className="space-y-2">
-              <Label>Frases de Busca</Label>
-              <p className="text-sm text-muted-foreground">
-                Configure as frases que serão utilizadas para buscar conteúdo
-              </p>
-              <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                {serviceConfig.searchPhrases.map((phrase, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      value={phrase}
-                      onChange={(e) => handleUpdateSearchPhrase(index, e.target.value)}
-                      placeholder={`Frase de busca ${index + 1}...`}
-                    />
-                    {serviceConfig.searchPhrases.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveSearchPhrase(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddSearchPhrase}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Frase de Busca
-                </Button>
-              </div>
-            </div>
-
-            {/* Frequência */}
-            <div className="space-y-2">
-              <Label htmlFor="config-frequency">Frequência de Busca</Label>
-              <Select 
-                value={serviceConfig.frequency} 
-                onValueChange={(value) => setServiceConfig(prev => ({ ...prev, frequency: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a frequência" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Diariamente</SelectItem>
-                  <SelectItem value="weekly">Semanalmente</SelectItem>
-                  <SelectItem value="monthly">Mensalmente</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Com que frequência o sistema deve executar as buscas automaticamente
-              </p>
-            </div>
-
-            {/* Status */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={serviceConfig.enabled}
-                  onChange={(e) => setServiceConfig(prev => ({ ...prev, enabled: e.target.checked }))}
-                  className="rounded"
-                />
-                Serviço Ativo
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Quando ativo, o serviço executará buscas automaticamente conforme a frequência configurada
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter className="flex-shrink-0">
-            <Button variant="outline" onClick={handleCancelServiceConfig} disabled={isSaving}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSaveServiceConfig} disabled={isSaving || !serviceConfig.apiKey}>
-              {isSaving ? 'Salvando...' : 'Salvar Configurações'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
+

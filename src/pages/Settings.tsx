@@ -4,14 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
-import { PlanModal } from '@/components/PlanModal';
 import { 
   Camera, 
   Mail, 
@@ -19,8 +17,6 @@ import {
   User, 
   Shield, 
   LogOut, 
-  CreditCard,
-  Crown,
   Save,
   AlertTriangle 
 } from 'lucide-react';
@@ -37,7 +33,6 @@ const Settings = () => {
   const [profileImage, setProfileImage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const [showPlanModal, setShowPlanModal] = useState(false);
 
   // Update local state when profile loads
   React.useEffect(() => {
@@ -103,19 +98,15 @@ const Settings = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">Configurações</h1>
         <p className="text-muted-foreground">
-          Gerencie seu perfil e plano de assinatura
+          Gerencie seu perfil e configurações da conta
         </p>
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Perfil
-          </TabsTrigger>
-          <TabsTrigger value="plan" className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Plano
           </TabsTrigger>
           <TabsTrigger value="account" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
@@ -215,47 +206,6 @@ const Settings = () => {
           </Card>
         </TabsContent>
 
-
-        {/* Plano */}
-        <TabsContent value="plan" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Crown className="h-5 w-5" />
-                Plano Atual
-              </CardTitle>
-              <CardDescription>
-                Informações sobre seu plano e funcionalidades disponíveis
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Plano Free</h3>
-                  <Badge variant="secondary">Gratuito</Badge>
-                </div>
-                <Button variant="default" onClick={() => setShowPlanModal(true)}>
-                  Fazer Upgrade
-                </Button>
-              </div>
-
-              <Separator />
-
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Recursos disponíveis:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Empresas ilimitadas</li>
-                  <li>• Base de conhecimento</li>
-                  <li>• Geração de conteúdo com IA</li>
-                  <li>• Calendário de conteúdo</li>
-                  <li>• Análise de tendências</li>
-                  <li>• Suporte por email</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         {/* Conta */}
         <TabsContent value="account" className="space-y-6">
           <Card>
@@ -317,12 +267,6 @@ const Settings = () => {
           </Card>
         </TabsContent>
       </Tabs>
-
-      <PlanModal 
-        isOpen={showPlanModal} 
-        onClose={() => setShowPlanModal(false)} 
-      />
-
     </div>
   );
 };

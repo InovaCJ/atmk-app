@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { useClientContext } from '@/contexts/ClientContext';
 import { useClientSettings, KnowledgeBaseData } from '@/hooks/useClientSettings';
 import { toast } from 'sonner';
+import { CreatableCombobox } from '@/components/ui/creatable-combobox';
 
 interface ClientKnowledgeBaseTabProps {
   clientId: string;
@@ -25,6 +26,40 @@ interface ExampleFile {
   content?: string; // Para arquivos de texto
   uploadedAt: string;
 }
+
+const SECTOR_OPTIONS = [
+  { value: 'tecnologia', label: 'Tecnologia' },
+  { value: 'saude', label: 'Saúde' },
+  { value: 'educacao', label: 'Educação' },
+  { value: 'financeiro', label: 'Financeiro' },
+  { value: 'varejo', label: 'Varejo' },
+  { value: 'industria', label: 'Indústria' },
+  { value: 'servicos', label: 'Serviços' },
+];
+
+const MARKET_OPTIONS = [
+  { value: 'b2b-saas', label: 'B2B SaaS' },
+  { value: 'b2c-ecommerce', label: 'B2C E-commerce' },
+  { value: 'b2b-enterprise', label: 'B2B Enterprise' },
+  { value: 'marketplace', label: 'Marketplace' },
+  { value: 'fintech', label: 'Fintech' },
+  { value: 'edtech', label: 'Edtech' },
+  { value: 'healthtech', label: 'Healthtech' },
+];
+
+const MATURITY_OPTIONS = [
+  { value: 'nascente', label: 'Nascente' },
+  { value: 'crescimento', label: 'Em crescimento' },
+  { value: 'madura', label: 'Madura' },
+  { value: 'declinio', label: 'Em declínio' },
+];
+
+const REGULATORY_OPTIONS = [
+  { value: 'anvisa', label: 'Regulado pela ANVISA' },
+  { value: 'bacen', label: 'Regulado pelo BACEN' },
+  { value: 'cvm', label: 'Regulado pela CVM' },
+  { value: 'sem-regulacao', label: 'Sem regulação específica' },
+];
 
 
 export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps) {
@@ -128,11 +163,11 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
     setLocalKnowledgeData(prev => {
       const newData = { ...prev };
       let current: Record<string, unknown> = newData;
-      
+
       for (let i = 0; i < path.length - 1; i++) {
         current = current[path[i]] as Record<string, unknown>;
       }
-      
+
       (current[path[path.length - 1]] as unknown[]).push(newItem);
       return newData;
     });
@@ -142,11 +177,11 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
     setLocalKnowledgeData(prev => {
       const newData = { ...prev };
       let current: Record<string, unknown> = newData;
-      
+
       for (let i = 0; i < path.length - 1; i++) {
         current = current[path[i]] as Record<string, unknown>;
       }
-      
+
       (current[path[path.length - 1]] as unknown[]).splice(index, 1);
       return newData;
     });
@@ -156,11 +191,11 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
     setLocalKnowledgeData(prev => {
       const newData = { ...prev };
       let current: Record<string, unknown> = newData;
-      
+
       for (let i = 0; i < path.length - 1; i++) {
         current = current[path[i]] as Record<string, unknown>;
       }
-      
+
       ((current[path[path.length - 1]] as Record<string, unknown>[])[index] as Record<string, unknown>)[field] = value;
       return newData;
     });
@@ -190,7 +225,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    
+
     // Validar tipo de arquivo (apenas texto)
     const allowedTypes = ['text/plain', 'text/markdown', 'application/pdf'];
     if (!allowedTypes.includes(file.type)) {
@@ -275,7 +310,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
         </div>
         {canEditClient(clientId) && (
           <div className="flex items-center space-x-2">
-            <Button 
+            <Button
               variant="outline"
               onClick={handleEditToggle}
               disabled={isSaving}
@@ -285,7 +320,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
               {isEditing ? 'Cancelar' : 'Editar'}
             </Button>
             {isEditing && (
-              <Button 
+              <Button
                 onClick={handleSave}
                 disabled={isSaving}
                 size="sm"
@@ -683,24 +718,17 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <div>
               <Label htmlFor="sector">Setor</Label>
               {isEditing ? (
-                <Select value={localKnowledgeData.business.sector} onValueChange={(value) => updateBusiness('sector', value)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Selecione o setor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="tecnologia">Tecnologia</SelectItem>
-                    <SelectItem value="saude">Saúde</SelectItem>
-                    <SelectItem value="educacao">Educação</SelectItem>
-                    <SelectItem value="financeiro">Financeiro</SelectItem>
-                    <SelectItem value="varejo">Varejo</SelectItem>
-                    <SelectItem value="industria">Indústria</SelectItem>
-                    <SelectItem value="servicos">Serviços</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="mt-1">
+                  <CreatableCombobox
+                    options={SECTOR_OPTIONS}
+                    value={localKnowledgeData.business.sector}
+                    onChange={(value) => updateBusiness('sector', value)}
+                    placeholder="Selecione ou digite o setor"
+                  />
+                </div>
               ) : (
                 <p className="text-sm mt-1 text-muted-foreground">
-                  {localKnowledgeData.business.sector || 'Não informado'}
+                  {SECTOR_OPTIONS.find(o => o.value === localKnowledgeData.business.sector)?.label || localKnowledgeData.business.sector || 'Não informado'}
                 </p>
               )}
             </div>
@@ -709,24 +737,17 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <div>
               <Label htmlFor="market">Mercado</Label>
               {isEditing ? (
-                <Select value={localKnowledgeData.business.market} onValueChange={(value) => updateBusiness('market', value)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Selecione o mercado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="b2b-saas">B2B SaaS</SelectItem>
-                    <SelectItem value="b2c-ecommerce">B2C E-commerce</SelectItem>
-                    <SelectItem value="b2b-enterprise">B2B Enterprise</SelectItem>
-                    <SelectItem value="marketplace">Marketplace</SelectItem>
-                    <SelectItem value="fintech">Fintech</SelectItem>
-                    <SelectItem value="edtech">Edtech</SelectItem>
-                    <SelectItem value="healthtech">Healthtech</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="mt-1">
+                  <CreatableCombobox
+                    options={MARKET_OPTIONS}
+                    value={localKnowledgeData.business.market}
+                    onChange={(value) => updateBusiness('market', value)}
+                    placeholder="Selecione ou digite o mercado"
+                  />
+                </div>
               ) : (
                 <p className="text-sm mt-1 text-muted-foreground">
-                  {localKnowledgeData.business.market || 'Não informado'}
+                  {MARKET_OPTIONS.find(o => o.value === localKnowledgeData.business.market)?.label || localKnowledgeData.business.market || 'Não informado'}
                 </p>
               )}
             </div>
@@ -735,20 +756,17 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <div>
               <Label htmlFor="category-maturity">Maturidade da Categoria</Label>
               {isEditing ? (
-                <Select value={localKnowledgeData.business.categoryMaturity} onValueChange={(value) => updateBusiness('categoryMaturity', value)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Selecione a maturidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="nascente">Nascente</SelectItem>
-                    <SelectItem value="crescimento">Em crescimento</SelectItem>
-                    <SelectItem value="madura">Madura</SelectItem>
-                    <SelectItem value="declinio">Em declínio</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="mt-1">
+                  <CreatableCombobox
+                    options={MATURITY_OPTIONS}
+                    value={localKnowledgeData.business.categoryMaturity}
+                    onChange={(value) => updateBusiness('categoryMaturity', value)}
+                    placeholder="Selecione ou digite a maturidade"
+                  />
+                </div>
               ) : (
                 <p className="text-sm mt-1 text-muted-foreground">
-                  {localKnowledgeData.business.categoryMaturity || 'Não informado'}
+                  {MATURITY_OPTIONS.find(o => o.value === localKnowledgeData.business.categoryMaturity)?.label || localKnowledgeData.business.categoryMaturity || 'Não informado'}
                 </p>
               )}
             </div>
@@ -757,21 +775,17 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
             <div>
               <Label htmlFor="regulatory-status">Status Regulatório</Label>
               {isEditing ? (
-                <Select value={localKnowledgeData.business.regulatoryStatus} onValueChange={(value) => updateBusiness('regulatoryStatus', value)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="anvisa">Regulado pela ANVISA</SelectItem>
-                    <SelectItem value="bacen">Regulado pelo BACEN</SelectItem>
-                    <SelectItem value="cvm">Regulado pela CVM</SelectItem>
-                    <SelectItem value="sem-regulacao">Sem regulação específica</SelectItem>
-                    <SelectItem value="outros">Outros órgãos</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="mt-1">
+                  <CreatableCombobox
+                    options={REGULATORY_OPTIONS}
+                    value={localKnowledgeData.business.regulatoryStatus}
+                    onChange={(value) => updateBusiness('regulatoryStatus', value)}
+                    placeholder="Selecione ou digite o status"
+                  />
+                </div>
               ) : (
                 <p className="text-sm mt-1 text-muted-foreground">
-                  {localKnowledgeData.business.regulatoryStatus || 'Não informado'}
+                  {REGULATORY_OPTIONS.find(o => o.value === localKnowledgeData.business.regulatoryStatus)?.label || localKnowledgeData.business.regulatoryStatus || 'Não informado'}
                 </p>
               )}
             </div>
@@ -1538,7 +1552,7 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
       {/* Botão de Salvar no Final */}
       {isEditing && canEditClient(clientId) && (
         <div className="flex justify-center pt-6 border-t">
-          <Button 
+          <Button
             onClick={handleSave}
             disabled={isSaving}
             size="lg"

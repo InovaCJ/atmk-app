@@ -40,6 +40,7 @@ export function useNewsFeed(params: UseNewsFeedParams) {
       setLoading(true);
       setError(null);
       try {
+        // Buscar todos os itens primeiro (sem filtro de data) para poder filtrar por published_at ou created_at
         let query = supabase
           .from('news_items')
           .select(`
@@ -49,8 +50,7 @@ export function useNewsFeed(params: UseNewsFeedParams) {
           )
           `, { count: 'exact' })
           .eq('client_id', clientId)
-          .gte('created_at', sinceIso)
-          .order('created_at', { ascending: false });
+          .gte('created_at', sinceIso); // Filtro inicial por created_at para reduzir resultados
 
         if (!includeInactive) {
           query = query.eq('is_active', true);
@@ -70,9 +70,7 @@ export function useNewsFeed(params: UseNewsFeedParams) {
           }
         }
 
-        const from = (page - 1) * pageSize;
-        const to = from + pageSize - 1;
-        const { data, error, count } = await query.range(from, to);
+        const { data: allData, error, count } = await query;
 
         if (error) {
           // Tolerar primeiro boot sem tabela no remoto (404) ou relação ausente
@@ -84,9 +82,28 @@ export function useNewsFeed(params: UseNewsFeedParams) {
           }
           throw error;
         }
+
+        // Filtrar no cliente: usar published_at se disponível, senão created_at
+        const filteredData = (allData || []).filter((item) => {
+          const itemDate = item.published_at || item.created_at;
+          return itemDate && new Date(itemDate) >= new Date(sinceIso);
+        });
+
+        // Ordenar: por published_at quando disponível, senão created_at
+        filteredData.sort((a, b) => {
+          const dateA = new Date(a.published_at || a.created_at || 0);
+          const dateB = new Date(b.published_at || b.created_at || 0);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        // Aplicar paginação
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize;
+        const data = filteredData.slice(from, to);
+
         if (!mounted) return;
         setItems(data || []);
-        setTotal(count || 0);
+        setTotal(filteredData.length);
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.message || 'Erro ao carregar feed');
