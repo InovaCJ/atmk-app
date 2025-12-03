@@ -17,6 +17,7 @@ import { usePostV1ApiGenerateContent, PostV1ApiGenerateContentMutationRequestTyp
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetV1ApiGeneratedContentGeneratedcontentid } from "@/http/generated/hooks/useGetV1ApiGeneratedContentGeneratedcontentid";
 import { ContentEditor } from "@/components/ContentEditor";
+import { usePostHog } from '@posthog/react'
 
 // Categorias únicas (sem subtipos)
 type Category = "post" | "carousel" | "scriptShort" | "scriptYoutube" | "blog" | "email";
@@ -40,7 +41,7 @@ export default function ContentCreate() {
   const [isGenerating, setIsGenerating] = useState(false);
   const newsDropdownTriggerRef = useRef<HTMLDivElement>(null);
   const [dropdownWidth, setDropdownWidth] = useState<number | undefined>(undefined);
-
+  const posthog = usePostHog();
 
 
   const { data: content, isLoading: isContentLoading } = useGetV1ApiGeneratedContentGeneratedcontentid(generatedContentId || "", {
@@ -145,7 +146,7 @@ export default function ContentCreate() {
 
     try {
       setIsGenerating(true);
-      const result = await generateContent({
+      const aiInput = {
         data: {
           type: category as PostV1ApiGenerateContentMutationRequestTypeEnumKey,
           source: inputType === "text" ? undefined : {
@@ -156,7 +157,10 @@ export default function ContentCreate() {
           objective: objective.trim(),
           context: contextText.trim(),
         }
-      });
+      }
+      posthog?.capture('Content Generation Started', aiInput);
+      const result = await generateContent(aiInput);
+      posthog?.capture('Content Generation Completed', { result });
 
       const generatedId = result.id;
       if (generatedId) {

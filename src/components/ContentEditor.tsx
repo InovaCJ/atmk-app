@@ -9,6 +9,7 @@ import { usePostV1ApiGeneratedContentGeneratedcontentidChat, useGetV1ApiGenerate
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { CopyButton } from "./CopyButton";
+import { usePostHog } from '@posthog/react';
 
 
 interface ContentEditorProps {
@@ -29,6 +30,7 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
   const [isTyping, setIsTyping] = useState(false);
   const { session } = useAuth();
   const { toast } = useToast();
+  const posthog = usePostHog();
 
   const client = {
     headers: {
@@ -98,12 +100,14 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
     }
 
     try {
+      posthog?.capture('Content Generation Message Started', { contentId, message: text });
       const result = await chatWithContent({
         generatedContentId: contentId,
         data: {
           message: text
         }
       });
+      posthog?.capture('Content Generation Message Completed', { result });
       addMessage(result);
     } catch (error) {
       console.error("Error sending message:", error);

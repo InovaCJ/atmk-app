@@ -30,6 +30,7 @@ import { useNewsFeed } from "@/hooks/useNewsFeed";
 import { useContentLibrary } from "@/hooks/useContentLibrary";
 import { usePeriod } from "@/contexts/PeriodContext";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
+import { usePostHog } from "@posthog/react";
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,11 +45,12 @@ export default function Dashboard() {
   const { canGenerateContent: canGenerateFromKnowledge } = useClientKnowledgeValidation(firstClientId);
   const { contents } = useContentLibrary();
   const { selectedPeriod, getDaysFromPeriod } = usePeriod();
+  const posthog = usePostHog();
 
   const { status: firstClientStatus } = useClientStatus(firstClientId || '', false);
   const hasSearchAutomation = !!firstClientStatus?.hasSearchAutomation;
   const hasNewsSources = !!firstClientStatus?.hasNewsSources;
-  
+
   // Verifica se já há conteúdos gerados
   const hasGeneratedContent = contents.length > 0;
 
@@ -92,11 +94,13 @@ export default function Dashboard() {
     try {
       toast({ title: "Atualizando feed...", description: "Buscando itens das fontes." });
 
-      await ingestNews({
+      posthog?.capture('News Feed Refresh Initiated', { clientId: selectedClientId });
+      const result = await ingestNews({
         data: {
           clientId: selectedClientId || '',
         }
       });
+      posthog?.capture('News Feed Refresh Completed', result);
 
       // Recarrega a página para atualizar o feed (ou idealmente invalidaria a query do useNewsFeed)
       window.location.reload();

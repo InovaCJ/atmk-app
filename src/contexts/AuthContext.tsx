@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { usePostHog } from '@posthog/react'
 
 interface AuthContextType {
   user: User | null;
@@ -29,6 +30,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const posthog = usePostHog();
+
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -37,12 +40,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         // Handle navigation after auth state changes
         if (session?.user) {
+          posthog?.identify(session.user.email, {
+            email: session.user.email,
+          });
+          posthog?.capture('User Logged In');
           // User is logged in
           const currentPath = window.location.pathname;
-          
+
           // If user is on auth page, redirect to dashboard
           if (currentPath === '/auth') {
             navigate('/');
@@ -51,12 +58,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // User is logged out - only redirect if not on allowed public pages
           const currentPath = window.location.pathname;
           const allowedPaths = ['/auth'];
-          
+          posthog?.reset();
+
           if (!allowedPaths.includes(currentPath)) {
             navigate('/auth');
           }
         }
-        
+
         setLoading(false);
       }
     );
@@ -67,7 +75,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         // If no session, redirect to auth
         if (!session) {
           const currentPath = window.location.pathname;
@@ -90,6 +98,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
+      posthog?.reset();
+      posthog?.capture('User Signed Out');
       if (error) throw error;
       navigate('/auth');
     } catch (error) {
