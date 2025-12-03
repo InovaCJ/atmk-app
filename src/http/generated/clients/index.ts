@@ -1,3 +1,4 @@
+export { getV1ApiGeneratedContentGeneratedcontentid } from "./getV1ApiGeneratedContentGeneratedcontentid.ts";
 export { getV1ApiGeneratedContentGeneratedcontentidMessages } from "./getV1ApiGeneratedContentGeneratedcontentidMessages.ts";
 export { postV1ApiGenerateContent } from "./postV1ApiGenerateContent.ts";
 export { postV1ApiGeneratedContentGeneratedcontentidChat } from "./postV1ApiGeneratedContentGeneratedcontentidChat.ts";
