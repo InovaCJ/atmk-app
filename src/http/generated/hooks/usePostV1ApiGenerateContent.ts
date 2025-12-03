@@ -25,7 +25,7 @@ export function postV1ApiGenerateContentMutationOptions(config: Partial<RequestC
 }
 
 /**
- * @description Generate content based on source and type. Requires Bearer token.
+ * @description Generate content based on source and type. Creates a conversation context.
  * @summary Generate AI content
  * {@link /v1/api/generate-content}
  */
