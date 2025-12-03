@@ -99,7 +99,7 @@ export default function Dashboard() {
 
   const handleGenerateContent = (newsId: string) => {
     // Redireciona diretamente para a criação usando o ID da notícia como fonte
-    navigate(`/content/create?source=feed&id=${newsId}`);
+    navigate(`/content/create?source=feed&source_id=${newsId}`);
   };
 
   const handleGenerationConfirm = async (_config: any) => {

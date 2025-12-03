@@ -2,22 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useClientContext } from '@/contexts/ClientContext';
 import { toast } from '@/hooks/use-toast';
+import { Database } from '@/integrations/supabase/types';
 
-export interface ContentItem {
-  id: string;
-  user_id: string;
-  title: string;
-  content: string;
-  category: "post" | "carousel" | "scriptShort" | "scriptYoutube" | "blog" | "email";
-  type: string;
-  status: 'draft' | 'scheduled' | 'published' | 'failed';
-  // ai_model?: string;
-  created_at: string;
-  updated_at: string;
-  media_urls?: string[];
-  // platform?: string[];
-  // scheduled_for?: string;
-}
+export type ContentItem = Database['public']['Tables']['generated_content']['Row'];
 
 export function useContentLibrary() {
   const { selectedClientId } = useClientContext();

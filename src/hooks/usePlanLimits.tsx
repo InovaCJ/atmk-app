@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useClientContext } from '@/contexts/ClientContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const usePlanLimits = () => {
   const { selectedClient } = useClientContext();
+  const { user } = useAuth();
   const [generatedCount, setGeneratedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,9 +27,10 @@ export const usePlanLimits = () => {
 
       try {
         const { data, error } = await supabase
-          .from('content_calendar')
+          .from('generated_content')
           .select('id')
-          .eq('company_id', selectedClient.id);
+          .eq('user_id', user?.id);
+        // .eq('client_id', selectedClient.id);
 
         if (error) {
           console.error('Error fetching generated content count:', error);
