@@ -39,68 +39,41 @@ export type Database = {
   }
   public: {
     Tables: {
-      agent_output: {
+      agent_change_history: {
         Row: {
-          agent_name: string
-          client_id: string | null
+          agent_name: string | null
           created_at: string | null
-          id: string
-          input: string
-          instruction: string
-          is_current: boolean
-          model: string
-          output: string
-          parent_id: string | null
+          id: string | null
+          instruction: string | null
+          model: string | null
+          operation_timestamp: string
+          operation_type: string
+          schema_output: Json | null
           updated_at: string | null
-          usage: Json | null
-          user_id: string | null
         }
         Insert: {
-          agent_name: string
-          client_id?: string | null
+          agent_name?: string | null
           created_at?: string | null
-          id?: string
-          input: string
-          instruction: string
-          is_current?: boolean
-          model: string
-          output: string
-          parent_id?: string | null
+          id?: string | null
+          instruction?: string | null
+          model?: string | null
+          operation_timestamp?: string
+          operation_type: string
+          schema_output?: Json | null
           updated_at?: string | null
-          usage?: Json | null
-          user_id?: string | null
         }
         Update: {
-          agent_name?: string
-          client_id?: string | null
+          agent_name?: string | null
           created_at?: string | null
-          id?: string
-          input?: string
-          instruction?: string
-          is_current?: boolean
-          model?: string
-          output?: string
-          parent_id?: string | null
+          id?: string | null
+          instruction?: string | null
+          model?: string | null
+          operation_timestamp?: string
+          operation_type?: string
+          schema_output?: Json | null
           updated_at?: string | null
-          usage?: Json | null
-          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "agent_output_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agent_output_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "agent_output"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       agent_profiles: {
         Row: {
@@ -172,42 +145,6 @@ export type Database = {
           model?: string | null
           schema_output?: Json | null
           tools?: Json | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      agents_history: {
-        Row: {
-          agent_name: string | null
-          created_at: string | null
-          id: string | null
-          instruction: string | null
-          model: string | null
-          operation_timestamp: string
-          operation_type: string
-          schema_output: Json | null
-          updated_at: string | null
-        }
-        Insert: {
-          agent_name?: string | null
-          created_at?: string | null
-          id?: string | null
-          instruction?: string | null
-          model?: string | null
-          operation_timestamp?: string
-          operation_type: string
-          schema_output?: Json | null
-          updated_at?: string | null
-        }
-        Update: {
-          agent_name?: string | null
-          created_at?: string | null
-          id?: string | null
-          instruction?: string | null
-          model?: string | null
-          operation_timestamp?: string
-          operation_type?: string
-          schema_output?: Json | null
           updated_at?: string | null
         }
         Relationships: []
@@ -632,7 +569,6 @@ export type Database = {
       generated_content: {
         Row: {
           category: string
-          content: string
           context: string | null
           created_at: string | null
           id: string
@@ -647,7 +583,6 @@ export type Database = {
         }
         Insert: {
           category: string
-          content: string
           context?: string | null
           created_at?: string | null
           id?: string
@@ -662,7 +597,6 @@ export type Database = {
         }
         Update: {
           category?: string
-          content?: string
           context?: string | null
           created_at?: string | null
           id?: string
@@ -676,6 +610,95 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      generated_content_messages: {
+        Row: {
+          content: string
+          created_at: string
+          generated_content_id: string
+          id: string
+          sender: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          generated_content_id: string
+          id?: string
+          sender: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          generated_content_id?: string
+          id?: string
+          sender?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_content_messages_generated_content_id_fkey"
+            columns: ["generated_content_id"]
+            isOneToOne: false
+            referencedRelation: "generated_content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ia_usage_log: {
+        Row: {
+          agent_id: string | null
+          agent_name: string | null
+          client_id: string | null
+          created_at: string | null
+          id: string
+          input: string
+          instruction: string | null
+          model: string
+          output: string
+          usage: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          agent_name?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          input: string
+          instruction?: string | null
+          model: string
+          output: string
+          usage?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          agent_name?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          input?: string
+          instruction?: string | null
+          model?: string
+          output?: string
+          usage?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_output_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ia_usage_log_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       kb_items: {
         Row: {
