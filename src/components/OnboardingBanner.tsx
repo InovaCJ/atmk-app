@@ -33,7 +33,9 @@ export function OnboardingBanner({
     try {
       const flag = localStorage.getItem("onboarding_banner_dismissed") === "1";
       setDismissed(flag);
-    } catch { }
+    } catch {
+      // Ignorar erros de localStorage
+    }
   }, []);
 
   if (isAllDone && dismissed) return null;
@@ -45,7 +47,11 @@ export function OnboardingBanner({
           type="button"
           aria-label="Fechar"
           onClick={() => {
-            try { localStorage.setItem("onboarding_banner_dismissed", "1"); } catch { }
+            try { 
+              localStorage.setItem("onboarding_banner_dismissed", "1"); 
+            } catch {
+              // Ignorar erros de localStorage
+            }
             setDismissed(true);
           }}
           className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-foreground/5"

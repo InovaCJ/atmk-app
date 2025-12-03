@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ClientProvider } from "./contexts/ClientContext";
+import { PeriodProvider } from "./contexts/PeriodContext";
 import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
 import Clients from "./pages/Clients";
@@ -30,7 +31,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <ClientProvider>
-            <Routes>
+            <PeriodProvider>
+              <Routes>
               {/* Auth Route - Login and Signup */}
               <Route path="/auth" element={<Auth />} />
               
@@ -55,6 +57,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </PeriodProvider>
           </ClientProvider>
         </AuthProvider>
       </BrowserRouter>

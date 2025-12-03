@@ -39,7 +39,7 @@ interface QueueItem {
   url?: string;
   error_message?: string;
   created_at: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   generated_content_id?: string;
   generated_content?: {
     id: string;
@@ -77,13 +77,13 @@ export function RunDetailsSheet({ runId, isOpen, onClose }: RunDetailsSheetProps
 
       if (runError) throw runError;
 
-      // @ts-ignore - automation join type safety
+      // @ts-expect-error - automation join type safety
       setRunData(run);
 
       // 2. Fetch Queue Items
       // Tentativa segura: se a tabela não existir, não quebra a UI
       try {
-        // @ts-ignore - Tabela pode não estar tipada ainda no frontend
+        // @ts-expect-error - Tabela pode não estar tipada ainda no frontend
         const { data: queue, error: queueError } = await supabase
           .from('automation_queue')
           .select(`
@@ -110,7 +110,7 @@ export function RunDetailsSheet({ runId, isOpen, onClose }: RunDetailsSheetProps
         setQueueItems([]);
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching run details:", err);
       setError(err.message || "Erro ao carregar detalhes");
     } finally {

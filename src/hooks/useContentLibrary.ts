@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useClientContext } from '@/contexts/ClientContext';
 import { toast } from '@/hooks/use-toast';
@@ -6,6 +6,7 @@ import { toast } from '@/hooks/use-toast';
 export interface ContentItem {
   id: string;
   user_id: string;
+  client_id?: string | null;
   title: string;
   content: string;
   category: "post" | "carousel" | "scriptShort" | "scriptYoutube" | "blog" | "email";
@@ -25,7 +26,7 @@ export function useContentLibrary() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchContents = async () => {
+  const fetchContents = useCallback(async () => {
     if (!selectedClientId) {
       setContents([]);
       setLoading(false);
@@ -36,27 +37,24 @@ export function useContentLibrary() {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      // Buscar conteúdos diretamente filtrados por client_id
+      // Isso garante isolamento completo entre clientes
+      const { data: contents, error: contentsError } = await supabase
         .from('generated_content')
         .select('*')
-        // .eq('company_id', selectedClientId)
+        .eq('client_id', selectedClientId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (contentsError) throw contentsError;
 
-      setContents(data as ContentItem[]);
+      setContents((contents || []) as ContentItem[]);
     } catch (err) {
       console.error('Error fetching content library:', err);
       setError(err instanceof Error ? err.message : 'Erro ao carregar biblioteca');
-      // toast({
-      //   title: "Erro ao carregar",
-      //   description: "Não foi possível buscar os conteúdos.",
-      //   variant: "destructive"
-      // });
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedClientId]);
 
   const deleteContent = async (id: string) => {
     try {
@@ -83,7 +81,7 @@ export function useContentLibrary() {
   // Recarregar quando o cliente mudar
   useEffect(() => {
     fetchContents();
-  }, [selectedClientId]);
+  }, [fetchContents]);
 
   return {
     contents,

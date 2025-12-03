@@ -632,6 +632,7 @@ export type Database = {
       generated_content: {
         Row: {
           category: string
+          client_id: string | null
           content: string
           context: string | null
           created_at: string | null
@@ -647,6 +648,7 @@ export type Database = {
         }
         Insert: {
           category: string
+          client_id?: string | null
           content: string
           context?: string | null
           created_at?: string | null
@@ -662,6 +664,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          client_id?: string | null
           content?: string
           context?: string | null
           created_at?: string | null

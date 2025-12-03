@@ -11,6 +11,9 @@ import {
   Newspaper,
   Loader2,
   Search, // Ensure Search is imported
+  Zap,
+  Clock,
+  BookOpen,
 } from "lucide-react";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -24,6 +27,9 @@ import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePostV1ApiIngestNews } from "@/http/generated";
 import { useNewsFeed } from "@/hooks/useNewsFeed";
+import { useContentLibrary } from "@/hooks/useContentLibrary";
+import { usePeriod } from "@/contexts/PeriodContext";
+import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,15 +42,37 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const firstClientId = useMemo(() => clients[0]?.id as string | undefined, [clients]);
   const { canGenerateContent: canGenerateFromKnowledge } = useClientKnowledgeValidation(firstClientId);
+  const { contents } = useContentLibrary();
+  const { selectedPeriod, getDaysFromPeriod } = usePeriod();
 
   const { status: firstClientStatus } = useClientStatus(firstClientId || '', false);
   const hasSearchAutomation = !!firstClientStatus?.hasSearchAutomation;
   const hasNewsSources = !!firstClientStatus?.hasNewsSources;
+  
+  // Verifica se já há conteúdos gerados
+  const hasGeneratedContent = contents.length > 0;
 
-  // Pass searchQuery to the hook for filtering
+  // Converte o período selecionado para dias
+  const days = getDaysFromPeriod(selectedPeriod);
+
+  // Calcula as datas de início e fim do período
+  const dateRange = useMemo(() => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - days);
+    return { startDate, endDate };
+  }, [days]);
+
+  // Busca métricas da dashboard
+  const { metrics, loading: metricsLoading } = useDashboardMetrics(
+    dateRange.startDate,
+    dateRange.endDate
+  );
+
+  // Pass searchQuery and days to the hook for filtering
   const { items: newsItems, loading: newsLoading, error: newsError } = useNewsFeed({
     clientId: selectedClientId || '',
-    days: 7,
+    days: days,
     pageSize: 6,
     q: searchQuery // Connected search query
   });
@@ -81,21 +109,66 @@ export default function Dashboard() {
     }
   };
 
-  const stats = [
-    {
-      title: "Clientes",
-      value: selectedClient ? "1" : "0",
-      change: selectedClient ? "+100%" : "0%",
-      icon: TrendingUp
-    },
-    {
-      title: "Conteúdos Gerados",
-      value: "0",
-      change: "0%",
-      icon: FileText,
-      onClick: () => navigate('/library')
+  // Monta os cards de métricas
+  const stats = useMemo(() => {
+    if (!metrics) {
+      return [
+        {
+          title: "Temas Disponíveis",
+          value: "—",
+          subtitle: "Carregando...",
+          icon: BookOpen,
+        },
+        {
+          title: "Conteúdos Gerados",
+          value: "—",
+          subtitle: "Carregando...",
+          icon: FileText,
+          onClick: () => navigate('/library')
+        },
+        {
+          title: "Automatizados",
+          value: "—",
+          subtitle: "Carregando...",
+          icon: Zap,
+        },
+        {
+          title: "Tempo Economizado",
+          value: "—",
+          subtitle: "Carregando...",
+          icon: Clock,
+        }
+      ];
     }
-  ];
+
+    return [
+      {
+        title: "Temas Disponíveis",
+        value: metrics.availableThemes.value,
+        subtitle: metrics.availableThemes.subtitle,
+        icon: BookOpen,
+      },
+      {
+        title: "Conteúdos Gerados",
+        value: metrics.totalContents.value,
+        subtitle: metrics.totalContents.subtitle,
+        icon: FileText,
+        onClick: () => navigate('/library')
+      },
+      {
+        title: "Automatizados",
+        value: metrics.automatedContents.value,
+        subtitle: metrics.automatedContents.subtitle,
+        icon: Zap,
+      },
+      {
+        title: "Tempo Economizado",
+        value: metrics.timeSaved.value,
+        subtitle: metrics.timeSaved.subtitle,
+        icon: Clock,
+      }
+    ];
+  }, [metrics, navigate]);
 
   const handleGenerateContent = (newsId: string) => {
     // Redireciona diretamente para a criação usando o ID da notícia como fonte
@@ -228,7 +301,8 @@ export default function Dashboard() {
   const hasCompany = clients?.length > 0;
   const hasConfiguredInfo = !!firstClientId;
   const automationConfigured = hasSearchAutomation;
-  const canCreateFirstContent = hasCompany && canGenerateFromKnowledge;
+  // Considera concluído se já tem conteúdos gerados OU se pode gerar baseado na validação
+  const canCreateFirstContent = hasCompany && (hasGeneratedContent || canGenerateFromKnowledge);
 
   const totalSteps = 5;
   const completedSteps = [
@@ -306,9 +380,11 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                {stat.change} desde o último mês
-              </p>
+              {stat.subtitle ? (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stat.subtitle}
+                </p>
+              ) : null}
             </CardContent>
           </Card>
         ))}

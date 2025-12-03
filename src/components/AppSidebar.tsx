@@ -1,14 +1,10 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import {
   BookOpen,
-  Brain,
   Home,
   Settings,
   Sparkles,
-  Star,
   Building2,
-  ChevronDown,
   User,
   Workflow,
   Plus
@@ -27,7 +23,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlanModal } from "./PlanModal";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { useClientContext } from "@/contexts/ClientContext";
 
@@ -48,7 +43,6 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const [showPlanModal, setShowPlanModal] = useState(false);
   const { selectedClient, clients, setSelectedClientId } = useClientContext();
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -173,41 +167,10 @@ export function AppSidebar() {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {/* Upgrade Pro */}
-            <div className="space-y-2 group-data-[collapsible=icon]:hidden">
-              <Button
-                onClick={() => setShowPlanModal(true)}
-                variant="outline"
-                className="w-full justify-start bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:bg-primary/10"
-              >
-                <Star className="h-4 w-4 mr-2" />
-                Upgrade Pro
-              </Button>
-              <div className="text-xs text-muted-foreground px-2">
-                <p>Plano Gratuito</p>
-                <p>2/10 teste gratuito</p>
-              </div>
-            </div>
-            <div className="hidden group-data-[collapsible=icon]:block">
-              <Button
-                onClick={() => setShowPlanModal(true)}
-                variant="outline"
-                size="icon"
-                className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover:bg-primary/10"
-              >
-                <Star className="h-4 w-4" />
-              </Button>
-            </div>
-
             <UserProfileDropdown />
           </div>
         </SidebarFooter>
       </Sidebar>
-
-      <PlanModal
-        isOpen={showPlanModal}
-        onClose={() => setShowPlanModal(false)}
-      />
     </>
   );
 }

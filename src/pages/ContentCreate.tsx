@@ -15,6 +15,8 @@ import { toast } from "@/components/ui/use-toast";
 import { useClientContext } from "@/contexts/ClientContext";
 import { useNewsFeed } from "@/hooks/useNewsFeed";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { supabase } from "@/integrations/supabase/client";
+import type { ContentItem } from "@/hooks/useContentLibrary";
 import { Download, Scissors, Sparkles, Link as LinkIcon, Newspaper, Globe, CheckCircle2, Settings2, Wand2, Heading1, Heading2, Bold, Italic, Underline, List, ListOrdered, Undo2, Redo2, Palette, Strikethrough, Quote, Paperclip, Send, Search } from "lucide-react";
 import type { ChatKitOptions } from "@openai/chatkit";
 import { AIChatKit } from "@/components/AIChatKit";
@@ -42,7 +44,17 @@ function mapCategoryToBackend(category: Category): "social" | "video" | "blog" |
   }
 }
 
-function buildDocFromResponse(contentType: string, data: any): string {
+interface ContentData {
+  title?: string;
+  subject?: string;
+  content?: string | unknown;
+  text?: string;
+  hashtags?: string | string[];
+  cta?: string | unknown;
+  [key: string]: unknown;
+}
+
+function buildDocFromResponse(contentType: string, data: unknown): string {
   // Função auxiliar para converter quebras de linha em <br />
   const convertNewlinesToBr = (text: string): string => {
     if (!text) return "";
@@ -68,47 +80,54 @@ function buildDocFromResponse(contentType: string, data: any): string {
     return `<div>${convertNewlinesToBr(data)}</div>`;
   }
 
+  // Type guard para verificar se é um objeto
+  const isObject = (value: unknown): value is ContentData => {
+    return typeof value === "object" && value !== null;
+  };
+
+  if (!isObject(data)) {
+    return `<div>${convertNewlinesToBr(String(data || "Conteúdo gerado."))}</div>`;
+  }
+
   try {
-    if (contentType === "blog" && data?.content) {
+    if (contentType === "blog" && data.content) {
       const content = typeof data.content === "string" 
         ? convertNewlinesToBr(data.content)
-        : data.content;
+        : String(data.content);
       return `<h1>${data.title || "Artigo"}</h1><div>${content}</div>`;
     }
-    if (contentType === "email" && data?.content) {
+    if (contentType === "email" && data.content) {
       const content = typeof data.content === "string"
         ? convertNewlinesToBr(data.content)
-        : data.content;
+        : String(data.content);
       return `<h1>${data.title || data.subject || "E-mail"}</h1><div>${content}</div>`;
     }
     if (contentType === "social") {
       const content = typeof data.content === "string"
         ? convertNewlinesToBr(data.content)
-        : data.content || "";
-      const hashtags = data?.hashtags ? (Array.isArray(data.hashtags) ? data.hashtags.join(" ") : data.hashtags) : "";
-      const cta = typeof data.cta === "string" ? convertNewlinesToBr(data.cta) : data.cta || "";
+        : String(data.content || "");
+      const hashtags = data.hashtags 
+        ? (Array.isArray(data.hashtags) ? data.hashtags.join(" ") : String(data.hashtags))
+        : "";
+      const cta = typeof data.cta === "string" ? convertNewlinesToBr(data.cta) : String(data.cta || "");
       const body = [content, hashtags, cta]
         .filter(Boolean)
         .join("<br/><br/>");
-      return `<h2>${data?.title || "Post para redes sociais"}</h2><div>${body}</div>`;
+      return `<h2>${data.title || "Post para redes sociais"}</h2><div>${body}</div>`;
     }
     if (contentType === "video") {
       const content = typeof data.content === "string"
         ? convertNewlinesToBr(data.content)
-        : (data.content || "").toString();
-      return `<h2>${data?.title || "Roteiro de Vídeo"}</h2><div>${content}</div>`;
+        : String(data.content || "");
+      return `<h2>${data.title || "Roteiro de Vídeo"}</h2><div>${content}</div>`;
     }
   } catch (error) {
     console.error("Erro ao processar resposta:", error);
   }
   
   // Fallback: se for objeto, tenta converter para string
-  if (typeof data === "object" && data !== null) {
-    const contentStr = data.content || data.text || JSON.stringify(data, null, 2);
-    return `<div>${convertNewlinesToBr(String(contentStr))}</div>`;
-  }
-  
-  return `<div>${convertNewlinesToBr(String(data || "Conteúdo gerado."))}</div>`;
+  const contentStr = data.content || data.text || JSON.stringify(data, null, 2);
+  return `<div>${convertNewlinesToBr(String(contentStr))}</div>`;
 }
 
 export default function ContentCreate() {
@@ -166,10 +185,48 @@ export default function ContentCreate() {
     return (hasSource || hasContext) && hasCategory && Boolean(selectedClientId);
   }, [newsId, sourceUrl, contextText, category, selectedClientId]);
 
+  // Carregar conteúdo existente quando há ID na URL
   useEffect(() => {
     const contentId = params.get("id");
     if (contentId) {
-      // Placeholder: no backend ainda. Futuro: buscar rascunho e carregar.
+      const loadContent = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('generated_content')
+            .select('*')
+            .eq('id', contentId)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            const content = data as ContentItem;
+            // Preencher campos do formulário
+            setCategory(content.category as Category);
+            setContextText(content.context || "");
+            setObjective(content.objective || "");
+            setUseKnowledge(content.use_knowledge_base ?? true);
+            
+            // Preencher o editor com o conteúdo
+            if (content.content) {
+              setHtml(content.content);
+              // Atualizar o editor ref se existir
+              if (editorRef.current) {
+                editorRef.current.innerHTML = content.content;
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Erro ao carregar conteúdo:', err);
+          toast({
+            title: "Erro ao carregar",
+            description: "Não foi possível carregar o conteúdo.",
+            variant: "destructive"
+          });
+        }
+      };
+
+      loadContent();
     }
   }, [params]);
 
@@ -229,6 +286,11 @@ export default function ContentCreate() {
       return;
     }
 
+    if (!selectedClientId) {
+      toast({ title: "Cliente não selecionado", description: "Selecione um cliente antes de gerar conteúdo.", variant: "destructive" });
+      return;
+    }
+
     try {
       setIsGenerating(true);
       const backendType = mapCategoryToBackend(category as Category);
@@ -258,10 +320,57 @@ export default function ContentCreate() {
       // Then sync state to match DOM
       setHtml(htmlDoc);
 
+      // Salvar conteúdo na tabela generated_content com client_id
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        // Extrair título do HTML ou usar padrão
+        let title = `Conteúdo ${category}`;
+        try {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = htmlDoc;
+          const h1 = tempDiv.querySelector('h1');
+          const h2 = tempDiv.querySelector('h2');
+          if (h1?.textContent) {
+            title = h1.textContent;
+          } else if (h2?.textContent) {
+            title = h2.textContent;
+          } else if (typeof result.text === 'object' && result.text?.title) {
+            title = result.text.title;
+          }
+        } catch (e) {
+          // Se falhar, usar título padrão
+        }
+        
+        const { error: saveError } = await supabase
+          .from('generated_content')
+          .insert({
+            title: title,
+            content: htmlDoc,
+            category: category,
+            type: 'manual',
+            client_id: selectedClientId,
+            user_id: user?.id || null,
+            context: contextText.trim() || null,
+            objective: objective.trim() || null,
+            use_knowledge_base: useKnowledge,
+            source_category: inputType === "feed" ? "news" : inputType === "url" ? "url" : "text",
+            source_content: inputType === "feed" ? newsId : inputType === "url" ? sourceUrl.trim() : null,
+          });
+
+        if (saveError) {
+          console.error('Error saving content:', saveError);
+          // Não falhar a geração se o salvamento falhar
+        }
+      } catch (saveErr) {
+        console.error('Error saving content to database:', saveErr);
+        // Não falhar a geração se o salvamento falhar
+      }
+
       console.log({ htmlDoc, editor: editorRef.current?.innerHTML });
       toast({ title: "Conteúdo gerado!", description: "Ajuste o texto ao lado direito e exporte quando quiser." });
-    } catch (e: any) {
-      const errorMessage = e.response?.data?.error?.message || e.message || "Erro desconhecido";
+    } catch (e: unknown) {
+      const error = e as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      const errorMessage = error.response?.data?.error?.message || error.message || "Erro desconhecido";
       toast({ title: "Erro ao gerar", description: errorMessage, variant: "destructive" });
     } finally {
       setIsGenerating(false);
@@ -273,7 +382,9 @@ export default function ContentCreate() {
       const text = editorRef.current?.innerText || "";
       await navigator.clipboard.writeText(text);
       toast({ title: "Copiado", description: "Conteúdo copiado para a área de transferência." });
-    } catch { }
+    } catch {
+      // Ignorar erros de clipboard
+    }
   };
 
   const downloadTxt = () => {

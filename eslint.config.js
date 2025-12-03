@@ -6,8 +6,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist"],
-    ignorePatterns: ["supabase/functions/**/*.ts"]
+    ignores: ["dist", "supabase/functions/**/*.ts"]
   },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
@@ -24,6 +23,8 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
 );

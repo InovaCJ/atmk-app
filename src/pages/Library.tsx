@@ -34,12 +34,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
-import { PlanModal } from "@/components/PlanModal";
-import { useClientKnowledgeValidation } from "@/hooks/useClientKnowledgeValidation";
-import { useClientContext } from "@/contexts/ClientContext";
 import { ContentFeedback } from "@/components/ContentFeedback";
 import { ImageCarousel } from "@/components/ImageCarousel";
-import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { useContentLibrary, ContentItem } from "@/hooks/useContentLibrary";
 
 // Componente para estado vazio
@@ -50,30 +46,6 @@ const EmptyState = ({ type, title, description, icon }: {
   icon: React.ReactNode;
 }) => {
   const navigate = useNavigate();
-
-  // Usar primeiro cliente para validação ou undefined se não houver
-  const { clients } = useClientContext();
-  const selectedClientId = clients.length > 0 ? clients[0].id : undefined;
-  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useClientKnowledgeValidation(selectedClientId);
-  const { canGenerateContent: canGeneratePlan, remainingContent } = usePlanLimits();
-
-  const canGenerate = canGenerateKnowledge && canGeneratePlan;
-
-  const handleGenerateClick = () => {
-    if (!canGenerateKnowledge) {
-      toast({
-        title: "Base de conhecimento incompleta",
-        description: `Complete pelo menos 50% da sua base de conhecimento para gerar conteúdos. Atual: ${completionPercentage}%`,
-        variant: "destructive"
-      });
-      navigate("/knowledge");
-      return;
-    }
-    if (!canGeneratePlan) {
-      return; // Will trigger plan modal in parent
-    }
-    navigate('/content/create');
-  };
 
   return (
     <>
@@ -86,15 +58,11 @@ const EmptyState = ({ type, title, description, icon }: {
           {description}
         </p>
         <Button
-          onClick={handleGenerateClick}
+          onClick={() => navigate('/content/create')}
           className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-          disabled={!canGenerate}
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          {clients.length > 0 && clients[0].plan === 'free'
-            ? `Gerar Conteúdo (${remainingContent} restantes)`
-            : 'Gerar Primeiro Conteúdo'
-          }
+          Gerar Primeiro Conteúdo
         </Button>
       </div>
     </>
@@ -109,19 +77,12 @@ export default function Library() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [contentFeedbacks, setContentFeedbacks] = useState<{ [key: string]: { rating: number, feedback: string } }>({});
   const [isGenerationModalOpen, setIsGenerationModalOpen] = useState(false);
-  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ContentItem | null>(null);
 
   const navigate = useNavigate();
-  const { selectedClient, selectedClientId } = useClientContext();
 
   // Hook de dados reais
   const { contents, loading, deleteContent } = useContentLibrary();
-
-  const { canGenerateContent: canGenerateKnowledge, completionPercentage } = useClientKnowledgeValidation(selectedClientId || undefined);
-  const { canGenerateContent: canGeneratePlan, remainingContent } = usePlanLimits();
-
-  const canGenerate = canGenerateKnowledge && canGeneratePlan;
 
   // Filter logic
   const filteredContents = useMemo(() => {
@@ -207,11 +168,6 @@ export default function Library() {
     }
   };
 
-  const openContentSheet = (content: ContentItem) => {
-    setSelectedContent(content);
-    setIsSheetOpen(true);
-  };
-
   const confirmDelete = async () => {
     if (deleteTarget) {
       const success = await deleteContent(deleteTarget.id);
@@ -255,30 +211,11 @@ export default function Library() {
           </p>
         </div>
         <Button
-          onClick={() => {
-            if (!canGenerateKnowledge) {
-              toast({
-                title: "Base de conhecimento incompleta",
-                description: `Complete pelo menos 50% da sua base de conhecimento para gerar conteúdos. Atual: ${completionPercentage}%`,
-                variant: "destructive"
-              });
-              navigate("/knowledge");
-              return;
-            }
-            if (!canGeneratePlan) {
-              setIsPlanModalOpen(true);
-              return;
-            }
-            navigate('/content/create');
-          }}
+          onClick={() => navigate('/content/create')}
           className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-          disabled={!canGenerate}
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          {selectedClient?.plan === 'free'
-            ? `Gerar Conteúdo (${remainingContent} restantes)`
-            : 'Gerar Novo Conteúdo'
-          }
+          Gerar Novo Conteúdo
         </Button>
       </div>
 
@@ -333,7 +270,7 @@ export default function Library() {
                 <Card
                   key={content.id}
                   className="group hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => openContentSheet(content)}
+                  onClick={() => navigate(`/content/create?id=${content.id}`)}
                 >
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-center justify-between">
@@ -423,14 +360,14 @@ export default function Library() {
                     </Button>
                   </div>
                   {/* Tenta renderizar como HTML se parecer HTML, senão texto puro */}
-                  {selectedContent.content.includes('<') ? (
+                  {selectedContent.content && selectedContent.content.includes('<') ? (
                     <div
                       className="min-h-[300px] p-4 border rounded-md prose prose-sm max-w-none dark:prose-invert bg-card"
                       dangerouslySetInnerHTML={{ __html: selectedContent.content }}
                     />
                   ) : (
                     <Textarea
-                      value={selectedContent.content}
+                      value={selectedContent.content || ''}
                       readOnly
                       className="min-h-[300px] font-mono text-sm"
                     />
@@ -475,19 +412,6 @@ export default function Library() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Show plan modal for free users who hit limit */}
-      {!canGeneratePlan && selectedClient?.plan === 'free' ? (
-        <PlanModal
-          isOpen={isPlanModalOpen}
-          onClose={() => setIsPlanModalOpen(false)}
-        />
-      ) : null}
-
-      <PlanModal
-        isOpen={isPlanModalOpen}
-        onClose={() => setIsPlanModalOpen(false)}
-      />
 
       <ContentGenerationModal
         open={isGenerationModalOpen}
