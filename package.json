@@ -9,7 +9,9 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate": "kubb"
+    "generate": "npm run generate:kubb && npm run generate:supabase",
+    "generate:kubb": "kubb",
+    "generate:supabase": "supabase gen types typescript --linked > src/integrations/supabase/types.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
