@@ -161,7 +161,7 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
                     <div className="flex flex-col gap-2">
                       <div
                         className="prose prose-sm dark:prose-invert max-w-none"
-                        dangerouslySetInnerHTML={{ __html: message.content }}
+                        dangerouslySetInnerHTML={{ __html: message.content.replace(/\n/g, '<br />') }}
                       />
                       <CopyButton content={message.content} className="self-end" />
                     </div>
