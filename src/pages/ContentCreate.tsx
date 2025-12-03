@@ -98,7 +98,7 @@ export default function ContentCreate() {
     const loadContent = async () => {
       // Caso 1: Carregando para EDIÇÃO de conteúdo já gerado (se não tiver flag source=feed)
       if (contentId && sourceParam !== 'feed') {
-        if (!content) {
+        if (!content && !isContentLoading) {
           toast({ title: "Erro", description: "Não foi possível carregar o conteúdo.", variant: "destructive" });
           return;
         }
