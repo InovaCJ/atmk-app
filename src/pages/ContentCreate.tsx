@@ -44,7 +44,7 @@ export default function ContentCreate() {
   const posthog = usePostHog();
 
 
-  const { data: content, isLoading: isContentLoading } = useGetV1ApiGeneratedContentGeneratedcontentid(generatedContentId || "", {
+  const { data: content, error, isLoading: isContentLoading } = useGetV1ApiGeneratedContentGeneratedcontentid(generatedContentId || "", {
     client: {
       headers: {
         Authorization: `Bearer ${session?.access_token}`,
@@ -103,19 +103,19 @@ export default function ContentCreate() {
           toast({ title: "Erro", description: "Não foi possível carregar o conteúdo.", variant: "destructive" });
           return;
         }
-
         // Popula configurações
-        if (content.category) setCategory(content.category as Category);
-        if (content.objective) setObjective(content.objective);
-        if (content.context) setContextText(content.context);
+        if (content?.category) setCategory(content.category as Category);
+        if (content?.objective) setObjective(content.objective);
+        if (content?.context) setContextText(content.context);
+        console.log({ newsItems });
 
         // Tenta mapear a fonte original se disponível
-        if (content.sourceCategory === 'feed' && content.sourceContent) {
+        if (content?.sourceCategory === 'feed' && content?.sourceContent) {
           setInputType('feed');
           setNewsId(content.sourceContent);
           return;
         }
-        if (content.sourceCategory === 'url' && content.sourceContent) {
+        if (content?.sourceCategory === 'url' && content?.sourceContent) {
           setInputType('url');
           setSourceUrl(content.sourceContent);
           return;
@@ -131,7 +131,7 @@ export default function ContentCreate() {
     };
 
     loadContent();
-  }, [params, content]);
+  }, [params, content, error]);
 
   const handleGenerate = async () => {
     if (!canGenerate) {
