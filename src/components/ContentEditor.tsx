@@ -4,13 +4,21 @@ import { chatKitOptions as defaultChatKitOptions } from "@/lib/chatkit-options";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { Bot, User, Check } from "lucide-react";
+import { Bot, User, Check, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePostV1ApiGeneratedContentGeneratedcontentidChat, useGetV1ApiGeneratedContentGeneratedcontentidMessages } from "@/http/generated";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { CopyButton } from "./CopyButton";
+import { ContentFeedbackModal } from "./ContentFeedbackModal";
+import { useContentFeedback } from "@/hooks/useContentFeedback";
 import { marked } from "marked";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 
 interface ContentEditorProps {
@@ -116,12 +124,17 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
   const [chatProgressSteps, setChatProgressSteps] = useState<ProgressStep[]>(CHAT_STEPS);
   const [chatCurrentStepIndex, setChatCurrentStepIndex] = useState(0);
   const [chatProgressValue, setChatProgressValue] = useState(0);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const progressBarIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatProgressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatProgressBarIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const generationStartTimeRef = useRef<number | null>(null);
+  const chatStartTimeRef = useRef<number | null>(null);
   const { session } = useAuth();
   const { toast } = useToast();
+  const { saveFeedback, isLoading: isSavingFeedback } = useContentFeedback();
 
   const client = {
     headers: {
@@ -168,43 +181,67 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
       setProgressSteps(GENERATION_STEPS.map(step => ({ ...step, completed: false })));
       setCurrentStepIndex(0);
       setProgressValue(0);
+      generationStartTimeRef.current = Date.now(); // Registrar tempo de início
 
-      // Start progress animation
+      // Tempo total estimado: 60 segundos
+      const TOTAL_ESTIMATED_TIME = 60000; // 60 segundos em ms
+      const STEP_DURATION = 10000; // 10 segundos por step (4 steps = 40s)
+      const PROGRESS_BAR_START_TIME = STEP_DURATION * (GENERATION_STEPS.length - 1); // 40s
+      const PROGRESS_BAR_DURATION = 20000; // 20s para chegar a 90% (40s a 60s)
+
+      // Start progress animation based on real elapsed time
       progressIntervalRef.current = setInterval(() => {
-        setCurrentStepIndex((prev) => {
-          if (prev < GENERATION_STEPS.length - 2) {
-            // Mark current step as completed (not the last one - that's the progress bar step)
-            setProgressSteps((steps) =>
-              steps.map((step, idx) =>
-                idx === prev ? { ...step, completed: true } : step
-              )
-            );
-            return prev + 1;
-          } else if (prev === GENERATION_STEPS.length - 2) {
-            // When reaching the last step before progress bar, start progress bar animation
-            setProgressSteps((steps) =>
-              steps.map((step, idx) =>
-                idx === prev ? { ...step, completed: true } : step
-              )
-            );
-            
-            // Start progress bar animation
-            setProgressValue(0);
-            let currentProgress = 0;
-            progressBarIntervalRef.current = setInterval(() => {
-              currentProgress += Math.random() * 15; // Incremento variável para parecer mais natural
-              if (currentProgress >= 90) {
-                currentProgress = 90; // Para em 90% até o conteúdo chegar
-              }
-              setProgressValue(currentProgress);
-            }, 200); // Atualiza a cada 200ms
-            
-            return prev + 1;
-          } else {
-            return prev;
+        if (!generationStartTimeRef.current) return;
+        
+        const elapsed = Date.now() - generationStartTimeRef.current;
+        
+        // Calcular step atual baseado no tempo decorrido
+        const currentStep = Math.min(
+          Math.floor(elapsed / STEP_DURATION),
+          GENERATION_STEPS.length - 1
+        );
+
+        setCurrentStepIndex(currentStep);
+
+        // Marcar steps anteriores como completos
+        setProgressSteps((steps) =>
+          steps.map((step, idx) => ({
+            ...step,
+            completed: idx < currentStep
+          }))
+        );
+
+        // Quando chegar no último step, iniciar barra de progresso
+        if (currentStep === GENERATION_STEPS.length - 1) {
+          // Limpar interval anterior se existir
+          if (progressBarIntervalRef.current) {
+            clearInterval(progressBarIntervalRef.current);
           }
-        });
-      }, 3000); // Change step every 3 seconds
+
+          // Calcular progresso baseado no tempo real
+          const progressElapsed = Math.max(0, elapsed - PROGRESS_BAR_START_TIME);
+          const progressPercent = Math.min(
+            (progressElapsed / PROGRESS_BAR_DURATION) * 90, // 0% a 90% em 20s
+            90
+          );
+
+          setProgressValue(progressPercent);
+
+          // Atualizar barra de progresso continuamente
+          progressBarIntervalRef.current = setInterval(() => {
+            if (!generationStartTimeRef.current) return;
+            
+            const currentElapsed = Date.now() - generationStartTimeRef.current;
+            const currentProgressElapsed = Math.max(0, currentElapsed - PROGRESS_BAR_START_TIME);
+            const currentProgressPercent = Math.min(
+              (currentProgressElapsed / PROGRESS_BAR_DURATION) * 90,
+              90
+            );
+
+            setProgressValue(currentProgressPercent);
+          }, 100); // Atualiza a cada 100ms para suavidade
+        }
+      }, 500); // Verifica a cada 500ms
 
       return () => {
         if (progressIntervalRef.current) {
@@ -234,6 +271,7 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
             steps.map((step) => ({ ...step, completed: true }))
           );
         }, 300);
+        generationStartTimeRef.current = null;
       }
     }
   }, [isLoading, contentId]);
@@ -255,41 +293,67 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
       setChatProgressSteps(CHAT_STEPS.map(step => ({ ...step, completed: false })));
       setChatCurrentStepIndex(0);
       setChatProgressValue(0);
+      chatStartTimeRef.current = Date.now(); // Registrar tempo de início
 
-      // Start chat progress animation (faster than generation)
+      // Tempo total estimado para chat: 30 segundos (mais rápido que geração)
+      const CHAT_TOTAL_TIME = 30000; // 30 segundos
+      const CHAT_STEP_DURATION = 8000; // 8 segundos por step (2 steps = 16s)
+      const CHAT_PROGRESS_BAR_START_TIME = CHAT_STEP_DURATION * (CHAT_STEPS.length - 1); // 16s
+      const CHAT_PROGRESS_BAR_DURATION = 14000; // 14s para chegar a 90% (16s a 30s)
+
+      // Start chat progress animation based on real elapsed time
       chatProgressIntervalRef.current = setInterval(() => {
-        setChatCurrentStepIndex((prev) => {
-          if (prev < CHAT_STEPS.length - 1) {
-            // Mark current step as completed
-            setChatProgressSteps((steps) =>
-              steps.map((step, idx) =>
-                idx === prev ? { ...step, completed: true } : step
-              )
-            );
-            return prev + 1;
-          } else {
-            // When reaching the last step, start progress bar
-            setChatProgressSteps((steps) =>
-              steps.map((step, idx) =>
-                idx === prev ? { ...step, completed: true } : step
-              )
-            );
-            
-            // Start progress bar animation
-            setChatProgressValue(0);
-            let currentProgress = 0;
-            chatProgressBarIntervalRef.current = setInterval(() => {
-              currentProgress += Math.random() * 20; // Faster increment for chat
-              if (currentProgress >= 90) {
-                currentProgress = 90; // Stop at 90% until response arrives
-              }
-              setChatProgressValue(currentProgress);
-            }, 150); // Faster updates for chat
-            
-            return prev;
+        if (!chatStartTimeRef.current) return;
+        
+        const elapsed = Date.now() - chatStartTimeRef.current;
+        
+        // Calcular step atual baseado no tempo decorrido
+        const currentStep = Math.min(
+          Math.floor(elapsed / CHAT_STEP_DURATION),
+          CHAT_STEPS.length - 1
+        );
+
+        setChatCurrentStepIndex(currentStep);
+
+        // Marcar steps anteriores como completos
+        setChatProgressSteps((steps) =>
+          steps.map((step, idx) => ({
+            ...step,
+            completed: idx < currentStep
+          }))
+        );
+
+        // Quando chegar no último step, iniciar barra de progresso
+        if (currentStep === CHAT_STEPS.length - 1) {
+          // Limpar interval anterior se existir
+          if (chatProgressBarIntervalRef.current) {
+            clearInterval(chatProgressBarIntervalRef.current);
           }
-        });
-      }, 1500); // Faster step changes for chat (1.5s instead of 3s)
+
+          // Calcular progresso baseado no tempo real
+          const progressElapsed = Math.max(0, elapsed - CHAT_PROGRESS_BAR_START_TIME);
+          const progressPercent = Math.min(
+            (progressElapsed / CHAT_PROGRESS_BAR_DURATION) * 90, // 0% a 90% em 14s
+            90
+          );
+
+          setChatProgressValue(progressPercent);
+
+          // Atualizar barra de progresso continuamente
+          chatProgressBarIntervalRef.current = setInterval(() => {
+            if (!chatStartTimeRef.current) return;
+            
+            const currentElapsed = Date.now() - chatStartTimeRef.current;
+            const currentProgressElapsed = Math.max(0, currentElapsed - CHAT_PROGRESS_BAR_START_TIME);
+            const currentProgressPercent = Math.min(
+              (currentProgressElapsed / CHAT_PROGRESS_BAR_DURATION) * 90,
+              90
+            );
+
+            setChatProgressValue(currentProgressPercent);
+          }, 100); // Atualiza a cada 100ms
+        }
+      }, 500); // Verifica a cada 500ms
 
       return () => {
         if (chatProgressIntervalRef.current) {
@@ -319,6 +383,7 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
             steps.map((step) => ({ ...step, completed: true }))
           );
         }, 200);
+        chatStartTimeRef.current = null;
       }
     }
   }, [isTyping, isLoading]);
@@ -455,7 +520,28 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
                         }}
                         dangerouslySetInnerHTML={{ __html: convertMarkdownToHTML(message.content) }}
                       />
-                      <CopyButton content={message.content} className="self-end" />
+                      <div className="flex items-center gap-2 self-end">
+                        <CopyButton content={message.content} />
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => {
+                                  setSelectedMessageId(message.id);
+                                  setFeedbackModalOpen(true);
+                                }}
+                                className="p-1 rounded-md hover:bg-muted transition"
+                                aria-label="Dar feedback sobre o conteúdo"
+                              >
+                                <MessageSquare className="w-4 h-4" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" align="center">
+                              <p>Feedback</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -624,6 +710,32 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
           </div>
         </div>
       )}
+
+      {/* Feedback Modal */}
+      <ContentFeedbackModal
+        isOpen={feedbackModalOpen}
+        onClose={() => {
+          setFeedbackModalOpen(false);
+          setSelectedMessageId(null);
+        }}
+        contentId={contentId}
+        onFeedbackSubmit={async (feedback) => {
+          if (!contentId) return;
+          
+          try {
+            await saveFeedback(contentId, selectedMessageId, feedback);
+            toast({
+              title: "Feedback enviado",
+              description: "Obrigado pelo seu feedback! Ele nos ajuda a melhorar.",
+            });
+            setFeedbackModalOpen(false);
+            setSelectedMessageId(null);
+          } catch (error) {
+            // Erro já é tratado no hook
+            console.error("Erro ao salvar feedback:", error);
+          }
+        }}
+      />
     </div>
   );
 }
