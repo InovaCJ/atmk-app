@@ -94,7 +94,8 @@ const Settings = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="h-full w-full overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">Configurações</h1>
         <p className="text-muted-foreground">
@@ -267,6 +268,7 @@ const Settings = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 };

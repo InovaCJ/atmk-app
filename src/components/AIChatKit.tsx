@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Paperclip, Send } from "lucide-react";
+import { Send } from "lucide-react";
 
 interface AIChatKitProps {
   options: any;
@@ -25,10 +25,6 @@ export function AIChatKit({ options, onSendFallback }: AIChatKitProps) {
   // Fallback simples mantendo visual atual
   return (
     <div className="flex items-center gap-2 rounded-lg border px-2 py-2 overflow-x-auto">
-      <Button variant="ghost" size="icon">
-        <Paperclip className="h-4 w-4" />
-      </Button>
-
       <Textarea
         className="min-h-[40px] max-h-32 text-sm border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none resize-none"
         placeholder={

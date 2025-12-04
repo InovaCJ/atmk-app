@@ -201,7 +201,8 @@ export default function Library() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="h-full w-full overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -418,6 +419,7 @@ export default function Library() {
         onOpenChange={setIsGenerationModalOpen}
         onConfirm={handleGenerationConfirm}
       />
+      </div>
     </div>
   );
 }

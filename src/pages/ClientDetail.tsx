@@ -233,7 +233,8 @@ export default function ClientDetail() {
   };
 
   return (
-    <div className="p-6 space-y-6 relative">
+    <div className="h-full w-full overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6 relative">
       {/* Skeleton overlay durante salvamento */}
       {isSaving && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -511,6 +512,7 @@ export default function ClientDetail() {
           <ClientMembersTab clientId={client.id} />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
