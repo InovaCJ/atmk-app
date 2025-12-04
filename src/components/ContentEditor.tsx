@@ -1,20 +1,74 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { AIChatKit } from "@/components/AIChatKit";
 import { chatKitOptions as defaultChatKitOptions } from "@/lib/chatkit-options";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, User } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Bot, User, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePostV1ApiGeneratedContentGeneratedcontentidChat, useGetV1ApiGeneratedContentGeneratedcontentidMessages } from "@/http/generated";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { CopyButton } from "./CopyButton";
+import { marked } from "marked";
 
 
 interface ContentEditorProps {
   isLoading: boolean;
   contentId?: string;
 }
+
+type ProgressStep = {
+  id: number;
+  message: string;
+  completed: boolean;
+};
+
+const GENERATION_STEPS: ProgressStep[] = [
+  {
+    id: 1,
+    message: "Estou lendo a notícia completa para extrair as informações mais estratégicas para você...",
+    completed: false,
+  },
+  {
+    id: 2,
+    message: "Agora vou ler sua base de conhecimento para relacionar a estratégia do seu negócio",
+    completed: false,
+  },
+  {
+    id: 3,
+    message: "Cruzando tudo com seu objetivo de conteúdo",
+    completed: false,
+  },
+  {
+    id: 4,
+    message: "Finalizando com a categoria final e formatando seu conteúdo neste instante...",
+    completed: false,
+  },
+  {
+    id: 5,
+    message: "Gerando conteúdo...",
+    completed: false,
+  },
+];
+
+const CHAT_STEPS: ProgressStep[] = [
+  {
+    id: 1,
+    message: "Analisando sua solicitação...",
+    completed: false,
+  },
+  {
+    id: 2,
+    message: "Consultando o contexto do conteúdo gerado...",
+    completed: false,
+  },
+  {
+    id: 3,
+    message: "Gerando resposta personalizada...",
+    completed: false,
+  },
+];
 
 interface Message {
   id: string;
@@ -23,10 +77,49 @@ interface Message {
   timestamp: Date;
 }
 
+// Helper function to convert markdown to HTML
+const convertMarkdownToHTML = (content: string): string => {
+  if (!content) return '';
+  
+  // Check if content looks like HTML (contains HTML tags)
+  const hasHtmlTags = /<[a-z][\s\S]*>/i.test(content);
+  
+  // If it's already HTML, return as is
+  if (hasHtmlTags) {
+    return content;
+  }
+  
+  // Check if content looks like markdown (contains markdown syntax)
+  const hasMarkdownSyntax = /(^#{1,6}\s|^\*\s|^-\s|^\d+\.\s|```|`|\[.*\]\(.*\)|!\[.*\]\(.*\))/m.test(content);
+  
+  // If it has markdown syntax, convert it
+  if (hasMarkdownSyntax) {
+    try {
+      return marked.parse(content, { breaks: true, gfm: true });
+    } catch (error) {
+      console.error('Error parsing markdown:', error);
+      return content;
+    }
+  }
+  
+  // Otherwise, return as plain text (will be escaped by dangerouslySetInnerHTML)
+  return content;
+};
+
 export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>(GENERATION_STEPS);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [progressValue, setProgressValue] = useState(0);
+  const [chatProgressSteps, setChatProgressSteps] = useState<ProgressStep[]>(CHAT_STEPS);
+  const [chatCurrentStepIndex, setChatCurrentStepIndex] = useState(0);
+  const [chatProgressValue, setChatProgressValue] = useState(0);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressBarIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const chatProgressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const chatProgressBarIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { session } = useAuth();
   const { toast } = useToast();
 
@@ -66,7 +159,84 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isTyping]);
+  }, [messages, isTyping, progressSteps, chatProgressSteps]);
+
+  // Progress steps animation during content generation
+  useEffect(() => {
+    if (isLoading && !contentId) {
+      // Reset progress when starting generation
+      setProgressSteps(GENERATION_STEPS.map(step => ({ ...step, completed: false })));
+      setCurrentStepIndex(0);
+      setProgressValue(0);
+
+      // Start progress animation
+      progressIntervalRef.current = setInterval(() => {
+        setCurrentStepIndex((prev) => {
+          if (prev < GENERATION_STEPS.length - 2) {
+            // Mark current step as completed (not the last one - that's the progress bar step)
+            setProgressSteps((steps) =>
+              steps.map((step, idx) =>
+                idx === prev ? { ...step, completed: true } : step
+              )
+            );
+            return prev + 1;
+          } else if (prev === GENERATION_STEPS.length - 2) {
+            // When reaching the last step before progress bar, start progress bar animation
+            setProgressSteps((steps) =>
+              steps.map((step, idx) =>
+                idx === prev ? { ...step, completed: true } : step
+              )
+            );
+            
+            // Start progress bar animation
+            setProgressValue(0);
+            let currentProgress = 0;
+            progressBarIntervalRef.current = setInterval(() => {
+              currentProgress += Math.random() * 15; // Incremento variável para parecer mais natural
+              if (currentProgress >= 90) {
+                currentProgress = 90; // Para em 90% até o conteúdo chegar
+              }
+              setProgressValue(currentProgress);
+            }, 200); // Atualiza a cada 200ms
+            
+            return prev + 1;
+          } else {
+            return prev;
+          }
+        });
+      }, 3000); // Change step every 3 seconds
+
+      return () => {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+        if (progressBarIntervalRef.current) {
+          clearInterval(progressBarIntervalRef.current);
+          progressBarIntervalRef.current = null;
+        }
+      };
+    } else {
+      // Complete all steps when loading finishes
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      if (progressBarIntervalRef.current) {
+        clearInterval(progressBarIntervalRef.current);
+        progressBarIntervalRef.current = null;
+      }
+      if (!isLoading) {
+        // Complete progress bar to 100% and mark all steps as completed
+        setProgressValue(100);
+        setTimeout(() => {
+          setProgressSteps((steps) =>
+            steps.map((step) => ({ ...step, completed: true }))
+          );
+        }, 300);
+      }
+    }
+  }, [isLoading, contentId]);
 
   const addMessage = (message) => {
     const newMessage: Message = {
@@ -77,6 +247,81 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
     };
     setMessages(prev => [...prev, newMessage]);
   };
+
+  // Chat progress steps animation
+  useEffect(() => {
+    if (isTyping && !isLoading) {
+      // Reset chat progress when starting
+      setChatProgressSteps(CHAT_STEPS.map(step => ({ ...step, completed: false })));
+      setChatCurrentStepIndex(0);
+      setChatProgressValue(0);
+
+      // Start chat progress animation (faster than generation)
+      chatProgressIntervalRef.current = setInterval(() => {
+        setChatCurrentStepIndex((prev) => {
+          if (prev < CHAT_STEPS.length - 1) {
+            // Mark current step as completed
+            setChatProgressSteps((steps) =>
+              steps.map((step, idx) =>
+                idx === prev ? { ...step, completed: true } : step
+              )
+            );
+            return prev + 1;
+          } else {
+            // When reaching the last step, start progress bar
+            setChatProgressSteps((steps) =>
+              steps.map((step, idx) =>
+                idx === prev ? { ...step, completed: true } : step
+              )
+            );
+            
+            // Start progress bar animation
+            setChatProgressValue(0);
+            let currentProgress = 0;
+            chatProgressBarIntervalRef.current = setInterval(() => {
+              currentProgress += Math.random() * 20; // Faster increment for chat
+              if (currentProgress >= 90) {
+                currentProgress = 90; // Stop at 90% until response arrives
+              }
+              setChatProgressValue(currentProgress);
+            }, 150); // Faster updates for chat
+            
+            return prev;
+          }
+        });
+      }, 1500); // Faster step changes for chat (1.5s instead of 3s)
+
+      return () => {
+        if (chatProgressIntervalRef.current) {
+          clearInterval(chatProgressIntervalRef.current);
+          chatProgressIntervalRef.current = null;
+        }
+        if (chatProgressBarIntervalRef.current) {
+          clearInterval(chatProgressBarIntervalRef.current);
+          chatProgressBarIntervalRef.current = null;
+        }
+      };
+    } else {
+      // Complete chat progress when typing finishes
+      if (chatProgressIntervalRef.current) {
+        clearInterval(chatProgressIntervalRef.current);
+        chatProgressIntervalRef.current = null;
+      }
+      if (chatProgressBarIntervalRef.current) {
+        clearInterval(chatProgressBarIntervalRef.current);
+        chatProgressBarIntervalRef.current = null;
+      }
+      if (!isTyping) {
+        // Complete progress bar to 100% and mark all steps as completed
+        setChatProgressValue(100);
+        setTimeout(() => {
+          setChatProgressSteps((steps) =>
+            steps.map((step) => ({ ...step, completed: true }))
+          );
+        }, 200);
+      }
+    }
+  }, [isTyping, isLoading]);
 
   const handleUserSend = async (text: string) => {
     addMessage({
@@ -98,31 +343,78 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
     }
 
     try {
+      console.log('Enviando mensagem para o chat:', { contentId, message: text });
       const result = await chatWithContent({
         generatedContentId: contentId,
         data: {
           message: text
         }
       });
+      console.log('Resposta do chat recebida:', result);
       addMessage(result);
-    } catch (error) {
-      console.error("Error sending message:", error);
+    } catch (error: any) {
+      console.error("Erro detalhado ao enviar mensagem:", {
+        error,
+        message: error?.message,
+        response: error?.response,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        contentId,
+        text
+      });
+
+      // Determinar tipo de erro e mensagem apropriada
+      let errorTitle = "Erro ao enviar mensagem";
+      let errorDescription = "Falha ao enviar mensagem para a IA.";
+
+      if (error?.response) {
+        // Erro da API (backend)
+        const status = error.response.status;
+        const errorData = error.response.data;
+        
+        if (status === 404) {
+          errorTitle = "Conteúdo não encontrado";
+          errorDescription = "O conteúdo gerado não foi encontrado. Tente gerar um novo conteúdo.";
+        } else if (status === 401 || status === 403) {
+          errorTitle = "Erro de autenticação";
+          errorDescription = "Sua sessão expirou. Por favor, faça login novamente.";
+        } else if (status === 500) {
+          errorTitle = "Erro no servidor";
+          errorDescription = errorData?.error?.message || errorData?.message || "Erro interno do servidor. Tente novamente em alguns instantes.";
+        } else if (status >= 400 && status < 500) {
+          errorTitle = "Erro na requisição";
+          errorDescription = errorData?.error?.message || errorData?.message || `Erro ${status}: Verifique os dados enviados.`;
+        } else {
+          errorDescription = errorData?.error?.message || errorData?.message || `Erro ${status} do servidor.`;
+        }
+      } else if (error?.message) {
+        // Erro de rede ou outro erro
+        if (error.message.includes('Network') || error.message.includes('fetch')) {
+          errorTitle = "Erro de conexão";
+          errorDescription = "Não foi possível conectar ao servidor. Verifique sua conexão com a internet.";
+        } else if (error.message.includes('timeout')) {
+          errorTitle = "Tempo esgotado";
+          errorDescription = "A requisição demorou muito para responder. Tente novamente.";
+        } else {
+          errorDescription = error.message;
+        }
+      }
+
       toast({
-        title: "Erro",
-        description: "Falha ao enviar mensagem para a IA.",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive"
       });
-      // Fallback or remove user message? For now just stop typing indicator
     } finally {
       setIsTyping(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-background" data-testid="chat-area-panel">
+    <div className="flex flex-col h-full bg-background overflow-hidden" data-testid="chat-area-panel">
       {/* Chat History Area */}
-      <ScrollArea className="flex-1 overflow-y-auto">
-        <div className="space-y-6">
+      <ScrollArea className="flex-1 min-w-0 min-h-0 overflow-x-hidden">
+        <div className="space-y-6 px-4 md:px-6 pt-4 md:pt-6 pb-2 min-w-0 w-full">
           {messages.length === 0 && !isLoading && (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
               <Bot className="h-12 w-12 mb-4 opacity-20" />
@@ -134,7 +426,7 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
             <div
               key={message.id}
               className={cn(
-                "flex gap-3 w-full max-w-3xl mx-auto",
+                "flex gap-3 w-full min-w-0 max-w-full px-2",
                 message.sender === 'user' ? "justify-end" : "justify-start"
               )}
             >
@@ -146,24 +438,28 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
 
               <div
                 className={cn(
-                  "rounded-lg p-4 text-sm shadow-sm max-w-[85%]",
+                  "rounded-lg p-4 text-sm shadow-sm",
                   message.sender === 'user'
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card border border-border prose prose-sm dark:prose-invert max-w-none"
+                    ? "bg-primary text-primary-foreground max-w-[85%] flex-shrink-0"
+                    : "bg-card border border-border flex-1 min-w-0"
                 )}
               >
                 {message.sender === 'assistant' ? (
-                  <div className="relative group">
-                    <div className="flex flex-col gap-2">
+                  <div className="relative group min-w-0 w-full max-w-full">
+                    <div className="flex flex-col gap-2 min-w-0 w-full max-w-full">
                       <div
-                        className="prose prose-sm dark:prose-invert max-w-none"
-                        dangerouslySetInnerHTML={{ __html: message.content }}
+                        className="prose prose-sm dark:prose-invert max-w-none w-full [&_h1]:break-words [&_h2]:break-words [&_h3]:break-words [&_h4]:break-words [&_h5]:break-words [&_h6]:break-words [&_p]:break-words [&_li]:break-words [&_strong]:break-words [&_em]:break-words [&_code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre_code]:whitespace-pre-wrap [&_pre_code]:break-words [&_a]:break-words [&_ul]:my-4 [&_ol]:my-4 [&_p]:my-2 [&_hr]:my-4"
+                        style={{ 
+                          wordBreak: 'break-word', 
+                          overflowWrap: 'anywhere'
+                        }}
+                        dangerouslySetInnerHTML={{ __html: convertMarkdownToHTML(message.content) }}
                       />
                       <CopyButton content={message.content} className="self-end" />
                     </div>
                   </div>
                 ) : (
-                  <p>{message.content}</p>
+                  <p className="break-words overflow-wrap-anywhere">{message.content}</p>
                 )}
 
               </div>
@@ -177,16 +473,136 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
           ))}
 
           {/* Loading/Typing Indicator */}
-          {(isLoading || isTyping) && (
-            <div className="flex gap-3 w-full max-w-3xl mx-auto">
-              <Avatar className="h-8 w-8 mt-1">
-                <AvatarFallback className="bg-primary/10 text-primary"><Bot className="h-4 w-4" /></AvatarFallback>
-              </Avatar>
-              <div className="bg-card border border-border rounded-lg p-4 flex items-center gap-2">
-                <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
+          {isLoading && !contentId && (
+            <div className="flex flex-col gap-3 w-full min-w-0 px-2">
+              {progressSteps.map((step, index) => {
+                const isLastStep = index === GENERATION_STEPS.length - 1;
+                const isProgressStep = isLastStep && index === currentStepIndex;
+                
+                return (
+                  <div key={step.id} className="flex gap-3 w-full min-w-0">
+                    <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
+                      <AvatarFallback className={cn(
+                        "bg-primary/10",
+                        step.completed ? "text-primary" : index === currentStepIndex ? "text-primary" : "text-muted-foreground"
+                      )}>
+                        {step.completed ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Bot className="h-4 w-4" />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={cn(
+                      "bg-card border rounded-lg p-4 flex-1 transition-all duration-300",
+                      step.completed
+                        ? "border-primary/20 bg-primary/5"
+                        : index === currentStepIndex
+                        ? "border-primary/40 shadow-sm"
+                        : "border-border opacity-60"
+                    )}>
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-start gap-3">
+                          {index === currentStepIndex && !step.completed && !isProgressStep && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            </div>
+                          )}
+                          <p className={cn(
+                            "text-sm",
+                            step.completed
+                              ? "text-muted-foreground"
+                              : index === currentStepIndex
+                              ? "text-foreground font-medium"
+                              : "text-muted-foreground"
+                          )}>
+                            {step.message}
+                          </p>
+                        </div>
+                        
+                        {/* Barra de progresso na última etapa */}
+                        {isProgressStep && (
+                          <div className="space-y-2">
+                            <Progress value={progressValue} className="h-2" />
+                            <p className="text-xs text-muted-foreground text-right">
+                              {Math.round(progressValue)}%
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Chat progress indicator */}
+          {isTyping && !isLoading && (
+            <div className="flex flex-col gap-3 w-full min-w-0 px-2">
+              {chatProgressSteps.map((step, index) => {
+                const isLastStep = index === CHAT_STEPS.length - 1;
+                const isProgressStep = isLastStep && index === chatCurrentStepIndex;
+                
+                return (
+                  <div key={step.id} className="flex gap-3 w-full min-w-0">
+                    <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
+                      <AvatarFallback className={cn(
+                        "bg-primary/10",
+                        step.completed ? "text-primary" : index === chatCurrentStepIndex ? "text-primary" : "text-muted-foreground"
+                      )}>
+                        {step.completed ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Bot className="h-4 w-4" />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={cn(
+                      "bg-card border rounded-lg p-4 flex-1 transition-all duration-300",
+                      step.completed
+                        ? "border-primary/20 bg-primary/5"
+                        : index === chatCurrentStepIndex
+                        ? "border-primary/40 shadow-sm"
+                        : "border-border opacity-60"
+                    )}>
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-start gap-3">
+                          {index === chatCurrentStepIndex && !step.completed && !isProgressStep && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            </div>
+                          )}
+                          <p className={cn(
+                            "text-sm",
+                            step.completed
+                              ? "text-muted-foreground"
+                              : index === chatCurrentStepIndex
+                              ? "text-foreground font-medium"
+                              : "text-muted-foreground"
+                          )}>
+                            {step.message}
+                          </p>
+                        </div>
+                        
+                        {/* Barra de progresso na última etapa do chat */}
+                        {isProgressStep && (
+                          <div className="space-y-2">
+                            <Progress value={chatProgressValue} className="h-2" />
+                            <p className="text-xs text-muted-foreground text-right">
+                              {Math.round(chatProgressValue)}%
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -196,7 +612,7 @@ export function ContentEditor({ isLoading, contentId }: ContentEditorProps) {
 
       {/* Chat Input Area */}
       {contentId && (
-        <div className="p-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="max-w-3xl mx-auto">
             <AIChatKit
               options={defaultChatKitOptions}

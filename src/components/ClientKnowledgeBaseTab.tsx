@@ -64,7 +64,7 @@ const REGULATORY_OPTIONS = [
 
 export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps) {
   const { canEditClient } = useClientContext();
-  const { knowledgeData, loading, saveKnowledgeData } = useClientSettings(clientId);
+  const { knowledgeData, loading, saveKnowledgeData, refetch } = useClientSettings(clientId);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -113,10 +113,117 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
 
   // Sincronizar dados locais com dados do hook
   useEffect(() => {
-    if (knowledgeData) {
-      setLocalKnowledgeData(knowledgeData);
+    // Não sincronizar enquanto está carregando
+    if (loading) {
+      console.log('⏳ [SYNC] Aguardando carregamento...', { clientId });
+      return;
     }
-  }, [knowledgeData]);
+
+    console.log('🔄 [SYNC] Sincronizando dados locais:', {
+      hasKnowledgeData: !!knowledgeData,
+      loading,
+      knowledgeDataKeys: knowledgeData ? Object.keys(knowledgeData) : [],
+      clientId,
+      timestamp: new Date().toISOString()
+    });
+
+    if (knowledgeData) {
+      // Fazer merge profundo para preservar estrutura completa
+      const mergedData: KnowledgeBaseData = {
+        positioning: {
+          valueProposition: knowledgeData.positioning?.valueProposition || '',
+          differentiators: knowledgeData.positioning?.differentiators?.length > 0 
+            ? knowledgeData.positioning.differentiators 
+            : [''],
+          personality: {
+            formalVsInformal: knowledgeData.positioning?.personality?.formalVsInformal ?? 50,
+            technicalVsAccessible: knowledgeData.positioning?.personality?.technicalVsAccessible ?? 50,
+            seriousVsHumorous: knowledgeData.positioning?.personality?.seriousVsHumorous ?? 50,
+          },
+          wordsWeUse: knowledgeData.positioning?.wordsWeUse?.length > 0 
+            ? knowledgeData.positioning.wordsWeUse 
+            : [''],
+          bannedWords: knowledgeData.positioning?.bannedWords?.length > 0 
+            ? knowledgeData.positioning.bannedWords 
+            : [''],
+          exampleFiles: knowledgeData.positioning?.exampleFiles || [],
+        },
+        business: {
+          sector: knowledgeData.business?.sector || '',
+          market: knowledgeData.business?.market || '',
+          categoryMaturity: knowledgeData.business?.categoryMaturity || '',
+          regulatoryStatus: knowledgeData.business?.regulatoryStatus || '',
+          products: knowledgeData.business?.products?.length > 0 
+            ? knowledgeData.business.products.map(p => ({
+                name: p.name || '',
+                features: p.features?.length > 0 ? p.features : [''],
+                priceRange: (p as any).priceRange || (p as any).pricing || '',
+              }))
+            : [{ name: '', features: [''], priceRange: '' }],
+          services: knowledgeData.business?.services?.length > 0 
+            ? knowledgeData.business.services.map(s => ({
+                name: s.name || '',
+                description: (s as any).description || '',
+                priceRange: (s as any).priceRange || '',
+              }))
+            : [{ name: '', description: '', priceRange: '' }],
+        },
+        audience: {
+          demographicProfile: {
+            ageRange: knowledgeData.audience?.demographicProfile?.ageRange || '',
+            gender: knowledgeData.audience?.demographicProfile?.gender || '',
+            income: knowledgeData.audience?.demographicProfile?.income || '',
+            education: knowledgeData.audience?.demographicProfile?.education || '',
+            location: knowledgeData.audience?.demographicProfile?.location || '',
+          },
+          firmographicProfile: {
+            companySize: knowledgeData.audience?.firmographicProfile?.companySize || '',
+            industries: knowledgeData.audience?.firmographicProfile?.industries?.length > 0 
+              ? knowledgeData.audience.firmographicProfile.industries 
+              : [''],
+            targetRoles: knowledgeData.audience?.firmographicProfile?.targetRoles?.length > 0 
+              ? knowledgeData.audience.firmographicProfile.targetRoles 
+              : [''],
+          },
+          personas: knowledgeData.audience?.personas?.length > 0 
+            ? knowledgeData.audience.personas.map(p => ({
+                name: p.name || '',
+                pains: p.pains?.length > 0 ? p.pains : [''],
+                objections: p.objections?.length > 0 ? p.objections : [''],
+                purchaseTriggers: p.purchaseTriggers?.length > 0 ? p.purchaseTriggers : [''],
+              }))
+            : [{ name: '', pains: [''], objections: [''], purchaseTriggers: [''] }],
+          faqs: knowledgeData.audience?.faqs?.length > 0 
+            ? knowledgeData.audience.faqs.map(f => ({
+                question: f.question || '',
+                answer: f.answer || '',
+              }))
+            : [{ question: '', answer: '' }],
+        },
+        seo: {
+          mainKeywords: knowledgeData.seo?.mainKeywords?.length > 0 
+            ? knowledgeData.seo.mainKeywords 
+            : [''],
+          searchIntents: knowledgeData.seo?.searchIntents?.length > 0 
+            ? knowledgeData.seo.searchIntents 
+            : [''],
+        },
+      };
+
+      console.log('✅ [SYNC] Dados sincronizados:', {
+        hasValueProposition: !!mergedData.positioning.valueProposition,
+        differentiatorsCount: mergedData.positioning.differentiators.filter(d => d.trim()).length,
+        wordsWeUseCount: mergedData.positioning.wordsWeUse.filter(w => w.trim()).length,
+        hasSector: !!mergedData.business.sector,
+        productsCount: mergedData.business.products.filter(p => p.name.trim()).length,
+      });
+
+      setLocalKnowledgeData(mergedData);
+    } else if (!loading) {
+      // Se não há dados e não está carregando, manter dados padrão
+      console.log('ℹ️ [SYNC] Nenhum dado encontrado, mantendo valores padrão');
+    }
+  }, [knowledgeData, loading, clientId]);
 
   // Funções de gerenciamento de dados
   const updatePositioning = (field: string, value: string | string[] | { formalVsInformal: number; technicalVsAccessible: number; seriousVsHumorous: number; }) => {
@@ -204,12 +311,36 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await saveKnowledgeData(localKnowledgeData);
+      console.log('🔄 [COMPONENT] Iniciando salvamento...', {
+        clientId,
+        dataKeys: Object.keys(localKnowledgeData),
+        timestamp: new Date().toISOString()
+      });
+      
+      const result = await saveKnowledgeData(localKnowledgeData);
+      
+      console.log('✅ [COMPONENT] Salvamento concluído:', {
+        success: !!result,
+        resultId: result?.id,
+        hasPromptDirectives: !!result?.prompt_directives
+      });
+      
+      // O hook já recarrega automaticamente após salvar
+      // Aguardar um pouco para garantir que a UI atualize
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       toast.success('Base de conhecimento salva com sucesso!');
       setIsEditing(false);
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
-      toast.error('Erro ao salvar base de conhecimento. Tente novamente.');
+    } catch (error: any) {
+      console.error('❌ [COMPONENT] Erro ao salvar:', {
+        error,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+        errorDetails: error?.details
+      });
+      
+      const errorMessage = error?.message || 'Erro desconhecido ao salvar base de conhecimento';
+      toast.error(`Erro ao salvar: ${errorMessage}. Verifique o console para mais detalhes.`);
     } finally {
       setIsSaving(false);
     }
@@ -297,6 +428,20 @@ export function ClientKnowledgeBaseTab({ clientId }: ClientKnowledgeBaseTabProps
     if (type.includes('markdown')) return '📝';
     return '📄';
   };
+
+  // Mostrar loading enquanto carrega
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando base de conhecimento...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

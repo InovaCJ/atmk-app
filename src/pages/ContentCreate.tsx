@@ -185,11 +185,11 @@ export default function ContentCreate() {
   ];
 
   return (
-    <div className="p-4 md:p-6 space-y-4 overflow-x-hidden h-[calc(100vh-100px)]">
-      <ResizablePanelGroup direction="horizontal" className="rounded-lg border h-full">
-        <ResizablePanel defaultSize={40} minSize={25} maxSize={55}>
-          <Card className="h-full rounded-none border-0">
-            <CardContent className="space-y-6 p-4 md:p-6">
+    <div className="h-full w-full p-4 md:p-6 overflow-hidden flex flex-col">
+      <ResizablePanelGroup direction="horizontal" className="rounded-lg border h-full min-h-0 flex-1">
+        <ResizablePanel defaultSize={40} minSize={25} maxSize={55} className="min-w-0">
+          <Card className="h-full rounded-none border-0 flex flex-col">
+            <CardContent className="space-y-6 p-4 md:p-6 overflow-y-auto overflow-x-hidden flex-1 min-h-0">
               <div className="space-y-2">
                 <Label>Fonte do tema</Label>
                 <div className="space-y-2">
@@ -213,36 +213,37 @@ export default function ContentCreate() {
                   </Select>
                 </div>
                 <div className="grid grid-cols-1 gap-3">
-                  <div className="flex items-center gap-2">
-                    {
-                      inputType === "feed" && <>
-                        <Newspaper className="h-4 w-4" />
-                        <div ref={newsDropdownTriggerRef} className="flex-1">
-                          <DropdownMenu
-                            onOpenChange={(open) => {
-                              if (open && newsDropdownTriggerRef.current) {
-                                setDropdownWidth(newsDropdownTriggerRef.current.offsetWidth);
-                              }
-                              if (!open) {
-                                setNewsSearchTerm("");
-                              }
-                            }}
-                          >
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className="w-full justify-between min-w-0 overflow-hidden whitespace-normal [&>span]:truncate [&>span]:block"
-                              >
-                                <span className="text-left flex-1 min-w-0 mr-2 overflow-hidden text-ellipsis whitespace-nowrap">
+                  {
+                    inputType === "feed" && (
+                      <div ref={newsDropdownTriggerRef} className="w-full">
+                        <DropdownMenu
+                          onOpenChange={(open) => {
+                            if (open && newsDropdownTriggerRef.current) {
+                              setDropdownWidth(newsDropdownTriggerRef.current.offsetWidth);
+                            }
+                            if (!open) {
+                              setNewsSearchTerm("");
+                            }
+                          }}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="w-full h-10 px-3 py-2 justify-between text-left min-w-0 items-center"
+                            >
+                              <span className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-2">
+                                <Newspaper className="h-4 w-4 flex-shrink-0" />
+                                <span className="truncate">
                                   {newsId ? (newsItems.find((n) => n.id === newsId)?.title || "Notícia selecionada") : "Selecionar notícia do feed"}
                                 </span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              className="max-h-[360px] overflow-hidden flex flex-col"
-                              style={{ width: dropdownWidth ? `${dropdownWidth}px` : undefined }}
-                              align="start"
-                            >
+                              </span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            className="max-h-[360px] overflow-hidden flex flex-col"
+                            style={{ width: dropdownWidth ? `${dropdownWidth}px` : undefined }}
+                            align="start"
+                          >
                               <div className="p-2 border-b">
                                 <div className="relative">
                                   <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -278,11 +279,11 @@ export default function ContentCreate() {
                                   </DropdownMenuCheckboxItem>
                                 ))}
                               </div>
-                            </DropdownMenuContent>
+                          </DropdownMenuContent>
                           </DropdownMenu>
-                        </div></>
-                    }
-                  </div>
+                        </div>
+                    )
+                  }
                   {
                     inputType === "url" && <>
                       <div className="flex items-center gap-2">
@@ -362,15 +363,13 @@ export default function ContentCreate() {
           </Card>
         </ResizablePanel>
         <ResizableHandle />
-        <ResizablePanel defaultSize={60} minSize={45} maxSize={75}>
-          <Card className="h-full rounded-none border-0">
-            <CardContent className="p-0 h-full">
-              <div className="h-full overflow-y-auto">
-                <ContentEditor
-                  isLoading={isGenerating || isContentLoading}
-                  contentId={generatedContentId}
-                />
-              </div>
+        <ResizablePanel defaultSize={60} minSize={45} maxSize={75} className="min-w-0">
+          <Card className="h-full rounded-none border-0 flex flex-col">
+            <CardContent className="p-0 h-full flex-1 min-h-0 overflow-hidden">
+              <ContentEditor
+                isLoading={isGenerating || isContentLoading}
+                contentId={generatedContentId}
+              />
             </CardContent>
           </Card>
         </ResizablePanel>

@@ -1,8 +1,15 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input"; // Added Input
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+} from "@/components/ui/pagination";
 import {
   TrendingUp,
   FileText,
@@ -14,6 +21,8 @@ import {
   Zap,
   Clock,
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { ContentGenerationModal } from "@/components/ContentGenerationModal";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -36,6 +45,8 @@ export default function Dashboard() {
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | undefined>();
   const [isGenerating, setIsGenerating] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // Added state for search
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const { selectedClientId, selectedClient } = useClientContext();
   const { clients } = useClients();
@@ -70,12 +81,27 @@ export default function Dashboard() {
   );
 
   // Pass searchQuery and days to the hook for filtering
+  // Buscar todos os itens para paginação client-side
   const { items: newsItems, loading: newsLoading, error: newsError } = useNewsFeed({
     clientId: selectedClientId || '',
     days: days,
-    pageSize: 6,
+    pageSize: 1000, // Buscar muitos itens para paginação client-side
     q: searchQuery // Connected search query
   });
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Paginação client-side
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return newsItems?.slice(startIndex, endIndex) || [];
+  }, [newsItems, currentPage]);
+
+  const totalPages = Math.ceil((newsItems?.length || 0) / ITEMS_PER_PAGE);
 
   const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
   const { session } = useAuth();
@@ -218,8 +244,9 @@ export default function Dashboard() {
     }
 
     return (
-      <div className="grid grid-cols-1 gap-4">
-        {newsItems.map((item: any) => {
+      <>
+        <div className="grid grid-cols-1 gap-4">
+          {paginatedItems.map((item: any) => {
           const summary =
             item.summary ||
             (item.content ? item.content.substring(0, 140) + "..." : "Sem resumo disponível.");
@@ -288,8 +315,113 @@ export default function Dashboard() {
             </Card>
           );
         })}
-      </div>
+        </div>
 
+        {/* Paginação */}
+        {totalPages > 1 && (
+          <div className="mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <Button
+                    variant="ghost"
+                    size="default"
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="gap-1 pl-2.5"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span>Anterior</span>
+                  </Button>
+                </PaginationItem>
+
+                {/* Primeira página */}
+                {currentPage > 2 && (
+                  <>
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage(1);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                    {currentPage > 3 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                  </>
+                )}
+
+                {/* Páginas ao redor da atual */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(
+                    (page) =>
+                      page === currentPage ||
+                      page === currentPage - 1 ||
+                      page === currentPage + 1
+                  )
+                  .map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage(page);
+                        }}
+                        isActive={page === currentPage}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                {/* Última página */}
+                {currentPage < totalPages - 1 && (
+                  <>
+                    {currentPage < totalPages - 2 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage(totalPages);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </>
+                )}
+
+                <PaginationItem>
+                  <Button
+                    variant="ghost"
+                    size="default"
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="gap-1 pr-2.5"
+                  >
+                    <span>Próxima</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
+      </>
     );
   };
 
@@ -356,7 +488,8 @@ export default function Dashboard() {
             : undefined;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="h-full w-full overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6">
       <OnboardingBanner
         totalSteps={totalSteps}
         completedSteps={completedSteps}
@@ -428,6 +561,7 @@ export default function Dashboard() {
         </div>
 
         {renderNewsFeed()}
+      </div>
       </div>
 
       {/* Content Generation Modal */}

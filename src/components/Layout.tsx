@@ -88,24 +88,24 @@ export function Layout() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="h-screen flex w-full bg-background overflow-hidden">
         <AppSidebar />
-        <main className="flex-1">
-          <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
             <div className="flex h-20 items-center justify-between px-4 lg:px-6">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 min-w-0">
                 <SidebarTrigger />
-                <div>
-                  <h1 className="text-lg font-semibold">{pageInfo.title}</h1>
+                <div className="min-w-0">
+                  <h1 className="text-lg font-semibold truncate">{pageInfo.title}</h1>
                   {pageInfo.description && (
-                    <p className="text-sm text-muted-foreground">{pageInfo.description}</p>
+                    <p className="text-sm text-muted-foreground truncate">{pageInfo.description}</p>
                   )}
                 </div>
               </div>
               {pageInfo.hasFilter && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="flex-shrink-0">
                       <Calendar className="h-4 w-4 mr-2" />
                       Últimos {selectedPeriod}
                       <ChevronDown className="h-4 w-4 ml-2" />
@@ -126,7 +126,7 @@ export function Layout() {
               )}
             </div>
           </header>
-          <div className="flex-1">
+          <div className="flex-1 min-h-0 overflow-hidden">
             <Outlet />
           </div>
         </main>
