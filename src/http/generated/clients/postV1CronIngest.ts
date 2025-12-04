@@ -4,7 +4,7 @@
 */
 
 import fetch from "@kubb/plugin-client/clients/axios";
-import type { PostV1CronIngestMutationResponse } from "../types/PostV1CronIngest.ts";
+import type { PostV1CronIngestMutationResponse, PostV1CronIngestHeaderParams, PostV1CronIngest403 } from "../types/PostV1CronIngest.ts";
 import type { RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/axios";
 
 function getPostV1CronIngestUrl() {
@@ -17,9 +17,9 @@ function getPostV1CronIngestUrl() {
  * @summary Trigger Global News Ingestion
  * {@link /v1/cron/ingest}
  */
-export async function postV1CronIngest(config: Partial<RequestConfig> & { client?: typeof fetch } = {}) {
+export async function postV1CronIngest(headers: PostV1CronIngestHeaderParams, config: Partial<RequestConfig> & { client?: typeof fetch } = {}) {
   const { client: request = fetch, ...requestConfig } = config  
   
-  const res = await request<PostV1CronIngestMutationResponse, ResponseErrorConfig<Error>, unknown>({ method : "POST", url : getPostV1CronIngestUrl().url.toString(), ... requestConfig })  
+  const res = await request<PostV1CronIngestMutationResponse, ResponseErrorConfig<PostV1CronIngest403>, unknown>({ method : "POST", url : getPostV1CronIngestUrl().url.toString(), ... requestConfig, headers : { ...headers, ...requestConfig.headers } })  
   return res.data
 }

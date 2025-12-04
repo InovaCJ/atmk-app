@@ -4,7 +4,7 @@
 */
 
 import fetch from "@kubb/plugin-client/clients/axios";
-import type { PostV1CronIngestMutationResponse } from "../types/PostV1CronIngest.ts";
+import type { PostV1CronIngestMutationResponse, PostV1CronIngestHeaderParams, PostV1CronIngest403 } from "../types/PostV1CronIngest.ts";
 import type { RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/axios";
 import type { UseMutationOptions, UseMutationResult, QueryClient } from "@tanstack/react-query";
 import { postV1CronIngest } from "../clients/postV1CronIngest.ts";
@@ -16,10 +16,10 @@ export type PostV1CronIngestMutationKey = ReturnType<typeof postV1CronIngestMuta
 
 export function postV1CronIngestMutationOptions(config: Partial<RequestConfig> & { client?: typeof fetch } = {}) {
   const mutationKey = postV1CronIngestMutationKey()
-  return mutationOptions<PostV1CronIngestMutationResponse, ResponseErrorConfig<Error>, void, typeof mutationKey>({
+  return mutationOptions<PostV1CronIngestMutationResponse, ResponseErrorConfig<PostV1CronIngest403>, {headers: PostV1CronIngestHeaderParams}, typeof mutationKey>({
     mutationKey,
-    mutationFn: async() => {
-      return postV1CronIngest(config)
+    mutationFn: async({ headers }) => {
+      return postV1CronIngest(headers, config)
     },
   })
 }
@@ -31,7 +31,7 @@ export function postV1CronIngestMutationOptions(config: Partial<RequestConfig> &
  */
 export function usePostV1CronIngest<TContext>(options: 
 {
-  mutation?: UseMutationOptions<PostV1CronIngestMutationResponse, ResponseErrorConfig<Error>, void, TContext> & { client?: QueryClient },
+  mutation?: UseMutationOptions<PostV1CronIngestMutationResponse, ResponseErrorConfig<PostV1CronIngest403>, {headers: PostV1CronIngestHeaderParams}, TContext> & { client?: QueryClient },
   client?: Partial<RequestConfig> & { client?: typeof fetch },
 }
  = {}) {
@@ -39,11 +39,11 @@ export function usePostV1CronIngest<TContext>(options:
   const { client: queryClient, ...mutationOptions } = mutation;
   const mutationKey = mutationOptions.mutationKey ?? postV1CronIngestMutationKey()
 
-  const baseOptions = postV1CronIngestMutationOptions(config) as UseMutationOptions<PostV1CronIngestMutationResponse, ResponseErrorConfig<Error>, void, TContext>
+  const baseOptions = postV1CronIngestMutationOptions(config) as UseMutationOptions<PostV1CronIngestMutationResponse, ResponseErrorConfig<PostV1CronIngest403>, {headers: PostV1CronIngestHeaderParams}, TContext>
 
-  return useMutation<PostV1CronIngestMutationResponse, ResponseErrorConfig<Error>, void, TContext>({
+  return useMutation<PostV1CronIngestMutationResponse, ResponseErrorConfig<PostV1CronIngest403>, {headers: PostV1CronIngestHeaderParams}, TContext>({
     ...baseOptions,
     mutationKey,
     ...mutationOptions,
-  }, queryClient) as UseMutationResult<PostV1CronIngestMutationResponse, ResponseErrorConfig<Error>, void, TContext>
+  }, queryClient) as UseMutationResult<PostV1CronIngestMutationResponse, ResponseErrorConfig<PostV1CronIngest403>, {headers: PostV1CronIngestHeaderParams}, TContext>
 }

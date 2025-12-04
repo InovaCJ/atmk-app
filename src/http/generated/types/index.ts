@@ -3,8 +3,8 @@ export type { GetV1ApiGeneratedContentGeneratedcontentidMessagesPathParams, GetV
 export type { PostV1ApiGenerateContent200CategoryEnumKey, PostV1ApiGenerateContent200, PostV1ApiGenerateContentMutationRequestTypeEnumKey, SourceTypeEnumKey, PostV1ApiGenerateContentMutationRequest, PostV1ApiGenerateContentMutationResponse, PostV1ApiGenerateContentMutation } from "./PostV1ApiGenerateContent.ts";
 export type { PostV1ApiGeneratedContentGeneratedcontentidChatPathParams, PostV1ApiGeneratedContentGeneratedcontentidChat200SenderEnumKey, PostV1ApiGeneratedContentGeneratedcontentidChat200, PostV1ApiGeneratedContentGeneratedcontentidChatMutationRequest, PostV1ApiGeneratedContentGeneratedcontentidChatMutationResponse, PostV1ApiGeneratedContentGeneratedcontentidChatMutation } from "./PostV1ApiGeneratedContentGeneratedcontentidChat.ts";
 export type { PostV1ApiIngestNews200, PostV1ApiIngestNewsMutationRequest, PostV1ApiIngestNewsMutationResponse, PostV1ApiIngestNewsMutation } from "./PostV1ApiIngestNews.ts";
-export type { PostV1CronAutomations200, PostV1CronAutomationsMutationRequestFrequencyEnumKey, PostV1CronAutomationsMutationRequest, PostV1CronAutomationsMutationResponse, PostV1CronAutomationsMutation } from "./PostV1CronAutomations.ts";
-export type { PostV1CronIngest200, PostV1CronIngestMutationResponse, PostV1CronIngestMutation } from "./PostV1CronIngest.ts";
+export type { PostV1CronAutomationsHeaderParams, ErrorCodeEnum2Key, PostV1CronAutomations403, PostV1CronAutomationsMutationRequestFrequencyEnumKey, PostV1CronAutomationsMutationRequest, PostV1CronAutomationsMutationResponse, PostV1CronAutomationsMutation } from "./PostV1CronAutomations.ts";
+export type { PostV1CronIngestHeaderParams, PostV1CronIngest200, ErrorCodeEnumKey, PostV1CronIngest403, PostV1CronIngestMutationResponse, PostV1CronIngestMutation } from "./PostV1CronIngest.ts";
 export { getV1ApiGeneratedContentGeneratedcontentid200SourceCategoryEnum } from "./GetV1ApiGeneratedContentGeneratedcontentid.ts";
 export { getV1ApiGeneratedContentGeneratedcontentid200TriggerTypeEnum } from "./GetV1ApiGeneratedContentGeneratedcontentid.ts";
 export { getV1ApiGeneratedContentGeneratedcontentidMessages200SenderEnum } from "./GetV1ApiGeneratedContentGeneratedcontentidMessages.ts";
@@ -12,4 +12,6 @@ export { postV1ApiGenerateContent200CategoryEnum } from "./PostV1ApiGenerateCont
 export { postV1ApiGenerateContentMutationRequestTypeEnum } from "./PostV1ApiGenerateContent.ts";
 export { sourceTypeEnum } from "./PostV1ApiGenerateContent.ts";
 export { postV1ApiGeneratedContentGeneratedcontentidChat200SenderEnum } from "./PostV1ApiGeneratedContentGeneratedcontentidChat.ts";
+export { errorCodeEnum2 } from "./PostV1CronAutomations.ts";
 export { postV1CronAutomationsMutationRequestFrequencyEnum } from "./PostV1CronAutomations.ts";
+export { errorCodeEnum } from "./PostV1CronIngest.ts";

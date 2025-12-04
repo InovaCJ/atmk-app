@@ -10,7 +10,7 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 export default defineConfig(() => {
-    const API_URL = process.env.VITE_API_URL
+    const API_URL = process.env.VITE_API_URL ?? 'http://localhost:3333'
     const OPENAPI_JSON = process.env.VITE_OPENAPI_JSON || `${API_URL}/docs/json`
 
     return {

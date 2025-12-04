@@ -4,10 +4,45 @@
 */
 
 
+export type PostV1CronAutomationsHeaderParams = {
+    /**
+     * @type string
+    */
+    "x-cron-secret": string;
+};
+
+export const errorCodeEnum2 = {
+    "MISSING_AUTH_HEADER": "MISSING_AUTH_HEADER",
+    "INVALID_TOKEN": "INVALID_TOKEN",
+    "AUTH_FAILED": "AUTH_FAILED",
+    "FORBIDDEN": "FORBIDDEN",
+    "VALIDATION_ERROR": "VALIDATION_ERROR",
+    "INVALID_INPUT": "INVALID_INPUT",
+    "NOT_FOUND": "NOT_FOUND",
+    "INTERNAL_ERROR": "INTERNAL_ERROR",
+    "DATABASE_ERROR": "DATABASE_ERROR"
+} as const;
+
+export type ErrorCodeEnum2Key = (typeof errorCodeEnum2)[keyof typeof errorCodeEnum2];
+
 /**
- * @description Default Response
+ * @description Forbidden
 */
-export type PostV1CronAutomations200 = any;
+export type PostV1CronAutomations403 = {
+    /**
+     * @type object
+    */
+    error: {
+        /**
+         * @type string
+        */
+        message: string;
+        /**
+         * @type string
+        */
+        code: ErrorCodeEnum2Key;
+    };
+};
 
 export const postV1CronAutomationsMutationRequestFrequencyEnum = {
     "daily": "daily",
@@ -25,10 +60,11 @@ export type PostV1CronAutomationsMutationRequest = {
     frequency: PostV1CronAutomationsMutationRequestFrequencyEnumKey;
 };
 
-export type PostV1CronAutomationsMutationResponse = PostV1CronAutomations200;
+export type PostV1CronAutomationsMutationResponse = any;
 
 export type PostV1CronAutomationsMutation = {
-    Response: PostV1CronAutomations200;
+    Response: any;
     Request: PostV1CronAutomationsMutationRequest;
-    Errors: any;
+    HeaderParams: PostV1CronAutomationsHeaderParams;
+    Errors: PostV1CronAutomations403;
 };

@@ -4,7 +4,7 @@
 */
 
 import fetch from "@kubb/plugin-client/clients/axios";
-import type { PostV1CronAutomationsMutationRequest, PostV1CronAutomationsMutationResponse } from "../types/PostV1CronAutomations.ts";
+import type { PostV1CronAutomationsMutationRequest, PostV1CronAutomationsMutationResponse, PostV1CronAutomationsHeaderParams, PostV1CronAutomations403 } from "../types/PostV1CronAutomations.ts";
 import type { RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/axios";
 
 function getPostV1CronAutomationsUrl() {
@@ -17,11 +17,11 @@ function getPostV1CronAutomationsUrl() {
  * @summary Trigger Automations by Frequency
  * {@link /v1/cron/automations}
  */
-export async function postV1CronAutomations(data: PostV1CronAutomationsMutationRequest, config: Partial<RequestConfig<PostV1CronAutomationsMutationRequest>> & { client?: typeof fetch } = {}) {
+export async function postV1CronAutomations(data: PostV1CronAutomationsMutationRequest, headers: PostV1CronAutomationsHeaderParams, config: Partial<RequestConfig<PostV1CronAutomationsMutationRequest>> & { client?: typeof fetch } = {}) {
   const { client: request = fetch, ...requestConfig } = config  
   
   const requestData = data  
   
-  const res = await request<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<Error>, PostV1CronAutomationsMutationRequest>({ method : "POST", url : getPostV1CronAutomationsUrl().url.toString(), data : requestData, ... requestConfig })  
+  const res = await request<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<PostV1CronAutomations403>, PostV1CronAutomationsMutationRequest>({ method : "POST", url : getPostV1CronAutomationsUrl().url.toString(), data : requestData, ... requestConfig, headers : { ...headers, ...requestConfig.headers } })  
   return res.data
 }

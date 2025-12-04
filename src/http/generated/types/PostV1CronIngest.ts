@@ -4,14 +4,64 @@
 */
 
 
+export type PostV1CronIngestHeaderParams = {
+    /**
+     * @type string
+    */
+    "x-cron-secret": string;
+};
+
 /**
- * @description Default Response
+ * @description Ingestion triggered successfully
 */
-export type PostV1CronIngest200 = any;
+export type PostV1CronIngest200 = {
+    /**
+     * @type string
+    */
+    requestId: string;
+    /**
+     * @type string
+    */
+    status: string;
+};
+
+export const errorCodeEnum = {
+    "MISSING_AUTH_HEADER": "MISSING_AUTH_HEADER",
+    "INVALID_TOKEN": "INVALID_TOKEN",
+    "AUTH_FAILED": "AUTH_FAILED",
+    "FORBIDDEN": "FORBIDDEN",
+    "VALIDATION_ERROR": "VALIDATION_ERROR",
+    "INVALID_INPUT": "INVALID_INPUT",
+    "NOT_FOUND": "NOT_FOUND",
+    "INTERNAL_ERROR": "INTERNAL_ERROR",
+    "DATABASE_ERROR": "DATABASE_ERROR"
+} as const;
+
+export type ErrorCodeEnumKey = (typeof errorCodeEnum)[keyof typeof errorCodeEnum];
+
+/**
+ * @description Forbidden
+*/
+export type PostV1CronIngest403 = {
+    /**
+     * @type object
+    */
+    error: {
+        /**
+         * @type string
+        */
+        message: string;
+        /**
+         * @type string
+        */
+        code: ErrorCodeEnumKey;
+    };
+};
 
 export type PostV1CronIngestMutationResponse = PostV1CronIngest200;
 
 export type PostV1CronIngestMutation = {
     Response: PostV1CronIngest200;
-    Errors: any;
+    HeaderParams: PostV1CronIngestHeaderParams;
+    Errors: PostV1CronIngest403;
 };

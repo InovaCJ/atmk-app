@@ -4,7 +4,7 @@
 */
 
 import fetch from "@kubb/plugin-client/clients/axios";
-import type { PostV1CronAutomationsMutationRequest, PostV1CronAutomationsMutationResponse } from "../types/PostV1CronAutomations.ts";
+import type { PostV1CronAutomationsMutationRequest, PostV1CronAutomationsMutationResponse, PostV1CronAutomationsHeaderParams, PostV1CronAutomations403 } from "../types/PostV1CronAutomations.ts";
 import type { RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/axios";
 import type { UseMutationOptions, UseMutationResult, QueryClient } from "@tanstack/react-query";
 import { postV1CronAutomations } from "../clients/postV1CronAutomations.ts";
@@ -16,10 +16,10 @@ export type PostV1CronAutomationsMutationKey = ReturnType<typeof postV1CronAutom
 
 export function postV1CronAutomationsMutationOptions(config: Partial<RequestConfig<PostV1CronAutomationsMutationRequest>> & { client?: typeof fetch } = {}) {
   const mutationKey = postV1CronAutomationsMutationKey()
-  return mutationOptions<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<Error>, {data: PostV1CronAutomationsMutationRequest}, typeof mutationKey>({
+  return mutationOptions<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<PostV1CronAutomations403>, {data: PostV1CronAutomationsMutationRequest, headers: PostV1CronAutomationsHeaderParams}, typeof mutationKey>({
     mutationKey,
-    mutationFn: async({ data }) => {
-      return postV1CronAutomations(data, config)
+    mutationFn: async({ data, headers }) => {
+      return postV1CronAutomations(data, headers, config)
     },
   })
 }
@@ -31,7 +31,7 @@ export function postV1CronAutomationsMutationOptions(config: Partial<RequestConf
  */
 export function usePostV1CronAutomations<TContext>(options: 
 {
-  mutation?: UseMutationOptions<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<Error>, {data: PostV1CronAutomationsMutationRequest}, TContext> & { client?: QueryClient },
+  mutation?: UseMutationOptions<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<PostV1CronAutomations403>, {data: PostV1CronAutomationsMutationRequest, headers: PostV1CronAutomationsHeaderParams}, TContext> & { client?: QueryClient },
   client?: Partial<RequestConfig<PostV1CronAutomationsMutationRequest>> & { client?: typeof fetch },
 }
  = {}) {
@@ -39,11 +39,11 @@ export function usePostV1CronAutomations<TContext>(options:
   const { client: queryClient, ...mutationOptions } = mutation;
   const mutationKey = mutationOptions.mutationKey ?? postV1CronAutomationsMutationKey()
 
-  const baseOptions = postV1CronAutomationsMutationOptions(config) as UseMutationOptions<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<Error>, {data: PostV1CronAutomationsMutationRequest}, TContext>
+  const baseOptions = postV1CronAutomationsMutationOptions(config) as UseMutationOptions<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<PostV1CronAutomations403>, {data: PostV1CronAutomationsMutationRequest, headers: PostV1CronAutomationsHeaderParams}, TContext>
 
-  return useMutation<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<Error>, {data: PostV1CronAutomationsMutationRequest}, TContext>({
+  return useMutation<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<PostV1CronAutomations403>, {data: PostV1CronAutomationsMutationRequest, headers: PostV1CronAutomationsHeaderParams}, TContext>({
     ...baseOptions,
     mutationKey,
     ...mutationOptions,
-  }, queryClient) as UseMutationResult<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<Error>, {data: PostV1CronAutomationsMutationRequest}, TContext>
+  }, queryClient) as UseMutationResult<PostV1CronAutomationsMutationResponse, ResponseErrorConfig<PostV1CronAutomations403>, {data: PostV1CronAutomationsMutationRequest, headers: PostV1CronAutomationsHeaderParams}, TContext>
 }
